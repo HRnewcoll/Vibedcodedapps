@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SchoolTalk – School Confession Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0a1628; --navy2: #0f2044; --gold: #f59e0b; --gold2: #d97706;
+    --accent: #f43f5e; --glass: rgba(255,255,255,0.06); --glass-border: rgba(255,255,255,0.12);
+    --text: #f1f5f9; --subtext: #94a3b8;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, var(--navy) 0%, #0d1f3c 40%, var(--navy2) 70%, #1a0a2e 100%);
+    min-height: 100vh; color: var(--text);
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 24px;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(245,158,11,0.2);
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--gold); text-decoration: none; font-size: 14px; font-weight: 500;
+    padding: 6px 12px; border-radius: 8px;
+    background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+    transition: all .2s;
+  }
+  .back-btn:hover { background: rgba(245,158,11,0.2); transform: translateX(-2px); }
+  .nav-title { font-size: 18px; font-weight: 800; flex: 1; }
+  .nav-title span { color: var(--gold); }
+  .nav-badge {
+    background: linear-gradient(135deg,var(--gold),var(--gold2));
+    color: #000; font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  /* ── HEADER BANNER ── */
+  .school-banner {
+    background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(244,63,94,0.1));
+    border-bottom: 1px solid rgba(245,158,11,0.2);
+    padding: 32px 24px; text-align: center;
+  }
+  .school-crest { font-size: 48px; margin-bottom: 10px; }
+  .school-banner h1 { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+  .school-banner h1 span { color: var(--gold); }
+  .school-banner p { color: var(--subtext); font-size: 14px; }
+  .school-stats { display: flex; justify-content: center; gap: 32px; margin-top: 20px; }
+  .stat { text-align: center; }
+  .stat-num { font-size: 22px; font-weight: 800; color: var(--gold); }
+  .stat-label { font-size: 11px; color: var(--subtext); text-transform: uppercase; letter-spacing: .06em; }
+
+  /* ── COMPOSE ── */
+  .compose-section { max-width: 720px; margin: 32px auto 0; padding: 0 20px; }
+  .compose-card {
+    background: var(--glass); backdrop-filter: blur(30px);
+    border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px;
+    transition: border-color .2s;
+  }
+  .compose-card:focus-within { border-color: rgba(245,158,11,0.4); }
+  .compose-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .compose-title span { color: var(--gold); }
+  .compose-textarea {
+    width: 100%; background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border); border-radius: 12px;
+    color: var(--text); font-family: 'Inter', sans-serif;
+    font-size: 15px; padding: 14px 16px; resize: none;
+    min-height: 90px; outline: none; transition: border-color .2s; line-height: 1.6;
+  }
+  .compose-textarea:focus { border-color: rgba(245,158,11,0.4); }
+
+  .tag-section { margin-top: 14px; }
+  .tag-section-label { font-size: 12px; font-weight: 600; color: var(--subtext); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag-chip {
+    padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    background: rgba(255,255,255,0.07); border: 1px solid var(--glass-border);
+    color: var(--subtext); cursor: pointer; transition: all .2s;
+  }
+  .tag-chip:hover { background: rgba(245,158,11,0.1); color: var(--gold); border-color: rgba(245,158,11,0.3); }
+  .tag-chip.selected { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.5); color: var(--gold); }
+
+  .compose-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; gap: 12px; }
+  .anon-note { font-size: 12px; color: #22c55e; display: flex; align-items: center; gap: 5px; font-weight: 500; }
+  .char-count { font-size: 12px; color: var(--subtext); }
+  .post-btn {
+    padding: 10px 24px; border-radius: 10px;
+    background: linear-gradient(135deg,var(--gold),var(--gold2));
+    border: none; color: #000; font-family: 'Inter', sans-serif;
+    font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s;
+  }
+  .post-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245,158,11,.4); }
+  .post-btn:disabled { opacity: .5; pointer-events: none; }
+
+  /* ── CONTROLS ── */
+  .controls { max-width: 720px; margin: 24px auto 0; padding: 0 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .sort-btn {
+    padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    color: var(--subtext); cursor: pointer; transition: all .2s;
+  }
+  .sort-btn.active { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); color: var(--gold); }
+  .sort-btn:hover:not(.active) { background: rgba(255,255,255,0.1); color: var(--text); }
+  .filter-tag {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.3);
+    color: var(--accent); cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 5px;
+  }
+  .filter-tag:hover { background: rgba(244,63,94,0.2); }
+  .controls-spacer { flex: 1; }
+  .post-count { font-size: 13px; color: var(--subtext); }
+
+  /* ── CARDS ── */
+  .feed { max-width: 720px; margin: 20px auto 60px; padding: 0 20px; display: flex; flex-direction: column; gap: 14px; }
+  .post-card {
+    background: var(--glass); backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border); border-radius: 18px; padding: 18px 20px;
+    animation: cardIn .35s ease; transition: border-color .2s, transform .2s;
+  }
+  .post-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.18); }
+  @keyframes cardIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+  .post-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  .post-num {
+    font-size: 11px; font-weight: 700; color: var(--gold);
+    background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3);
+    padding: 3px 8px; border-radius: 6px; white-space: nowrap;
+  }
+  .post-tags { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+  .post-tag {
+    font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 12px;
+    cursor: pointer; transition: opacity .2s;
+  }
+  .post-tag:hover { opacity: .75; }
+  .post-time { font-size: 11px; color: var(--subtext); white-space: nowrap; }
+  .post-text { font-size: 15px; line-height: 1.7; color: var(--text); margin-bottom: 14px; word-break: break-word; }
+
+  .post-footer { display: flex; align-items: center; gap: 10px; }
+  .vote-group { display: flex; align-items: center; gap: 2px; background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); border-radius: 24px; padding: 4px; }
+  .vote-btn {
+    width: 32px; height: 32px; border-radius: 20px; border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 14px; font-weight: 700;
+    transition: all .2s; background: transparent; color: var(--subtext);
+  }
+  .vote-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+  .vote-btn.up.voted { background: rgba(34,197,94,0.2); color: #22c55e; }
+  .vote-btn.down.voted { background: rgba(244,63,94,0.2); color: var(--accent); }
+  .vote-score { font-size: 14px; font-weight: 700; padding: 0 8px; min-width: 28px; text-align: center; }
+  .vote-score.positive { color: #22c55e; }
+  .vote-score.negative { color: var(--accent); }
+  .delete-btn {
+    margin-left: auto; background: none; border: none; color: rgba(255,255,255,0.2);
+    cursor: pointer; font-size: 14px; padding: 6px; border-radius: 6px; transition: color .2s;
+  }
+  .delete-btn:hover { color: var(--accent); }
+  .hot-badge { font-size: 11px; padding: 3px 8px; background: rgba(249,115,22,0.2); border: 1px solid rgba(249,115,22,0.4); color: #fb923c; border-radius: 12px; font-weight: 600; }
+
+  /* ── EMPTY ── */
+  .empty { text-align: center; padding: 60px 20px; color: var(--subtext); }
+  .empty .icon { font-size: 52px; opacity: .4; margin-bottom: 16px; }
+  .empty h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: rgba(245,158,11,0.9); color: #000; padding: 12px 24px;
+    border-radius: 12px; font-size: 14px; font-weight: 600;
+    transition: transform .3s; z-index: 999; pointer-events: none;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media(max-width:480px) { .school-stats { gap: 16px; } .compose-footer { flex-wrap: wrap; } }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../../index.html" class="back-btn">← Back</a>
+  <div class="nav-title">🏫 School<span>Talk</span></div>
+  <div class="nav-badge" id="nav-badge">0 Posts</div>
+</nav>
+
+<div class="school-banner">
+  <div class="school-crest">🎓</div>
+  <h1>The <span>Anonymous</span> Board</h1>
+  <p>Share your school thoughts, secrets, and experiences — 100% anonymous</p>
+  <div class="school-stats">
+    <div class="stat"><div class="stat-num" id="stat-posts">0</div><div class="stat-label">Confessions</div></div>
+    <div class="stat"><div class="stat-num" id="stat-votes">0</div><div class="stat-label">Total Votes</div></div>
+    <div class="stat"><div class="stat-num" id="stat-hot">0</div><div class="stat-label">Hot Posts</div></div>
+  </div>
+</div>
+
+<!-- Compose -->
+<div class="compose-section">
+  <div class="compose-card">
+    <div class="compose-title">✏️ New <span>Anonymous</span> Post</div>
+    <textarea class="compose-textarea" id="compose-textarea" placeholder="Share your school confession, secret, or experience… (max 400 chars)" maxlength="400"></textarea>
+    <div class="tag-section">
+      <div class="tag-section-label">Add Tags (optional)</div>
+      <div class="tag-row" id="tag-row"></div>
+    </div>
+    <div class="compose-footer">
+      <div class="anon-note">🔒 Anonymous</div>
+      <div class="char-count" id="char-count">0 / 400</div>
+      <button class="post-btn" id="post-btn" onclick="postConfession()" disabled>Post Anonymously</button>
+    </div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="sort-btn active" data-sort="hot" onclick="setSort('hot',this)">🔥 Hot</button>
+  <button class="sort-btn" data-sort="new" onclick="setSort('new',this)">🕐 New</button>
+  <button class="sort-btn" data-sort="top" onclick="setSort('top',this)">⭐ Top</button>
+  <div class="controls-spacer"></div>
+  <div class="post-count" id="post-count"></div>
+</div>
+
+<!-- Feed -->
+<div class="feed" id="feed"></div>
+
+<div id="toast"></div>
+
+<script>
+  const STORAGE_KEY = 'schooltalk_v2';
+  const TAGS = [
+    { label: 'Year 7', color: '#6366f1', bg: 'rgba(99,102,241,0.2)' },
+    { label: 'Year 8', color: '#8b5cf6', bg: 'rgba(139,92,246,0.2)' },
+    { label: 'Year 9', color: '#ec4899', bg: 'rgba(236,72,153,0.2)' },
+    { label: 'Year 10', color: '#f43f5e', bg: 'rgba(244,63,94,0.2)' },
+    { label: 'Year 11', color: '#f59e0b', bg: 'rgba(245,158,11,0.2)' },
+    { label: 'Year 12', color: '#10b981', bg: 'rgba(16,185,129,0.2)' },
+    { label: 'Year 13', color: '#06b6d4', bg: 'rgba(6,182,212,0.2)' },
+    { label: 'GCSE', color: '#f97316', bg: 'rgba(249,115,22,0.2)' },
+    { label: 'A-Level', color: '#3b82f6', bg: 'rgba(59,130,246,0.2)' },
+    { label: 'Drama 🎭', color: '#a855f7', bg: 'rgba(168,85,247,0.2)' },
+    { label: 'Sports ⚽', color: '#22c55e', bg: 'rgba(34,197,94,0.2)' },
+    { label: 'Lunch 🍽️', color: '#84cc16', bg: 'rgba(132,204,22,0.2)' },
+    { label: 'Teacher 👨‍🏫', color: '#e879f9', bg: 'rgba(232,121,249,0.2)' },
+    { label: 'Crush 💘', color: '#fb7185', bg: 'rgba(251,113,133,0.2)' },
+  ];
+
+  let posts = [];
+  let myVotes = {}; // id -> 'up'|'down'
+  let selectedTags = new Set();
+  let currentSort = 'hot';
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        posts = d.posts || [];
+        myVotes = d.myVotes || {};
+      }
+    } catch(e) { posts = []; myVotes = {}; }
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ posts, myVotes }));
+  }
+
+  function buildTagRow() {
+    document.getElementById('tag-row').innerHTML = TAGS.map(t => `
+      <div class="tag-chip" data-label="${t.label}" onclick="toggleTag('${t.label}',this)">${t.label}</div>
+    `).join('');
+  }
+
+  function toggleTag(label, el) {
+    if (selectedTags.has(label)) { selectedTags.delete(label); el.classList.remove('selected'); }
+    else { selectedTags.add(label); el.classList.add('selected'); }
+  }
+
+  function postConfession() {
+    const ta = document.getElementById('compose-textarea');
+    const text = ta.value.trim();
+    if (!text) return;
+
+    const post = {
+      id: Date.now().toString() + Math.random().toString(36).slice(2),
+      text, time: Date.now(),
+      tags: [...selectedTags],
+      upvotes: 0, downvotes: 0,
+      num: posts.length + 1
+    };
+    posts.unshift(post);
+    save();
+
+    ta.value = '';
+    updateCharCount();
+    selectedTags.clear();
+    document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('selected'));
+    renderAll();
+    showToast('🎓 Posted anonymously!');
+  }
+
+  function vote(id, dir) {
+    const post = posts.find(p => p.id === id);
+    if (!post) return;
+    const prev = myVotes[id];
+    if (prev === dir) {
+      // undo
+      if (dir === 'up') post.upvotes--;
+      else post.downvotes--;
+      delete myVotes[id];
+    } else {
+      if (prev === 'up') post.upvotes--;
+      if (prev === 'down') post.downvotes--;
+      myVotes[id] = dir;
+      if (dir === 'up') post.upvotes++;
+      else post.downvotes++;
+    }
+    save(); renderAll();
+  }
+
+  function deletePost(id) {
+    posts = posts.filter(p => p.id !== id);
+    save(); renderAll();
+  }
+
+  function setSort(s, el) {
+    currentSort = s;
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderAll();
+  }
+
+  function getScore(p) { return p.upvotes - p.downvotes; }
+
+  function getHotScore(p) {
+    const score = getScore(p);
+    const ageHours = (Date.now() - p.time) / 3600000;
+    return score / Math.pow(ageHours + 2, 1.5);
+  }
+
+  function getSorted() {
+    const list = [...posts];
+    if (currentSort === 'hot') list.sort((a,b) => getHotScore(b) - getHotScore(a));
+    else if (currentSort === 'new') list.sort((a,b) => b.time - a.time);
+    else list.sort((a,b) => getScore(b) - getScore(a));
+    return list;
+  }
+
+  function timeAgo(ts) {
+    const sec = Math.floor((Date.now() - ts) / 1000);
+    if (sec < 60) return 'just now';
+    if (sec < 3600) return Math.floor(sec/60) + 'm ago';
+    if (sec < 86400) return Math.floor(sec/3600) + 'h ago';
+    return Math.floor(sec/86400) + 'd ago';
+  }
+
+  function getTagStyle(label) {
+    const t = TAGS.find(t => t.label === label);
+    return t ? `background:${t.bg};color:${t.color};border-color:${t.color}40` : 'background:rgba(255,255,255,0.1);color:#fff';
+  }
+
+  function renderAll() {
+    const sorted = getSorted();
+    const feed = document.getElementById('feed');
+    const totalVotes = posts.reduce((s,p) => s + p.upvotes + p.downvotes, 0);
+    const hotCount = posts.filter(p => getScore(p) >= 5).length;
+
+    document.getElementById('stat-posts').textContent = posts.length;
+    document.getElementById('stat-votes').textContent = totalVotes;
+    document.getElementById('stat-hot').textContent = hotCount;
+    document.getElementById('nav-badge').textContent = posts.length + ' Posts';
+    document.getElementById('post-count').textContent = posts.length + ' total';
+
+    if (sorted.length === 0) {
+      feed.innerHTML = `<div class="empty"><div class="icon">🏫</div><h3>No posts yet</h3><p>Be the first to post something!</p></div>`;
+      return;
+    }
+
+    feed.innerHTML = sorted.map(p => {
+      const score = getScore(p);
+      const isHot = getHotScore(p) > 1 && score >= 3;
+      const upVoted = myVotes[p.id] === 'up';
+      const downVoted = myVotes[p.id] === 'down';
+      const tagsHtml = p.tags.map(t => `<span class="post-tag" style="${getTagStyle(t)};border:1px solid">${t}</span>`).join('');
+
+      return `
+        <div class="post-card">
+          <div class="post-header">
+            <span class="post-num">#${p.num}</span>
+            <div class="post-tags">${tagsHtml}</div>
+            ${isHot ? '<span class="hot-badge">🔥 Hot</span>' : ''}
+            <span class="post-time">${timeAgo(p.time)}</span>
+          </div>
+          <div class="post-text">${escHtml(p.text)}</div>
+          <div class="post-footer">
+            <div class="vote-group">
+              <button class="vote-btn up ${upVoted?'voted':''}" onclick="vote('${p.id}','up')">▲</button>
+              <span class="vote-score ${score>0?'positive':score<0?'negative':''}">${score}</span>
+              <button class="vote-btn down ${downVoted?'voted':''}" onclick="vote('${p.id}','down')">▼</button>
+            </div>
+            <span style="font-size:12px;color:var(--subtext)">${p.upvotes}↑ ${p.downvotes}↓</span>
+            <button class="delete-btn" onclick="deletePost('${p.id}')">✕</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateCharCount() {
+    const ta = document.getElementById('compose-textarea');
+    document.getElementById('char-count').textContent = ta.value.length + ' / 400';
+    document.getElementById('post-btn').disabled = ta.value.trim().length === 0;
+  }
+
+  document.getElementById('compose-textarea').addEventListener('input', updateCharCount);
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Inject some seed posts if empty
+  function seedPosts() {
+    if (posts.length > 0) return;
+    const seeds = [
+      { text: "I spend all my revision time just reorganising my notes 😂", tags: ["GCSE", "Year 11"], up: 24, down: 2 },
+      { text: "The school lunches have actually gotten better this year. Change my mind.", tags: ["Lunch 🍽️"], up: 18, down: 7 },
+      { text: "I've been dreading the mock results all week. Good luck everyone 🤞", tags: ["A-Level", "Year 12"], up: 41, down: 1 },
+      { text: "Why does period 5 on Friday feel 3x longer than any other period??", tags: ["Year 10"], up: 56, down: 3 },
+    ];
+    seeds.forEach((s, i) => {
+      posts.push({
+        id: 'seed_' + i, text: s.text, tags: s.tags,
+        time: Date.now() - (i + 1) * 3600000 * 3,
+        upvotes: s.up, downvotes: s.down,
+        num: i + 1
+      });
+    });
+    save();
+  }
+
+  load(); seedPosts(); buildTagRow(); renderAll();
+</script>
+</body>
+</html>

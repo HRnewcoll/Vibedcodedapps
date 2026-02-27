@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlueTalk – Local Wireless Chat</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg1: #0f0c29; --bg2: #302b63; --accent: #f43f5e;
+    --accent2: #3b82f6; --glass: rgba(255,255,255,0.07);
+    --glass-border: rgba(255,255,255,0.13); --text: #f1f5f9;
+    --subtext: #94a3b8; --bubble-me: linear-gradient(135deg,#f43f5e,#e11d48);
+    --bubble-them: rgba(255,255,255,0.1);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 50%, #24243e 100%);
+    min-height: 100vh; color: var(--text); overflow: hidden;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 20px;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--glass-border);
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--accent); text-decoration: none;
+    font-size: 14px; font-weight: 500;
+    padding: 6px 12px; border-radius: 8px;
+    background: rgba(244,63,94,0.1);
+    border: 1px solid rgba(244,63,94,0.3);
+    transition: all .2s;
+  }
+  .back-btn:hover { background: rgba(244,63,94,0.2); transform: translateX(-2px); }
+  .nav-title { font-size: 18px; font-weight: 700; flex: 1; text-align: center; }
+  .nav-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--subtext); }
+  .bt-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+
+  /* ── SETUP SCREEN ── */
+  #setup-screen {
+    position: fixed; inset: 0; z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  }
+  .setup-card {
+    background: var(--glass); backdrop-filter: blur(30px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px; padding: 48px 40px;
+    max-width: 420px; width: 90%;
+    text-align: center; animation: fadeUp .6s ease;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+  .setup-icon { font-size: 60px; margin-bottom: 20px; }
+  .setup-card h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .setup-card p { color: var(--subtext); font-size: 14px; margin-bottom: 32px; line-height: 1.6; }
+  .input-group { margin-bottom: 20px; text-align: left; }
+  .input-group label { display: block; font-size: 12px; font-weight: 600; color: var(--subtext); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+  .input-group input {
+    width: 100%; padding: 14px 16px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px; color: var(--text);
+    font-family: 'Inter', sans-serif; font-size: 15px;
+    outline: none; transition: border-color .2s;
+  }
+  .input-group input:focus { border-color: var(--accent); }
+  .avatar-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 24px; }
+  .avatar-opt {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; cursor: pointer;
+    border: 2px solid transparent;
+    background: rgba(255,255,255,0.08);
+    transition: all .2s;
+  }
+  .avatar-opt.selected { border-color: var(--accent); transform: scale(1.1); }
+  .btn-primary {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #e11d48);
+    border: none; border-radius: 12px;
+    color: #fff; font-family: 'Inter', sans-serif;
+    font-size: 16px; font-weight: 600; cursor: pointer;
+    transition: all .2s; letter-spacing: .02em;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(244,63,94,.4); }
+
+  /* ── MAIN LAYOUT ── */
+  #main-screen { display: none; height: 100vh; flex-direction: column; padding-top: 65px; }
+
+  .app-body { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 260px; flex-shrink: 0;
+    background: rgba(0,0,0,0.25); backdrop-filter: blur(20px);
+    border-right: 1px solid var(--glass-border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 16px; border-bottom: 1px solid var(--glass-border);
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--subtext);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .scan-btn {
+    padding: 4px 10px; border-radius: 6px;
+    background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.4);
+    color: var(--accent2); font-size: 11px; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+  }
+  .scan-btn:hover { background: rgba(59,130,246,0.35); }
+  .devices-list { flex: 1; overflow-y: auto; padding: 8px; }
+  .device-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px;
+    cursor: pointer; transition: all .2s;
+    border: 1px solid transparent; margin-bottom: 4px;
+  }
+  .device-item:hover { background: var(--glass); border-color: var(--glass-border); }
+  .device-item.active { background: rgba(244,63,94,0.12); border-color: rgba(244,63,94,0.3); }
+  .device-avatar { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 20px; position: relative; }
+  .online-badge { position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: #22c55e; border-radius: 50%; border: 2px solid #1a1a2e; }
+  .device-info { flex: 1; min-width: 0; }
+  .device-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .device-last { font-size: 11px; color: var(--subtext); margin-top: 2px; }
+  .unread-badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 12px; }
+
+  .my-profile {
+    padding: 14px 16px;
+    border-top: 1px solid var(--glass-border);
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(0,0,0,0.2);
+  }
+  .my-profile-avatar { font-size: 24px; }
+  .my-profile-info { flex: 1; }
+  .my-profile-name { font-size: 13px; font-weight: 600; }
+  .my-profile-id { font-size: 11px; color: var(--subtext); }
+
+  /* ── CHAT AREA ── */
+  .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .chat-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(0,0,0,0.2); backdrop-filter: blur(10px);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .chat-header-avatar { font-size: 28px; }
+  .chat-header-info { flex: 1; }
+  .chat-header-name { font-size: 16px; font-weight: 600; }
+  .chat-header-status { font-size: 12px; color: #22c55e; }
+  .typing-indicator { font-size: 12px; color: var(--subtext); font-style: italic; }
+
+  .messages-container {
+    flex: 1; overflow-y: auto;
+    padding: 20px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .messages-container::-webkit-scrollbar { width: 4px; }
+  .messages-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+  .msg-group { display: flex; flex-direction: column; gap: 4px; }
+  .msg-row { display: flex; align-items: flex-end; gap: 8px; }
+  .msg-row.mine { flex-direction: row-reverse; }
+  .msg-bubble {
+    max-width: 65%; padding: 10px 14px;
+    border-radius: 18px; font-size: 14px; line-height: 1.5;
+    position: relative; word-break: break-word;
+  }
+  .msg-row.mine .msg-bubble {
+    background: var(--bubble-me); border-bottom-right-radius: 4px;
+    color: #fff;
+  }
+  .msg-row.theirs .msg-bubble {
+    background: var(--bubble-them); backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border); border-bottom-left-radius: 4px;
+  }
+  .msg-meta { font-size: 11px; color: var(--subtext); margin-top: 2px; padding: 0 4px; }
+  .msg-row.mine .msg-meta { text-align: right; }
+  .msg-sender { font-size: 11px; color: var(--accent); font-weight: 600; margin-bottom: 2px; padding: 0 4px; }
+
+  .system-msg {
+    text-align: center; font-size: 12px; color: var(--subtext);
+    padding: 6px 12px; background: rgba(255,255,255,0.05);
+    border-radius: 20px; align-self: center; margin: 8px 0;
+  }
+
+  .empty-chat {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: var(--subtext); text-align: center; gap: 12px;
+  }
+  .empty-chat .icon { font-size: 56px; opacity: .4; }
+
+  /* ── INPUT BAR ── */
+  .input-bar {
+    padding: 12px 16px;
+    background: rgba(0,0,0,0.3); backdrop-filter: blur(20px);
+    border-top: 1px solid var(--glass-border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .msg-input {
+    flex: 1; padding: 12px 16px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px; color: var(--text);
+    font-family: 'Inter', sans-serif; font-size: 14px;
+    outline: none; transition: border-color .2s;
+    resize: none; height: 44px; max-height: 120px; overflow-y: auto;
+  }
+  .msg-input:focus { border-color: rgba(244,63,94,0.5); }
+  .send-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #e11d48);
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s; flex-shrink: 0;
+  }
+  .send-btn:hover { transform: scale(1.08); box-shadow: 0 4px 15px rgba(244,63,94,.4); }
+  .send-btn svg { width: 18px; height: 18px; fill: #fff; }
+
+  /* ── BROADCAST ── */
+  .broadcast-bar {
+    padding: 8px 16px;
+    background: rgba(59,130,246,0.08);
+    border-top: 1px solid rgba(59,130,246,0.2);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .broadcast-label { font-size: 12px; color: var(--accent2); font-weight: 600; }
+  .broadcast-input {
+    flex: 1; padding: 8px 14px;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 20px; color: var(--text);
+    font-family: 'Inter', sans-serif; font-size: 13px;
+    outline: none;
+  }
+  .broadcast-btn {
+    padding: 8px 16px; border-radius: 20px;
+    background: rgba(59,130,246,0.25); border: 1px solid rgba(59,130,246,0.4);
+    color: var(--accent2); font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+  }
+  .broadcast-btn:hover { background: rgba(59,130,246,0.4); }
+
+  /* scrollbar */
+  .devices-list::-webkit-scrollbar { width: 4px; }
+  .devices-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  /* mobile */
+  @media(max-width:640px) {
+    .sidebar { width: 60px; }
+    .device-info, .device-last, .unread-badge, .my-profile-info, .sidebar-header span, .scan-btn { display: none; }
+    .sidebar-header { justify-content: center; padding: 12px 8px; }
+    .device-item { justify-content: center; padding: 10px 0; }
+    .my-profile { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-icon">📡</div>
+    <h1>BlueTalk</h1>
+    <p>Simulated local wireless chat. Open this page in multiple tabs to chat between them instantly — like Bluetooth, but in your browser.</p>
+    <div class="input-group">
+      <label>Your Display Name</label>
+      <input type="text" id="username-input" placeholder="e.g. Alex, Jordan, Sam…" maxlength="20">
+    </div>
+    <div class="input-group">
+      <label>Pick your avatar</label>
+      <div class="avatar-row" id="avatar-row">
+        <div class="avatar-opt selected" data-emoji="🦊">🦊</div>
+        <div class="avatar-opt" data-emoji="🐼">🐼</div>
+        <div class="avatar-opt" data-emoji="🦁">🦁</div>
+        <div class="avatar-opt" data-emoji="🐯">🐯</div>
+        <div class="avatar-opt" data-emoji="🦋">🦋</div>
+        <div class="avatar-opt" data-emoji="🐬">🐬</div>
+        <div class="avatar-opt" data-emoji="🦄">🦄</div>
+        <div class="avatar-opt" data-emoji="🐉">🐉</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="startApp()">Join Network →</button>
+  </div>
+</div>
+
+<!-- MAIN SCREEN -->
+<div id="main-screen">
+  <nav class="nav">
+    <a href="../../index.html" class="back-btn">← Back</a>
+    <span class="nav-title">📡 BlueTalk</span>
+    <div class="nav-status">
+      <div class="bt-dot"></div>
+      <span id="connected-count">0 nearby</span>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <span>Nearby Devices</span>
+        <button class="scan-btn" onclick="broadcastPresence()">Scan</button>
+      </div>
+      <div class="devices-list" id="devices-list">
+        <div style="text-align:center;color:var(--subtext);font-size:12px;padding:20px;">
+          Open more tabs to see devices…
+        </div>
+      </div>
+      <div class="my-profile">
+        <div class="my-profile-avatar" id="my-profile-avatar">🦊</div>
+        <div class="my-profile-info">
+          <div class="my-profile-name" id="my-profile-name">You</div>
+          <div class="my-profile-id" id="my-profile-id">#0000</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat area -->
+    <div class="chat-area">
+      <div class="chat-header" id="chat-header">
+        <div class="chat-header-avatar" id="chat-target-avatar">📡</div>
+        <div class="chat-header-info">
+          <div class="chat-header-name" id="chat-target-name">Broadcast Channel</div>
+          <div class="chat-header-status">All nearby devices</div>
+        </div>
+        <div class="typing-indicator" id="typing-indicator"></div>
+      </div>
+
+      <div class="messages-container" id="messages-container">
+        <div class="empty-chat" id="empty-chat">
+          <div class="icon">💬</div>
+          <div style="font-size:16px;font-weight:600;color:var(--text)">Broadcast to all tabs</div>
+          <div style="font-size:13px;">Messages appear in every connected tab</div>
+        </div>
+      </div>
+
+      <div class="broadcast-bar">
+        <span class="broadcast-label">📢</span>
+        <input class="broadcast-input" id="broadcast-input" placeholder="Broadcast to all nearby devices…" maxlength="300">
+        <button class="broadcast-btn" onclick="sendBroadcast()">Send All</button>
+      </div>
+
+      <div class="input-bar">
+        <textarea class="msg-input" id="msg-input" placeholder="Message…" rows="1"></textarea>
+        <button class="send-btn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── State ──
+  let myId = null, myName = '', myAvatar = '🦊', selectedAvatar = '🦊';
+  let devices = {}; // id -> {name, avatar, lastSeen}
+  let messages = []; // {id, from, fromName, fromAvatar, text, time, type}
+  let channel = null;
+  let typingTimer = null;
+  let presenceInterval = null;
+  const CHANNEL_NAME = 'bluetalk_v1';
+
+  // ── Avatar selection ──
+  document.querySelectorAll('.avatar-opt').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.avatar-opt').forEach(a => a.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedAvatar = el.dataset.emoji;
+    });
+  });
+
+  document.getElementById('username-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') startApp();
+  });
+
+  function startApp() {
+    const nameInput = document.getElementById('username-input').value.trim();
+    if (!nameInput) { document.getElementById('username-input').focus(); return; }
+    myName = nameInput;
+    myAvatar = selectedAvatar;
+    myId = 'user_' + Math.random().toString(36).slice(2, 8);
+
+    document.getElementById('setup-screen').style.display = 'none';
+    const ms = document.getElementById('main-screen');
+    ms.style.display = 'flex';
+
+    document.getElementById('my-profile-avatar').textContent = myAvatar;
+    document.getElementById('my-profile-name').textContent = myName;
+    document.getElementById('my-profile-id').textContent = '#' + myId.slice(-4).toUpperCase();
+
+    initChannel();
+    broadcastPresence();
+    presenceInterval = setInterval(broadcastPresence, 5000);
+    setInterval(cleanStaleDevices, 7000);
+  }
+
+  function initChannel() {
+    channel = new BroadcastChannel(CHANNEL_NAME);
+    channel.addEventListener('message', handleChannelMessage);
+  }
+
+  function broadcastPresence() {
+    if (!channel) return;
+    channel.postMessage({ type: 'presence', id: myId, name: myName, avatar: myAvatar, time: Date.now() });
+  }
+
+  function handleChannelMessage(e) {
+    const d = e.data;
+    if (!d || d.id === myId) return;
+
+    if (d.type === 'presence') {
+      const isNew = !devices[d.id];
+      devices[d.id] = { name: d.name, avatar: d.avatar, lastSeen: d.time };
+      if (isNew) {
+        appendSystemMsg(`${d.avatar} ${d.name} joined the network`);
+        channel.postMessage({ type: 'presence', id: myId, name: myName, avatar: myAvatar, time: Date.now() });
+      }
+      updateDevicesList();
+    } else if (d.type === 'broadcast' || d.type === 'message') {
+      const msg = { id: d.msgId, from: d.id, fromName: d.name, fromAvatar: d.avatar, text: d.text, time: d.time, type: d.type };
+      if (!messages.find(m => m.id === d.msgId)) {
+        messages.push(msg);
+        appendMessage(msg);
+      }
+    } else if (d.type === 'typing') {
+      showTyping(d.name);
+    } else if (d.type === 'leave') {
+      appendSystemMsg(`${devices[d.id]?.avatar || '👤'} ${devices[d.id]?.name || d.id} left`);
+      delete devices[d.id];
+      updateDevicesList();
+    }
+  }
+
+  function cleanStaleDevices() {
+    const now = Date.now();
+    let changed = false;
+    for (const id in devices) {
+      if (now - devices[id].lastSeen > 12000) {
+        appendSystemMsg(`${devices[id].avatar} ${devices[id].name} went offline`);
+        delete devices[id];
+        changed = true;
+      }
+    }
+    if (changed) updateDevicesList();
+  }
+
+  function updateDevicesList() {
+    const list = document.getElementById('devices-list');
+    const count = Object.keys(devices).length;
+    document.getElementById('connected-count').textContent = count + ' nearby';
+
+    if (count === 0) {
+      list.innerHTML = '<div style="text-align:center;color:var(--subtext);font-size:12px;padding:20px;">Open more tabs to see devices…</div>';
+      return;
+    }
+
+    list.innerHTML = Object.entries(devices).map(([id, d]) => `
+      <div class="device-item">
+        <div class="device-avatar">${d.avatar}<div class="online-badge"></div></div>
+        <div class="device-info">
+          <div class="device-name">${escHtml(d.name)}</div>
+          <div class="device-last">Active now</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function sendMessage() {
+    const input = document.getElementById('msg-input');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    input.style.height = '44px';
+
+    const msg = {
+      type: 'message', msgId: Date.now() + '_' + Math.random().toString(36).slice(2),
+      id: myId, name: myName, avatar: myAvatar,
+      text, time: Date.now()
+    };
+    channel.postMessage(msg);
+    messages.push({ id: msg.msgId, from: myId, fromName: myName, fromAvatar: myAvatar, text, time: msg.time, type: 'message' });
+    appendMessage({ from: myId, fromName: myName, fromAvatar: myAvatar, text, time: msg.time });
+  }
+
+  function sendBroadcast() {
+    const input = document.getElementById('broadcast-input');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+
+    const msg = {
+      type: 'broadcast', msgId: Date.now() + '_bc_' + Math.random().toString(36).slice(2),
+      id: myId, name: myName, avatar: myAvatar,
+      text: '📢 ' + text, time: Date.now()
+    };
+    channel.postMessage(msg);
+    messages.push({ id: msg.msgId, from: myId, fromName: myName, fromAvatar: myAvatar, text: msg.text, time: msg.time, type: 'broadcast' });
+    appendMessage({ from: myId, fromName: myName, fromAvatar: myAvatar, text: msg.text, time: msg.time });
+  }
+
+  function appendMessage(msg) {
+    const container = document.getElementById('messages-container');
+    const ec = document.getElementById('empty-chat');
+    if (ec) ec.remove();
+
+    const isMine = msg.from === myId;
+    const row = document.createElement('div');
+    row.className = 'msg-group';
+
+    const timeStr = new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (!isMine) {
+      row.innerHTML = `
+        <div class="msg-sender">${escHtml(msg.fromAvatar)} ${escHtml(msg.fromName)}</div>
+        <div class="msg-row theirs">
+          <div class="msg-bubble">${escHtml(msg.text)}</div>
+        </div>
+        <div class="msg-meta">${timeStr}</div>
+      `;
+    } else {
+      row.innerHTML = `
+        <div class="msg-row mine">
+          <div class="msg-bubble">${escHtml(msg.text)}</div>
+        </div>
+        <div class="msg-meta">${timeStr}</div>
+      `;
+    }
+
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function appendSystemMsg(text) {
+    const container = document.getElementById('messages-container');
+    const ec = document.getElementById('empty-chat');
+    if (ec) ec.remove();
+    const div = document.createElement('div');
+    div.className = 'system-msg';
+    div.textContent = text;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  let typingTimeout = null;
+  function showTyping(name) {
+    const el = document.getElementById('typing-indicator');
+    el.textContent = `${name} is typing…`;
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => { el.textContent = ''; }, 2500);
+  }
+
+  // Typing events
+  document.getElementById('msg-input').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    if (channel) channel.postMessage({ type: 'typing', id: myId, name: myName });
+  });
+
+  document.getElementById('msg-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  document.getElementById('broadcast-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendBroadcast();
+  });
+
+  // Cleanup on tab close
+  window.addEventListener('beforeunload', () => {
+    if (channel) channel.postMessage({ type: 'leave', id: myId });
+  });
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
