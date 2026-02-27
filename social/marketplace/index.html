@@ -389,8 +389,8 @@
   function load() {
     try {
       const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      listings = d.listings || null;
-      if (!listings) listings = seedListings();
+      listings = d.listings || [];
+      if (listings.length === 0) listings = seedListings();
     } catch(e) { listings = seedListings(); }
   }
 

@@ -327,9 +327,9 @@
   function load() {
     try {
       const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      topics = d.topics || null;
+      topics = d.topics || [];
       myUpvotes = d.myUpvotes || {};
-      if (!topics) {
+      if (topics.length === 0) {
         topics = SEED_TOPICS.map(t => ({ ...t, arguments: seedArgs(t.id) }));
       }
     } catch(e) { topics = SEED_TOPICS.map(t => ({...t, arguments:[]})); myUpvotes = {}; }
