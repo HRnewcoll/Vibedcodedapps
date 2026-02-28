@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confess – Anonymous Confession Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg1: #0f0c29; --bg2: #302b63; --accent: #f43f5e;
+    --glass: rgba(255,255,255,0.06); --glass-border: rgba(255,255,255,0.12);
+    --text: #f1f5f9; --subtext: #94a3b8;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 50%, #24243e 100%);
+    min-height: 100vh; color: var(--text);
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 24px;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--accent); text-decoration: none; font-size: 14px; font-weight: 500;
+    padding: 6px 12px; border-radius: 8px;
+    background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3);
+    transition: all .2s;
+  }
+  .back-btn:hover { background: rgba(244,63,94,0.2); transform: translateX(-2px); }
+  .nav-title { font-size: 18px; font-weight: 700; flex: 1; }
+  .nav-count { font-size: 13px; color: var(--subtext); }
+
+  /* ── HERO ── */
+  .hero {
+    text-align: center; padding: 48px 24px 32px;
+  }
+  .hero-icon { font-size: 52px; margin-bottom: 16px; }
+  .hero h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; }
+  .hero p { color: var(--subtext); font-size: 15px; max-width: 480px; margin: 0 auto; line-height: 1.7; }
+
+  /* ── COMPOSE BOX ── */
+  .compose-wrap { max-width: 680px; margin: 0 auto 40px; padding: 0 20px; }
+  .compose-card {
+    background: var(--glass); backdrop-filter: blur(30px);
+    border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px;
+    transition: border-color .2s;
+  }
+  .compose-card:focus-within { border-color: rgba(244,63,94,0.5); }
+  .compose-textarea {
+    width: 100%; background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border); border-radius: 12px;
+    color: var(--text); font-family: 'Inter', sans-serif;
+    font-size: 15px; padding: 14px 16px; resize: none;
+    min-height: 100px; outline: none; transition: border-color .2s; line-height: 1.6;
+  }
+  .compose-textarea:focus { border-color: rgba(244,63,94,0.4); }
+  .compose-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; gap: 12px;
+  }
+  .char-count { font-size: 12px; color: var(--subtext); }
+  .char-count.warn { color: #f59e0b; }
+  .char-count.over { color: var(--accent); }
+  .anon-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: #22c55e; font-weight: 500;
+  }
+  .post-btn {
+    padding: 10px 24px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), #e11d48);
+    border: none; color: #fff; font-family: 'Inter', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s;
+  }
+  .post-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(244,63,94,.4); }
+  .post-btn:disabled { opacity: .5; pointer-events: none; }
+
+  /* ── FILTERS ── */
+  .filters { max-width: 680px; margin: 0 auto 24px; padding: 0 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .filter-btn {
+    padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    color: var(--subtext); cursor: pointer; transition: all .2s;
+  }
+  .filter-btn.active { background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.4); color: var(--accent); }
+  .filter-btn:hover:not(.active) { background: rgba(255,255,255,0.1); color: var(--text); }
+  .confession-count { margin-left: auto; font-size: 13px; color: var(--subtext); }
+
+  /* ── CARDS ── */
+  .confessions-wrap { max-width: 680px; margin: 0 auto 60px; padding: 0 20px; display: flex; flex-direction: column; gap: 16px; }
+  .confession-card {
+    background: var(--glass); backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border); border-radius: 18px; padding: 20px 22px;
+    animation: cardIn .4s ease; position: relative; overflow: hidden;
+    transition: border-color .25s, transform .2s;
+  }
+  .confession-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2); }
+  @keyframes cardIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .card-shimmer {
+    position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent);
+    animation: shimmer 3s infinite;
+  }
+  @keyframes shimmer { to{left:150%} }
+
+  .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .anon-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; flex-shrink: 0;
+  }
+  .card-meta { flex: 1; }
+  .anon-name { font-size: 13px; font-weight: 600; }
+  .card-time { font-size: 11px; color: var(--subtext); margin-top: 2px; }
+  .card-delete {
+    background: none; border: none; color: rgba(255,255,255,0.2);
+    cursor: pointer; font-size: 16px; padding: 4px; border-radius: 6px;
+    transition: color .2s;
+  }
+  .card-delete:hover { color: var(--accent); }
+
+  .card-text { font-size: 15px; line-height: 1.7; color: var(--text); margin-bottom: 16px; word-break: break-word; }
+
+  .card-reactions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .reaction-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border-radius: 20px;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border);
+    cursor: pointer; transition: all .2s; font-size: 16px; color: var(--text);
+  }
+  .reaction-btn:hover { background: rgba(255,255,255,0.14); transform: scale(1.05); }
+  .reaction-btn.reacted { background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.4); }
+  .reaction-count { font-size: 13px; font-weight: 600; }
+
+  /* ── EMPTY ── */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--subtext);
+  }
+  .empty-state .icon { font-size: 52px; margin-bottom: 16px; opacity: .4; }
+  .empty-state h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: rgba(34,197,94,0.9); color: #fff; padding: 12px 24px;
+    border-radius: 12px; font-size: 14px; font-weight: 500;
+    transition: transform .3s; z-index: 999; pointer-events: none; backdrop-filter: blur(10px);
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media(max-width:480px) {
+    .hero h1 { font-size: 24px; } .compose-footer { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../../index.html" class="back-btn">← Back</a>
+  <div class="nav-title">🤫 Confess</div>
+  <div class="nav-count" id="nav-count">0 confessions</div>
+</nav>
+
+<div class="hero">
+  <div class="hero-icon">🎭</div>
+  <h1>Anonymous Confessions</h1>
+  <p>Say what's on your mind. No names, no judgement — completely anonymous. Your secrets are safe here.</p>
+</div>
+
+<!-- Compose -->
+<div class="compose-wrap">
+  <div class="compose-card">
+    <textarea class="compose-textarea" id="compose-textarea" placeholder="What's on your mind? Confess anonymously… (max 500 characters)" maxlength="500"></textarea>
+    <div class="compose-footer">
+      <div class="anon-badge">🔒 100% Anonymous</div>
+      <div class="char-count" id="char-count">0 / 500</div>
+      <button class="post-btn" id="post-btn" onclick="postConfession()" disabled>Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filters">
+  <button class="filter-btn active" data-filter="newest" onclick="setFilter('newest', this)">🕐 Most Recent</button>
+  <button class="filter-btn" data-filter="reacted" onclick="setFilter('reacted', this)">🔥 Most Reacted</button>
+  <div class="confession-count" id="confession-count"></div>
+</div>
+
+<!-- Feed -->
+<div class="confessions-wrap" id="confessions-wrap"></div>
+
+<div id="toast">✅ Confession posted!</div>
+
+<script>
+  const STORAGE_KEY = 'confess_v2';
+  const EMOJIS = ['❤️','😮','😂','😢'];
+  const AVATARS = [
+    {emoji:'🎭',color:'rgba(244,63,94,0.3)'},{emoji:'🌸',color:'rgba(236,72,153,0.3)'},
+    {emoji:'🌊',color:'rgba(59,130,246,0.3)'},{emoji:'🍃',color:'rgba(34,197,94,0.3)'},
+    {emoji:'🔥',color:'rgba(249,115,22,0.3)'},{emoji:'⭐',color:'rgba(234,179,8,0.3)'},
+    {emoji:'🌙',color:'rgba(139,92,246,0.3)'},{emoji:'🌈',color:'rgba(20,184,166,0.3)'}
+  ];
+
+  let confessions = [];
+  let currentFilter = 'newest';
+  let myReactions = {}; // confessionId -> Set of emoji
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        confessions = d.confessions || [];
+        myReactions = d.myReactions || {};
+        // Convert myReactions arrays back to sets
+        for (const k in myReactions) myReactions[k] = new Set(myReactions[k]);
+      }
+    } catch(e) { confessions = []; myReactions = {}; }
+  }
+
+  function save() {
+    const mr = {};
+    for (const k in myReactions) mr[k] = [...myReactions[k]];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ confessions, myReactions: mr }));
+  }
+
+  function postConfession() {
+    const ta = document.getElementById('compose-textarea');
+    const text = ta.value.trim();
+    if (!text || text.length > 500) return;
+
+    const av = AVATARS[Math.floor(Math.random() * AVATARS.length)];
+    const anons = ['Anonymous Fox','Mysterious Star','Secret Moon','Hidden Wave','Quiet Storm','Shadow Wolf','Silent Owl','Masked Rose'];
+    const conf = {
+      id: Date.now().toString() + Math.random().toString(36).slice(2),
+      text,
+      time: Date.now(),
+      anonName: anons[Math.floor(Math.random() * anons.length)],
+      avatarEmoji: av.emoji,
+      avatarColor: av.color,
+      reactions: { '❤️': 0, '😮': 0, '😂': 0, '😢': 0 }
+    };
+    confessions.unshift(conf);
+    save();
+    ta.value = '';
+    updateCharCount();
+    renderAll();
+    showToast('🎭 Confession posted anonymously!');
+  }
+
+  function react(id, emoji) {
+    const conf = confessions.find(c => c.id === id);
+    if (!conf) return;
+    if (!myReactions[id]) myReactions[id] = new Set();
+    if (myReactions[id].has(emoji)) {
+      myReactions[id].delete(emoji);
+      conf.reactions[emoji] = Math.max(0, (conf.reactions[emoji] || 0) - 1);
+    } else {
+      myReactions[id].add(emoji);
+      conf.reactions[emoji] = (conf.reactions[emoji] || 0) + 1;
+    }
+    save();
+    renderAll();
+  }
+
+  function deleteConfession(id) {
+    confessions = confessions.filter(c => c.id !== id);
+    save();
+    renderAll();
+  }
+
+  function setFilter(f, el) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderAll();
+  }
+
+  function getSorted() {
+    let list = [...confessions];
+    if (currentFilter === 'reacted') {
+      list.sort((a, b) => {
+        const ra = Object.values(a.reactions).reduce((s, v) => s + v, 0);
+        const rb = Object.values(b.reactions).reduce((s, v) => s + v, 0);
+        return rb - ra;
+      });
+    } else {
+      list.sort((a, b) => b.time - a.time);
+    }
+    return list;
+  }
+
+  function timeAgo(ts) {
+    const sec = Math.floor((Date.now() - ts) / 1000);
+    if (sec < 60) return 'just now';
+    if (sec < 3600) return Math.floor(sec/60) + 'm ago';
+    if (sec < 86400) return Math.floor(sec/3600) + 'h ago';
+    return Math.floor(sec/86400) + 'd ago';
+  }
+
+  function totalReactions(conf) {
+    return Object.values(conf.reactions).reduce((s, v) => s + v, 0);
+  }
+
+  function renderAll() {
+    const wrap = document.getElementById('confessions-wrap');
+    const sorted = getSorted();
+
+    document.getElementById('nav-count').textContent = confessions.length + ' confession' + (confessions.length !== 1 ? 's' : '');
+    document.getElementById('confession-count').textContent = confessions.length + ' total';
+
+    if (sorted.length === 0) {
+      wrap.innerHTML = `<div class="empty-state"><div class="icon">🤫</div><h3>No confessions yet</h3><p>Be the first to share something anonymous!</p></div>`;
+      return;
+    }
+
+    wrap.innerHTML = sorted.map(c => {
+      const myR = myReactions[c.id] || new Set();
+      const reactionHTML = EMOJIS.map(e => `
+        <button class="reaction-btn ${myR.has(e)?'reacted':''}" onclick="react('${c.id}','${e}')">
+          ${e} <span class="reaction-count">${c.reactions[e] || 0}</span>
+        </button>
+      `).join('');
+
+      return `
+        <div class="confession-card">
+          <div class="card-shimmer"></div>
+          <div class="card-header">
+            <div class="anon-avatar" style="background:${c.avatarColor}">${c.avatarEmoji}</div>
+            <div class="card-meta">
+              <div class="anon-name">${escHtml(c.anonName)}</div>
+              <div class="card-time">${timeAgo(c.time)} · ${totalReactions(c)} reaction${totalReactions(c)!==1?'s':''}</div>
+            </div>
+            <button class="card-delete" onclick="deleteConfession('${c.id}')" title="Remove">✕</button>
+          </div>
+          <div class="card-text">${escHtml(c.text)}</div>
+          <div class="card-reactions">${reactionHTML}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateCharCount() {
+    const ta = document.getElementById('compose-textarea');
+    const len = ta.value.trim().length;
+    const cc = document.getElementById('char-count');
+    cc.textContent = ta.value.length + ' / 500';
+    cc.className = 'char-count' + (ta.value.length > 450 ? ' warn' : '') + (ta.value.length >= 500 ? ' over' : '');
+    document.getElementById('post-btn').disabled = len === 0 || ta.value.length > 500;
+  }
+
+  document.getElementById('compose-textarea').addEventListener('input', updateCharCount);
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Init
+  load();
+  renderAll();
+</script>
+</body>
+</html>

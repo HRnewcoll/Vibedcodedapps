@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Masjid Finder</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{
+    --bg1:#051a0d;--bg2:#0a2e1a;--bg3:#134e2a;
+    --accent:#10b981;--accent2:#059669;--accent3:#34d399;
+    --glass:rgba(16,185,129,0.07);--glass2:rgba(16,185,129,0.13);
+    --border:rgba(16,185,129,0.2);--border2:rgba(16,185,129,0.35);
+    --text:#e2f0e8;--text2:#a7c4b0;--text3:#6b9a7d;
+    --sidebar:280px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--bg1);color:var(--text);
+    height:100vh;overflow:hidden;display:flex;flex-direction:column;
+  }
+
+  /* TOP BAR */
+  .topbar{
+    display:flex;align-items:center;gap:12px;
+    padding:12px 16px;
+    background:rgba(5,26,13,0.95);
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;z-index:1000;flex-wrap:wrap;
+  }
+  .back-btn{
+    display:flex;align-items:center;gap:6px;color:var(--accent);
+    text-decoration:none;font-size:13px;font-weight:500;
+    padding:7px 12px;border-radius:9px;border:1px solid var(--border);
+    background:var(--glass);white-space:nowrap;
+  }
+  .back-btn:hover{background:var(--glass2);}
+  .app-title{
+    font-size:16px;font-weight:700;white-space:nowrap;
+    background:linear-gradient(135deg,var(--accent3),#f59e0b);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .search-wrap{
+    display:flex;gap:8px;flex:1;min-width:220px;
+  }
+  .search-input{
+    flex:1;padding:9px 14px;border-radius:10px;
+    border:1px solid var(--border);background:rgba(0,0,0,0.4);
+    color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;
+  }
+  .search-input:focus{border-color:var(--accent);}
+  .search-btn,.geo-btn{
+    padding:9px 16px;border-radius:10px;border:none;cursor:pointer;
+    font-family:'Inter',sans-serif;font-size:13px;font-weight:500;white-space:nowrap;
+  }
+  .search-btn{background:var(--accent2);color:#fff;}
+  .search-btn:hover{background:var(--accent);}
+  .geo-btn{background:var(--glass2);color:var(--accent3);border:1px solid var(--border);}
+  .geo-btn:hover{background:var(--border);}
+
+  /* MAIN LAYOUT */
+  .main{display:flex;flex:1;overflow:hidden;}
+
+  /* SIDEBAR */
+  .sidebar{
+    width:var(--sidebar);flex-shrink:0;
+    background:rgba(5,26,13,0.97);
+    border-right:1px solid var(--border);
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  .sidebar-header{
+    padding:14px 16px;border-bottom:1px solid var(--border);
+    font-size:13px;font-weight:600;color:var(--accent3);
+  }
+  .sidebar-status{
+    padding:10px 16px;font-size:12px;color:var(--text3);
+    border-bottom:1px solid var(--border);min-height:38px;
+    display:flex;align-items:center;gap:6px;
+  }
+  .mosque-list{flex:1;overflow-y:auto;padding:8px;}
+  .mosque-list::-webkit-scrollbar{width:4px;}
+  .mosque-list::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:2px;}
+
+  .mosque-item{
+    padding:12px 14px;border-radius:12px;border:1px solid var(--border);
+    background:var(--glass);margin-bottom:8px;cursor:pointer;
+    transition:all .2s;
+  }
+  .mosque-item:hover,.mosque-item.active{background:var(--glass2);border-color:var(--border2);}
+  .mosque-item.active{border-color:var(--accent);}
+  .mosque-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.3;}
+  .mosque-addr{font-size:11px;color:var(--text3);line-height:1.4;}
+  .mosque-dist{
+    display:inline-block;margin-top:6px;padding:2px 8px;
+    border-radius:6px;background:rgba(16,185,129,0.15);
+    font-size:11px;color:var(--accent3);font-weight:500;
+  }
+
+  /* MAP */
+  #map{flex:1;}
+
+  /* LEAFLET CUSTOM POPUP */
+  .leaflet-popup-content-wrapper{
+    background:rgba(10,46,26,0.97);color:var(--text);
+    border:1px solid var(--border2);border-radius:12px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  }
+  .leaflet-popup-tip{background:rgba(10,46,26,0.97);}
+  .popup-name{font-size:14px;font-weight:600;color:var(--accent3);margin-bottom:4px;}
+  .popup-addr{font-size:12px;color:var(--text2);}
+
+  .spinner{
+    display:inline-block;width:14px;height:14px;
+    border:2px solid var(--border2);border-top-color:var(--accent);
+    border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* MOBILE */
+  @media(max-width:680px){
+    :root{--sidebar:100%;}
+    .main{flex-direction:column;}
+    .sidebar{width:100%;height:220px;border-right:none;border-bottom:1px solid var(--border);}
+    #map{height:calc(100vh - 340px);}
+    .topbar{padding:8px 12px;}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="../../index.html" class="back-btn">&#8592; Back</a>
+  <div class="app-title">🕌 Masjid Finder</div>
+  <div class="search-wrap">
+    <input class="search-input" id="searchInput" type="text" placeholder="Search city or area…" onkeydown="if(event.key==='Enter')searchMosques()"/>
+    <button class="search-btn" onclick="searchMosques()">Search</button>
+    <button class="geo-btn" onclick="useMyLocation()">📍 Me</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-header">Nearby Mosques</div>
+    <div class="sidebar-status" id="sidebarStatus">Search for an area or use your location</div>
+    <div class="mosque-list" id="mosqueList"></div>
+  </div>
+  <div id="map"></div>
+</div>
+
+<script>
+// ========== MAP INIT ==========
+const map = L.map('map', { center: [51.505, -0.09], zoom: 13, zoomControl: true });
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  maxZoom: 19
+}).addTo(map);
+
+// Custom emerald marker icon
+function makeIcon(color = '#10b981') {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
+    <path d="M16 0 C7.16 0 0 7.16 0 16 C0 28 16 42 16 42 C16 42 32 28 32 16 C32 7.16 24.84 0 16 0Z" fill="${color}" opacity="0.9"/>
+    <text x="16" y="22" text-anchor="middle" font-size="14" fill="white">🕌</text>
+  </svg>`;
+  return L.divIcon({
+    html: svg, className: '', iconSize: [32, 42], iconAnchor: [16, 42], popupAnchor: [0, -44]
+  });
+}
+
+function makeUserIcon() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10" fill="#3b82f6" opacity="0.85" stroke="white" stroke-width="2"/>
+    <circle cx="12" cy="12" r="4" fill="white"/>
+  </svg>`;
+  return L.divIcon({ html: svg, className: '', iconSize: [24, 24], iconAnchor: [12, 12] });
+}
+
+let markers = [];
+let userMarker = null;
+let userLatLng = null;
+let activeItem = null;
+
+// Fallback mosques in London
+const FALLBACK_MOSQUES = [
+  { name: "East London Mosque", address: "82-92 Whitechapel Rd, London E1 1JQ", lat: 51.5148, lng: -0.0619 },
+  { name: "Regent's Park Mosque (London Central Mosque)", address: "146 Park Rd, London NW8 7RG", lat: 51.5255, lng: -0.1627 },
+  { name: "Finsbury Park Mosque", address: "St Thomas's Rd, London N4 2QH", lat: 51.5672, lng: -0.1056 },
+  { name: "Brixton Mosque", address: "Gresham Rd, London SW9 7PH", lat: 51.4611, lng: -0.1142 },
+  { name: "Hackney Mosque", address: "Shacklewell Ln, London E8 2EZ", lat: 51.5502, lng: -0.0709 },
+  { name: "Harrow Central Mosque", address: "34 Station Rd, Harrow HA1 2SQ", lat: 51.5793, lng: -0.3349 },
+  { name: "Walthamstow Mosque", address: "Palmerston Rd, London E17 6PQ", lat: 51.5873, lng: -0.0195 },
+  { name: "Ilford Islamic Centre", address: "15-17 Albert Rd, Ilford IG1 1HQ", lat: 51.5588, lng: 0.0713 },
+];
+
+function clearMarkers() {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+}
+
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+function showStatus(msg, loading = false) {
+  const el = document.getElementById('sidebarStatus');
+  el.innerHTML = loading ? `<span class="spinner"></span> ${msg}` : msg;
+}
+
+function renderMosqueList(mosques, centerLat, centerLng) {
+  const list = document.getElementById('mosqueList');
+  list.innerHTML = '';
+  if (!mosques.length) {
+    list.innerHTML = '<div style="padding:16px;font-size:13px;color:var(--text3);text-align:center;">No mosques found in this area.</div>';
+    return;
+  }
+  mosques.forEach((m, i) => {
+    const dist = (centerLat && centerLng) ? haversine(centerLat, centerLng, m.lat, m.lng) : null;
+    const item = document.createElement('div');
+    item.className = 'mosque-item';
+    item.innerHTML = `
+      <div class="mosque-name">${m.name}</div>
+      <div class="mosque-addr">${m.address || 'Address not available'}</div>
+      ${dist !== null ? `<span class="mosque-dist">${dist < 1 ? (dist*1000).toFixed(0)+'m' : dist.toFixed(1)+'km'}</span>` : ''}
+    `;
+    item.addEventListener('click', () => {
+      if (activeItem) activeItem.classList.remove('active');
+      activeItem = item;
+      item.classList.add('active');
+      map.setView([m.lat, m.lng], 17);
+      markers[i] && markers[i].openPopup();
+    });
+    list.appendChild(item);
+  });
+}
+
+function plotMosques(mosques, centerLat, centerLng) {
+  clearMarkers();
+  mosques.forEach((m, i) => {
+    const mk = L.marker([m.lat, m.lng], { icon: makeIcon() })
+      .addTo(map)
+      .bindPopup(`<div class="popup-name">🕌 ${m.name}</div><div class="popup-addr">${m.address || ''}</div>`);
+    markers.push(mk);
+  });
+  if (mosques.length > 0) {
+    const bounds = L.latLngBounds(mosques.map(m => [m.lat, m.lng]));
+    if (centerLat) bounds.extend([centerLat, centerLng]);
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+  }
+}
+
+async function geocodeLocation(query) {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+  const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+  const data = await res.json();
+  if (!data.length) throw new Error('Location not found');
+  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), name: data[0].display_name };
+}
+
+async function fetchMosquesOverpass(lat, lng, radius = 5000) {
+  const query = `[out:json][timeout:25];(node["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${lat},${lng});way["amenity"="place_of_worship"]["religion"="muslim"](around:${radius},${lat},${lng}););out center;`;
+  const res = await fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST', body: query
+  });
+  const data = await res.json();
+  return data.elements.map(el => ({
+    name: el.tags?.name || el.tags?.['name:en'] || 'Unnamed Mosque',
+    address: [
+      el.tags?.['addr:housenumber'],
+      el.tags?.['addr:street'],
+      el.tags?.['addr:city'],
+    ].filter(Boolean).join(', ') || el.tags?.['addr:full'] || '',
+    lat: el.lat || el.center?.lat,
+    lng: el.lon || el.center?.lon,
+  })).filter(m => m.lat && m.lng);
+}
+
+async function searchMosques() {
+  const query = document.getElementById('searchInput').value.trim();
+  if (!query) return;
+  showStatus('Geocoding location…', true);
+  try {
+    const loc = await geocodeLocation(query);
+    showStatus('Finding mosques…', true);
+    if (userMarker) map.removeLayer(userMarker);
+    userMarker = L.marker([loc.lat, loc.lng], { icon: makeUserIcon() }).addTo(map)
+      .bindPopup(`<div class="popup-name">📍 ${loc.name.split(',')[0]}</div>`);
+    userLatLng = { lat: loc.lat, lng: loc.lng };
+    const mosques = await fetchMosquesOverpass(loc.lat, loc.lng);
+    if (mosques.length === 0) throw new Error('No mosques found via API');
+    showStatus(`Found ${mosques.length} mosque${mosques.length !== 1 ? 's' : ''}`);
+    const sorted = mosques.sort((a, b) => haversine(loc.lat, loc.lng, a.lat, a.lng) - haversine(loc.lat, loc.lng, b.lat, b.lng));
+    plotMosques(sorted, loc.lat, loc.lng);
+    renderMosqueList(sorted, loc.lat, loc.lng);
+  } catch (err) {
+    if (err.message === 'Location not found') {
+      showStatus('⚠️ Location not found. Try another search.');
+      return;
+    }
+    // Fallback
+    showStatus(`⚠️ API unavailable — showing sample mosques in London`);
+    plotMosques(FALLBACK_MOSQUES, 51.5074, -0.1278);
+    renderMosqueList(FALLBACK_MOSQUES, 51.5074, -0.1278);
+    map.setView([51.5074, -0.1278], 12);
+  }
+}
+
+async function useMyLocation() {
+  if (!navigator.geolocation) { showStatus('⚠️ Geolocation not supported'); return; }
+  showStatus('Getting your location…', true);
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const lat = pos.coords.latitude, lng = pos.coords.longitude;
+    userLatLng = { lat, lng };
+    if (userMarker) map.removeLayer(userMarker);
+    userMarker = L.marker([lat, lng], { icon: makeUserIcon() }).addTo(map)
+      .bindPopup('<div class="popup-name">📍 You are here</div>').openPopup();
+    showStatus('Finding mosques nearby…', true);
+    try {
+      const mosques = await fetchMosquesOverpass(lat, lng);
+      if (mosques.length === 0) throw new Error('none');
+      showStatus(`Found ${mosques.length} mosque${mosques.length !== 1 ? 's' : ''} nearby`);
+      const sorted = mosques.sort((a, b) => haversine(lat, lng, a.lat, a.lng) - haversine(lat, lng, b.lat, b.lng));
+      plotMosques(sorted, lat, lng);
+      renderMosqueList(sorted, lat, lng);
+    } catch {
+      showStatus('⚠️ API unavailable — showing sample mosques in London');
+      plotMosques(FALLBACK_MOSQUES, 51.5074, -0.1278);
+      renderMosqueList(FALLBACK_MOSQUES, 51.5074, -0.1278);
+      map.setView([51.5074, -0.1278], 12);
+    }
+  }, () => {
+    showStatus('⚠️ Could not get location. Showing sample mosques.');
+    plotMosques(FALLBACK_MOSQUES, 51.5074, -0.1278);
+    renderMosqueList(FALLBACK_MOSQUES, 51.5074, -0.1278);
+    map.setView([51.5074, -0.1278], 12);
+  });
+}
+
+// Initial load: show fallback
+plotMosques(FALLBACK_MOSQUES, 51.5074, -0.1278);
+renderMosqueList(FALLBACK_MOSQUES, 51.5074, -0.1278);
+showStatus(`Showing ${FALLBACK_MOSQUES.length} sample mosques in London`);
+map.setView([51.5074, -0.1278], 12);
+</script>
+</body>
+</html>

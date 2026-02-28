@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DebateHub – Argue Your Corner</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg1: #0f0c29; --bg2: #302b63; --accent: #f43f5e;
+    --for: #10b981; --against: #f43f5e;
+    --glass: rgba(255,255,255,0.06); --glass-border: rgba(255,255,255,0.12);
+    --text: #f1f5f9; --subtext: #94a3b8;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 50%, #24243e 100%);
+    min-height: 100vh; color: var(--text);
+  }
+
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 12px; padding: 14px 24px;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 6px; color: var(--accent);
+    text-decoration: none; font-size: 14px; font-weight: 500;
+    padding: 6px 12px; border-radius: 8px;
+    background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3); transition: all .2s;
+  }
+  .back-btn:hover { background: rgba(244,63,94,0.2); transform: translateX(-2px); }
+  .nav-title { font-size: 18px; font-weight: 800; flex: 1; }
+
+  /* ── VIEWS ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── TOPIC LIST ── */
+  .page-header { padding: 32px 24px 20px; max-width: 860px; margin: 0 auto; }
+  .page-header h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+  .page-header p { color: var(--subtext); font-size: 15px; }
+
+  .topics-controls { max-width: 860px; margin: 0 auto 20px; padding: 0 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .new-topic-btn {
+    padding: 10px 20px; border-radius: 10px;
+    background: linear-gradient(135deg,var(--accent),#e11d48);
+    border: none; color: #fff; font-family: 'Inter', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s;
+  }
+  .new-topic-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(244,63,94,.4); }
+  .topics-count { font-size: 13px; color: var(--subtext); margin-left: auto; }
+
+  .topics-grid { max-width: 860px; margin: 0 auto 60px; padding: 0 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 16px; }
+  .topic-card {
+    background: var(--glass); backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border); border-radius: 18px; padding: 20px;
+    cursor: pointer; transition: all .25s; animation: cardIn .35s ease;
+  }
+  .topic-card:hover { transform: translateY(-4px); border-color: rgba(244,63,94,.4); box-shadow: 0 8px 30px rgba(244,63,94,.15); }
+  @keyframes cardIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+  .topic-category { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+  .topic-title { font-size: 16px; font-weight: 700; line-height: 1.4; margin-bottom: 14px; }
+  .vote-bar-wrap { margin-bottom: 10px; }
+  .vote-bar-labels { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+  .vote-bar-labels .for-label { color: var(--for); }
+  .vote-bar-labels .against-label { color: var(--against); }
+  .vote-bar-bg { background: rgba(255,255,255,.1); border-radius: 4px; height: 6px; overflow: hidden; }
+  .vote-bar-fill { height: 100%; background: linear-gradient(90deg,var(--for),#059669); border-radius: 4px; transition: width .5s ease; }
+  .topic-stats { display: flex; gap: 12px; }
+  .topic-stat { font-size: 12px; color: var(--subtext); }
+  .topic-stat strong { color: var(--text); }
+
+  /* ── NEW TOPIC MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,.7); backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal-card {
+    background: linear-gradient(135deg,rgba(15,12,41,.96),rgba(48,43,99,.96));
+    border: 1px solid var(--glass-border); border-radius: 24px;
+    padding: 32px; max-width: 480px; width: 100%; animation: fadeUp .4s ease;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  .modal-card h2 { font-size: 20px; font-weight: 800; margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--subtext); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 7px; }
+  .form-input, .form-select {
+    width: 100%; padding: 13px 15px;
+    background: rgba(255,255,255,.07); border: 1px solid var(--glass-border);
+    border-radius: 12px; color: var(--text); font-family: 'Inter', sans-serif;
+    font-size: 14px; outline: none; transition: border-color .2s;
+  }
+  .form-select option { background: #1a1a2e; }
+  .form-input:focus, .form-select:focus { border-color: var(--accent); }
+  .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
+  .btn-cancel { flex: 1; padding: 12px; border-radius: 10px; background: rgba(255,255,255,.07); border: 1px solid var(--glass-border); color: var(--subtext); font-family: 'Inter', sans-serif; font-size: 14px; cursor: pointer; transition: all .2s; }
+  .btn-cancel:hover { background: rgba(255,255,255,.12); color: var(--text); }
+  .btn-create { flex: 2; padding: 12px; border-radius: 10px; background: linear-gradient(135deg,var(--accent),#e11d48); border: none; color: #fff; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; }
+  .btn-create:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(244,63,94,.4); }
+
+  /* ── DEBATE DETAIL ── */
+  .debate-header {
+    max-width: 900px; margin: 0 auto; padding: 28px 24px 0;
+  }
+  .debate-back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 14px; color: var(--subtext); cursor: pointer;
+    background: none; border: none; padding: 6px 0; margin-bottom: 16px; transition: color .2s;
+  }
+  .debate-back-btn:hover { color: var(--text); }
+  .debate-topic-title { font-size: 26px; font-weight: 800; line-height: 1.3; margin-bottom: 16px; }
+  .debate-meta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+  .debate-meta-item { font-size: 13px; color: var(--subtext); display: flex; align-items: center; gap: 5px; }
+  .debate-meta-item strong { color: var(--text); }
+
+  /* ── VOTE SPLIT ── */
+  .vote-split-card {
+    max-width: 900px; margin: 0 auto 24px; padding: 0 24px;
+  }
+  .split-inner {
+    background: var(--glass); backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border); border-radius: 18px; padding: 20px 22px;
+  }
+  .split-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--subtext); margin-bottom: 14px; }
+  .split-bar-wrap { margin-bottom: 12px; }
+  .split-bar-bg { background: rgba(244,63,94,.3); border-radius: 6px; height: 10px; overflow: hidden; }
+  .split-bar-for { background: linear-gradient(90deg,var(--for),#059669); height: 100%; border-radius: 6px; transition: width .6s cubic-bezier(.34,1.56,.64,1); }
+  .split-labels { display: flex; justify-content: space-between; margin-top: 8px; }
+  .split-label { font-size: 13px; font-weight: 700; }
+  .split-label.for { color: var(--for); }
+  .split-label.against { color: var(--against); }
+
+  /* ── ARGUE AREA ── */
+  .argue-section { max-width: 900px; margin: 0 auto 24px; padding: 0 24px; }
+  .side-picker { display: flex; gap: 10px; margin-bottom: 14px; }
+  .side-btn {
+    flex: 1; padding: 12px; border-radius: 12px; font-family: 'Inter', sans-serif;
+    font-size: 14px; font-weight: 700; cursor: pointer; transition: all .25s;
+    border: 2px solid; text-align: center;
+  }
+  .side-btn.for { border-color: rgba(16,185,129,.4); color: var(--for); background: rgba(16,185,129,.08); }
+  .side-btn.for.selected { background: rgba(16,185,129,.2); border-color: var(--for); box-shadow: 0 0 20px rgba(16,185,129,.3); transform: scale(1.02); }
+  .side-btn.against { border-color: rgba(244,63,94,.4); color: var(--against); background: rgba(244,63,94,.08); }
+  .side-btn.against.selected { background: rgba(244,63,94,.2); border-color: var(--against); box-shadow: 0 0 20px rgba(244,63,94,.3); transform: scale(1.02); }
+  .argue-textarea {
+    width: 100%; padding: 14px 16px; background: rgba(255,255,255,.06);
+    border: 1px solid var(--glass-border); border-radius: 12px;
+    color: var(--text); font-family: 'Inter', sans-serif;
+    font-size: 14px; resize: none; min-height: 80px; outline: none;
+    transition: border-color .2s; line-height: 1.6;
+  }
+  .argue-textarea:focus { border-color: rgba(244,63,94,.4); }
+  .argue-footer { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px; }
+  .argue-submit {
+    padding: 10px 24px; border-radius: 10px; border: none;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all .2s;
+  }
+  .argue-submit.for { background: linear-gradient(135deg,var(--for),#059669); color: #fff; }
+  .argue-submit.against { background: linear-gradient(135deg,var(--against),#e11d48); color: #fff; }
+  .argue-submit:hover { transform: translateY(-2px); }
+  .argue-submit:disabled { opacity: .5; pointer-events: none; }
+  .name-input-sm {
+    padding: 10px 14px; background: rgba(255,255,255,.07);
+    border: 1px solid var(--glass-border); border-radius: 10px;
+    color: var(--text); font-family: 'Inter', sans-serif;
+    font-size: 13px; outline: none; transition: border-color .2s; width: 160px;
+  }
+  .name-input-sm:focus { border-color: rgba(244,63,94,.4); }
+
+  /* ── ARGUMENTS ── */
+  .args-section { max-width: 900px; margin: 0 auto 60px; padding: 0 24px; }
+  .args-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:600px){ .args-cols { grid-template-columns: 1fr; } }
+  .args-col-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 15px; font-weight: 800; }
+  .args-col-header.for { color: var(--for); }
+  .args-col-header.against { color: var(--against); }
+  .arg-card {
+    background: var(--glass); backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border); border-radius: 14px; padding: 14px 16px;
+    margin-bottom: 10px; animation: cardIn .3s ease; transition: border-color .2s;
+  }
+  .arg-card.for { border-left: 3px solid var(--for); }
+  .arg-card.against { border-left: 3px solid var(--against); }
+  .arg-author { font-size: 12px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .arg-text { font-size: 14px; line-height: 1.6; color: var(--text); margin-bottom: 10px; word-break: break-word; }
+  .arg-footer { display: flex; align-items: center; gap: 8px; }
+  .upvote-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border-radius: 20px;
+    background: rgba(255,255,255,.07); border: 1px solid var(--glass-border);
+    color: var(--subtext); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+  }
+  .upvote-btn:hover { background: rgba(255,255,255,.13); color: var(--text); }
+  .upvote-btn.voted { background: rgba(244,63,94,.15); border-color: rgba(244,63,94,.4); color: var(--accent); }
+  .arg-del { background: none; border: none; color: rgba(255,255,255,.15); cursor: pointer; font-size: 12px; padding: 5px; border-radius: 6px; margin-left: auto; transition: color .2s; }
+  .arg-del:hover { color: var(--accent); }
+  .no-args { font-size: 13px; color: var(--subtext); text-align: center; padding: 20px; }
+
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: rgba(34,197,94,.9); color: #fff; padding: 12px 24px;
+    border-radius: 12px; font-size: 14px; font-weight: 500;
+    transition: transform .3s; z-index: 999; pointer-events: none;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../../index.html" class="back-btn">← Back</a>
+  <div class="nav-title">⚔️ DebateHub</div>
+</nav>
+
+<!-- Topic List View -->
+<div id="list-view" class="view active">
+  <div class="page-header">
+    <h1>⚔️ Pick Your Battle</h1>
+    <p>Choose a debate topic, pick your side, and make your argument. See what others think.</p>
+  </div>
+  <div class="topics-controls">
+    <button class="new-topic-btn" onclick="showNewTopicModal()">+ New Topic</button>
+    <div class="topics-count" id="topics-count"></div>
+  </div>
+  <div class="topics-grid" id="topics-grid"></div>
+</div>
+
+<!-- Debate Detail View -->
+<div id="detail-view" class="view">
+  <div class="debate-header">
+    <button class="debate-back-btn" onclick="showListView()">← All Topics</button>
+    <div class="debate-topic-title" id="detail-title"></div>
+    <div class="debate-meta" id="detail-meta"></div>
+  </div>
+
+  <div class="vote-split-card">
+    <div class="split-inner">
+      <div class="split-title">Community Vote Split</div>
+      <div class="split-bar-wrap">
+        <div class="split-bar-bg"><div class="split-bar-for" id="split-bar" style="width:50%"></div></div>
+        <div class="split-labels">
+          <span class="split-label for" id="split-for-pct">50% For</span>
+          <span class="split-label against" id="split-against-pct">50% Against</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="argue-section">
+    <div class="side-picker">
+      <div class="side-btn for" id="side-for" onclick="selectSide('for')">✅ For</div>
+      <div class="side-btn against" id="side-against" onclick="selectSide('against')">❌ Against</div>
+    </div>
+    <textarea class="argue-textarea" id="argue-textarea" placeholder="Make your argument… be persuasive!" maxlength="400"></textarea>
+    <div class="argue-footer">
+      <input class="name-input-sm" id="argue-name" placeholder="Your name (optional)" maxlength="20">
+      <button class="argue-submit against" id="argue-submit" onclick="submitArgument()" disabled>Submit Argument</button>
+    </div>
+  </div>
+
+  <div class="args-section">
+    <div class="args-cols">
+      <div>
+        <div class="args-col-header for">✅ For <span id="for-count" style="font-size:13px;font-weight:500;color:var(--subtext)"></span></div>
+        <div id="for-args"></div>
+      </div>
+      <div>
+        <div class="args-col-header against">❌ Against <span id="against-count" style="font-size:13px;font-weight:500;color:var(--subtext)"></span></div>
+        <div id="against-args"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Topic Modal -->
+<div class="modal-overlay hidden" id="new-topic-modal">
+  <div class="modal-card">
+    <h2>💡 New Debate Topic</h2>
+    <div class="form-group">
+      <label>Topic Statement</label>
+      <input class="form-input" id="nt-title" type="text" placeholder="e.g. 'AI will replace most jobs by 2040'" maxlength="120">
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select class="form-select" id="nt-cat">
+        <option value="Technology">🤖 Technology</option>
+        <option value="Society">🌍 Society</option>
+        <option value="Education">📚 Education</option>
+        <option value="Politics">🏛️ Politics</option>
+        <option value="Environment">🌿 Environment</option>
+        <option value="Ethics">⚖️ Ethics</option>
+        <option value="Other">💬 Other</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="hideNewTopicModal()">Cancel</button>
+      <button class="btn-create" onclick="createTopic()">Create Topic</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const STORAGE_KEY = 'debatehub_v2';
+  let topics = [], currentTopicId = null, selectedSide = null, myUpvotes = {};
+
+  const SEED_TOPICS = [
+    { id:'s1', title:'Social media does more harm than good', category:'Society', createdAt: Date.now()-86400000*5 },
+    { id:'s2', title:'AI will replace most human jobs within 20 years', category:'Technology', createdAt: Date.now()-86400000*3 },
+    { id:'s3', title:'School uniforms should be abolished', category:'Education', createdAt: Date.now()-86400000*2 },
+    { id:'s4', title:'Homework should be banned for under-16s', category:'Education', createdAt: Date.now()-86400000*1 },
+    { id:'s5', title:'Celebrities have too much political influence', category:'Politics', createdAt: Date.now()-3600000*6 },
+    { id:'s6', title:'Zoos are unethical and should be closed', category:'Ethics', createdAt: Date.now()-3600000*2 },
+  ];
+
+  function load() {
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      topics = d.topics || [];
+      myUpvotes = d.myUpvotes || {};
+      if (topics.length === 0) {
+        topics = SEED_TOPICS.map(t => ({ ...t, arguments: seedArgs(t.id) }));
+      }
+    } catch(e) { topics = SEED_TOPICS.map(t => ({...t, arguments:[]})); myUpvotes = {}; }
+  }
+
+  function seedArgs(id) {
+    const map = {
+      's1': [
+        { id:'sa1', side:'for', author:'Alex', text:'Constant comparison and cyberbullying have dramatically increased teen mental health issues. Studies show Instagram usage correlates strongly with depression rates.', upvotes:14, time: Date.now()-3600000 },
+        { id:'sa2', side:'against', author:'Jamie', text:'Social media connects isolated people, enables grassroots activism, and lets marginalised voices be heard globally. The benefits outweigh the negatives.', upvotes:11, time: Date.now()-3600000*2 },
+        { id:'sa3', side:'for', author:'Sam', text:'Misinformation spreads faster than facts on every social platform. It undermines democracy and public health — we saw this clearly during the pandemic.', upvotes:9, time: Date.now()-3600000*3 },
+      ],
+      's2': [
+        { id:'sb1', side:'for', author:'Morgan', text:'Automation is already replacing factory workers, drivers, and now even white-collar tasks like coding and writing. The pace is accelerating rapidly.', upvotes:18, time: Date.now()-3600000 },
+        { id:'sb2', side:'against', author:'Riley', text:'Every industrial revolution has created more jobs than it destroyed. AI will create new categories of work we can\'t yet imagine, just like the internet did.', upvotes:15, time: Date.now()-3600000*2 },
+      ],
+      's3': [
+        { id:'sc1', side:'for', author:'Jordan', text:'Uniforms suppress individuality and self-expression during crucial developmental years. Students should be able to express themselves freely.', upvotes:7, time: Date.now()-3600000 },
+        { id:'sc2', side:'against', author:'Casey', text:'Uniforms reduce visible inequality and stop students being judged by their clothes. They create a level playing field and reduce peer pressure.', upvotes:12, time: Date.now()-3600000*2 },
+      ],
+    };
+    return (map[id] || []).map(a => ({ ...a, id: a.id + '_' + Math.random().toString(36).slice(2) }));
+  }
+
+  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ topics, myUpvotes })); }
+
+  function getTopic(id) { return topics.find(t => t.id === id); }
+
+  function countSide(topic, side) { return (topic.arguments||[]).filter(a => a.side === side).length; }
+
+  function getVotePct(topic) {
+    const forV = (topic.arguments||[]).filter(a=>a.side==='for').reduce((s,a)=>s+a.upvotes,0);
+    const agV = (topic.arguments||[]).filter(a=>a.side==='against').reduce((s,a)=>s+a.upvotes,0);
+    const total = forV + agV;
+    if (total === 0) return 50;
+    return Math.round(forV / total * 100);
+  }
+
+  function catColor(cat) {
+    const map = { Technology:'#3b82f6',Society:'#8b5cf6',Education:'#10b981',Politics:'#f59e0b',Environment:'#22c55e',Ethics:'#ec4899',Other:'#94a3b8' };
+    return map[cat] || '#94a3b8';
+  }
+
+  function timeAgo(ts) {
+    const s = Math.floor((Date.now()-ts)/1000);
+    if(s<60) return 'just now'; if(s<3600) return Math.floor(s/60)+'m ago';
+    if(s<86400) return Math.floor(s/3600)+'h ago';
+    return Math.floor(s/86400)+'d ago';
+  }
+
+  // ── LIST VIEW ──
+  function renderTopics() {
+    const grid = document.getElementById('topics-grid');
+    document.getElementById('topics-count').textContent = topics.length + ' topic' + (topics.length!==1?'s':'');
+    grid.innerHTML = topics.map(t => {
+      const pct = getVotePct(t);
+      const total = (t.arguments||[]).length;
+      const color = catColor(t.category);
+      return `
+        <div class="topic-card" onclick="openTopic('${t.id}')">
+          <div class="topic-category" style="color:${color}">${t.category}</div>
+          <div class="topic-title">${escHtml(t.title)}</div>
+          <div class="vote-bar-wrap">
+            <div class="vote-bar-labels">
+              <span class="for-label">✅ For ${pct}%</span>
+              <span class="against-label">${100-pct}% Against ❌</span>
+            </div>
+            <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:${pct}%"></div></div>
+          </div>
+          <div class="topic-stats">
+            <div class="topic-stat"><strong>${total}</strong> argument${total!==1?'s':''}</div>
+            <div class="topic-stat"><strong>${countSide(t,'for')}</strong> for</div>
+            <div class="topic-stat"><strong>${countSide(t,'against')}</strong> against</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function showListView() {
+    document.getElementById('list-view').classList.add('active');
+    document.getElementById('detail-view').classList.remove('active');
+    currentTopicId = null; selectedSide = null;
+    renderTopics();
+  }
+
+  // ── DETAIL VIEW ──
+  function openTopic(id) {
+    currentTopicId = id;
+    selectedSide = null;
+    document.getElementById('list-view').classList.remove('active');
+    document.getElementById('detail-view').classList.add('active');
+    renderDetail();
+    window.scrollTo(0,0);
+  }
+
+  function renderDetail() {
+    const t = getTopic(currentTopicId);
+    if (!t) return;
+    document.getElementById('detail-title').textContent = t.title;
+    const pct = getVotePct(t);
+    document.getElementById('detail-meta').innerHTML = `
+      <div class="debate-meta-item" style="color:${catColor(t.category)}">${t.category}</div>
+      <div class="debate-meta-item">💬 <strong>${(t.arguments||[]).length}</strong> arguments</div>
+      <div class="debate-meta-item">🕐 Created ${timeAgo(t.createdAt)}</div>
+    `;
+    document.getElementById('split-bar').style.width = pct + '%';
+    document.getElementById('split-for-pct').textContent = pct + '% For';
+    document.getElementById('split-against-pct').textContent = (100-pct) + '% Against';
+
+    // Side buttons
+    document.getElementById('side-for').classList.toggle('selected', selectedSide === 'for');
+    document.getElementById('side-against').classList.toggle('selected', selectedSide === 'against');
+
+    // Update submit button class/state
+    const sub = document.getElementById('argue-submit');
+    sub.className = 'argue-submit ' + (selectedSide||'against');
+    sub.textContent = selectedSide === 'for' ? '✅ Argue For' : selectedSide === 'against' ? '❌ Argue Against' : 'Submit Argument';
+    sub.disabled = !selectedSide || !document.getElementById('argue-textarea').value.trim();
+
+    // Arguments
+    const args = [...(t.arguments||[])].sort((a,b) => b.upvotes - a.upvotes);
+    const forArgs = args.filter(a => a.side === 'for');
+    const againstArgs = args.filter(a => a.side === 'against');
+
+    document.getElementById('for-count').textContent = '(' + forArgs.length + ')';
+    document.getElementById('against-count').textContent = '(' + againstArgs.length + ')';
+
+    document.getElementById('for-args').innerHTML = forArgs.length ? forArgs.map(a => argHtml(a)).join('') : '<div class="no-args">No arguments yet — be the first!</div>';
+    document.getElementById('against-args').innerHTML = againstArgs.length ? againstArgs.map(a => argHtml(a)).join('') : '<div class="no-args">No arguments yet — be the first!</div>';
+  }
+
+  function argHtml(a) {
+    const voted = myUpvotes[a.id];
+    return `
+      <div class="arg-card ${a.side}">
+        <div class="arg-author">
+          <span>${escHtml(a.author || 'Anonymous')}</span>
+          <span>${timeAgo(a.time)}</span>
+        </div>
+        <div class="arg-text">${escHtml(a.text)}</div>
+        <div class="arg-footer">
+          <button class="upvote-btn ${voted?'voted':''}" onclick="upvoteArg('${a.id}')">
+            👍 ${a.upvotes}
+          </button>
+          <button class="arg-del" onclick="deleteArg('${a.id}')">✕</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function selectSide(side) {
+    selectedSide = side;
+    renderDetail();
+  }
+
+  document.getElementById('argue-textarea').addEventListener('input', function() {
+    const sub = document.getElementById('argue-submit');
+    sub.disabled = !selectedSide || !this.value.trim();
+  });
+
+  function submitArgument() {
+    const t = getTopic(currentTopicId);
+    if (!t || !selectedSide) return;
+    const text = document.getElementById('argue-textarea').value.trim();
+    if (!text) return;
+    const name = document.getElementById('argue-name').value.trim() || 'Anonymous';
+
+    t.arguments = t.arguments || [];
+    t.arguments.push({
+      id: Date.now().toString() + Math.random().toString(36).slice(2),
+      side: selectedSide, author: name, text,
+      upvotes: 0, time: Date.now()
+    });
+    save();
+    document.getElementById('argue-textarea').value = '';
+    document.getElementById('argue-submit').disabled = true;
+    renderDetail();
+    showToast(selectedSide === 'for' ? '✅ Argument submitted — For!' : '❌ Argument submitted — Against!');
+  }
+
+  function upvoteArg(argId) {
+    const t = getTopic(currentTopicId);
+    if (!t) return;
+    const arg = t.arguments.find(a => a.id === argId);
+    if (!arg) return;
+    if (myUpvotes[argId]) { arg.upvotes = Math.max(0, arg.upvotes-1); delete myUpvotes[argId]; }
+    else { arg.upvotes++; myUpvotes[argId] = true; }
+    save(); renderDetail();
+  }
+
+  function deleteArg(argId) {
+    const t = getTopic(currentTopicId);
+    if (!t) return;
+    t.arguments = t.arguments.filter(a => a.id !== argId);
+    save(); renderDetail();
+  }
+
+  function showNewTopicModal() { document.getElementById('new-topic-modal').classList.remove('hidden'); }
+  function hideNewTopicModal() { document.getElementById('new-topic-modal').classList.add('hidden'); }
+
+  function createTopic() {
+    const title = document.getElementById('nt-title').value.trim();
+    if (!title) return;
+    const cat = document.getElementById('nt-cat').value;
+    topics.unshift({ id: Date.now().toString(), title, category: cat, createdAt: Date.now(), arguments: [] });
+    save(); hideNewTopicModal();
+    document.getElementById('nt-title').value = '';
+    renderTopics();
+    showToast('💡 New debate topic created!');
+  }
+
+  document.getElementById('new-topic-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('new-topic-modal')) hideNewTopicModal();
+  });
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  load(); renderTopics();
+</script>
+</body>
+</html>

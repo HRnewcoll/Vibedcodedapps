@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>2D Games Collection</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg1:#0d0500;--bg2:#1a0a00;--bg3:#2d1600;
+  --amber:#f59e0b;--amber2:#d97706;--amber3:#92400e;
+  --glass:rgba(245,158,11,0.08);--glass2:rgba(255,255,255,0.05);
+  --border:rgba(245,158,11,0.25);--text:#fef3c7;--text2:#fbbf24;
+}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));min-height:100vh;color:var(--text)}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 60%,rgba(245,158,11,0.07) 0%,transparent 60%);pointer-events:none;z-index:0}
+
+nav{position:sticky;top:0;z-index:100;background:rgba(13,5,0,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:16px}
+.back-btn{display:flex;align-items:center;gap:6px;text-decoration:none;color:var(--text2);font-size:14px;font-weight:500;padding:7px 14px;border:1px solid var(--border);border-radius:8px;background:var(--glass);transition:.2s}
+.back-btn:hover{background:rgba(245,158,11,0.2);color:#fde68a}
+.back-btn svg{width:16px;height:16px}
+nav h1{font-size:18px;font-weight:800;background:linear-gradient(90deg,var(--amber),#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+#backToMenu{display:none;padding:7px 14px;border:1px solid var(--border);border-radius:8px;background:var(--glass);color:var(--text2);cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;transition:.2s}
+#backToMenu:hover{background:rgba(245,158,11,0.2)}
+#pauseBtn{display:none;padding:7px 14px;border:1px solid var(--border);border-radius:8px;background:var(--glass);color:var(--text2);cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;transition:.2s}
+#pauseBtn:hover{background:rgba(245,158,11,0.2)}
+
+/* Selector */
+#selector{position:relative;z-index:1;padding:40px 20px;max-width:900px;margin:0 auto}
+.selector-title{text-align:center;margin-bottom:40px}
+.selector-title h2{font-size:32px;font-weight:800;color:var(--amber);margin-bottom:8px}
+.selector-title p{color:var(--text2);opacity:.7}
+.game-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px}
+.game-card{background:rgba(30,15,0,0.7);border:1px solid var(--border);border-radius:20px;padding:28px;cursor:pointer;transition:.3s;backdrop-filter:blur(10px);text-align:center}
+.game-card:hover{border-color:var(--amber);transform:translateY(-4px);box-shadow:0 12px 40px rgba(245,158,11,0.2)}
+.game-icon{font-size:52px;margin-bottom:16px}
+.game-card h3{font-size:20px;font-weight:700;color:var(--amber);margin-bottom:8px}
+.game-card p{font-size:13px;color:var(--text2);opacity:.7;line-height:1.5}
+.game-badge{display:inline-block;margin-top:12px;padding:4px 10px;background:rgba(245,158,11,0.15);border:1px solid var(--border);border-radius:20px;font-size:11px;color:var(--amber)}
+
+/* Game area */
+#gameArea{display:none;position:relative;z-index:1;flex-direction:column;align-items:center;padding:16px;gap:12px}
+#gameTitle{font-size:20px;font-weight:700;color:var(--amber)}
+.score-bar{display:flex;gap:24px;align-items:center;background:rgba(30,15,0,0.7);border:1px solid var(--border);border-radius:12px;padding:10px 20px;backdrop-filter:blur(10px)}
+.score-item{text-align:center}
+.score-label{font-size:10px;color:var(--text2);opacity:.6;text-transform:uppercase;letter-spacing:1px}
+.score-val{font-size:20px;font-weight:700;color:var(--amber)}
+canvas{border:1px solid var(--border);border-radius:12px;display:block;background:#0d0800;box-shadow:0 0 40px rgba(245,158,11,0.1)}
+.game-over-overlay{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(13,5,0,0.93);border:1px solid var(--border);border-radius:20px;padding:32px;text-align:center;backdrop-filter:blur(20px);z-index:50;min-width:260px}
+.game-over-overlay h2{font-size:28px;font-weight:800;color:var(--amber);margin-bottom:8px}
+.game-over-overlay p{color:var(--text2);margin-bottom:16px}
+.restart-btn{padding:12px 28px;background:linear-gradient(135deg,var(--amber3),var(--amber2));color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:.2s}
+.restart-btn:hover{transform:scale(1.04);box-shadow:0 4px 20px rgba(245,158,11,0.4)}
+
+.controls-hint{font-size:12px;color:var(--text2);opacity:.5;text-align:center;padding:4px}
+
+/* Tetris sidebar */
+#tetrisWrapper{display:flex;gap:16px;align-items:flex-start}
+#nextPieceCanvas{border:1px solid var(--border);border-radius:8px;background:#0d0800}
+.sidebar{display:flex;flex-direction:column;gap:12px}
+
+@media(max-width:600px){canvas{max-width:calc(100vw - 32px)}}
+</style>
+</head>
+<body>
+<nav>
+  <a class="back-btn" href="../../index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>Back
+  </a>
+  <h1>🎮 2D Games</h1>
+  <div class="nav-right">
+    <button id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
+    <button id="backToMenu" onclick="showSelector()">🏠 Menu</button>
+  </div>
+</nav>
+
+<!-- Selector -->
+<div id="selector">
+  <div class="selector-title">
+    <h2>Choose Your Game</h2>
+    <p>Three classic games, fully playable in your browser</p>
+  </div>
+  <div class="game-cards">
+    <div class="game-card" onclick="startGame('snake')">
+      <div class="game-icon">🐍</div>
+      <h3>Snake</h3>
+      <p>Classic snake game. Eat food, grow longer, don't hit the walls or yourself!</p>
+      <span class="game-badge">Arrow Keys / WASD</span>
+    </div>
+    <div class="game-card" onclick="startGame('tetris')">
+      <div class="game-icon">🟦</div>
+      <h3>Tetris</h3>
+      <p>Stack and clear lines with all 7 classic tetrominoes. How high can you score?</p>
+      <span class="game-badge">Arrow Keys</span>
+    </div>
+    <div class="game-card" onclick="startGame('breakout')">
+      <div class="game-icon">🧱</div>
+      <h3>Breakout</h3>
+      <p>Smash bricks with your paddle and ball. Multiple levels with power-ups!</p>
+      <span class="game-badge">Mouse / Arrow Keys</span>
+    </div>
+  </div>
+</div>
+
+<!-- Game Area -->
+<div id="gameArea">
+  <div id="gameTitle"></div>
+  <div class="score-bar" id="scoreBar"></div>
+  <div style="position:relative">
+    <!-- Snake / Breakout canvas -->
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <!-- Tetris wrapper -->
+    <div id="tetrisWrapper" style="display:none">
+      <canvas id="tetrisCanvas" width="240" height="480"></canvas>
+      <div class="sidebar">
+        <div style="text-align:center;font-size:12px;color:var(--text2);opacity:.6">NEXT</div>
+        <canvas id="nextPieceCanvas" width="100" height="100"></canvas>
+      </div>
+    </div>
+    <div class="game-over-overlay" id="gameOverOverlay">
+      <h2 id="goTitle">Game Over!</h2>
+      <p id="goScore"></p>
+      <button class="restart-btn" onclick="restartGame()">🔄 Play Again</button>
+    </div>
+  </div>
+  <div class="controls-hint" id="controlsHint"></div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────────────────────────
+let currentGame = null;
+let paused = false;
+let gameLoop = null;
+
+function showSelector() {
+  stopCurrentGame();
+  document.getElementById('selector').style.display='block';
+  document.getElementById('gameArea').style.display='none';
+  document.getElementById('backToMenu').style.display='none';
+  document.getElementById('pauseBtn').style.display='none';
+  document.getElementById('gameCanvas').style.display='block';
+  document.getElementById('tetrisWrapper').style.display='none';
+  paused=false;
+}
+
+function startGame(name) {
+  currentGame=name;
+  document.getElementById('selector').style.display='none';
+  document.getElementById('gameArea').style.display='flex';
+  document.getElementById('backToMenu').style.display='block';
+  document.getElementById('pauseBtn').style.display='block';
+  document.getElementById('gameOverOverlay').style.display='none';
+  paused=false;
+  document.getElementById('pauseBtn').textContent='⏸ Pause';
+  if(name==='snake') initSnake();
+  else if(name==='tetris') initTetris();
+  else if(name==='breakout') initBreakout();
+}
+
+function stopCurrentGame(){
+  if(gameLoop){clearInterval(gameLoop);clearTimeout(gameLoop);cancelAnimationFrame(gameLoop);gameLoop=null;}
+}
+
+function togglePause(){
+  paused=!paused;
+  document.getElementById('pauseBtn').textContent=paused?'▶ Resume':'⏸ Pause';
+  if(currentGame==='snake'&&!paused) snakeLoop();
+  else if(currentGame==='breakout'&&!paused) breakoutRaf();
+}
+
+function restartGame(){
+  document.getElementById('gameOverOverlay').style.display='none';
+  startGame(currentGame);
+}
+
+function showGameOver(title,msg){
+  document.getElementById('goTitle').textContent=title;
+  document.getElementById('goScore').textContent=msg;
+  document.getElementById('gameOverOverlay').style.display='block';
+}
+
+// ──────────────────────────────────────────────────────────────────
+// SNAKE
+// ──────────────────────────────────────────────────────────────────
+let snake, snakeDir, snakeFood, snakeScore, snakeHi, snakeSpeed, snakeRunning;
+
+function initSnake(){
+  document.getElementById('gameTitle').textContent='🐍 Snake';
+  document.getElementById('gameCanvas').style.display='block';
+  document.getElementById('tetrisWrapper').style.display='none';
+  document.getElementById('controlsHint').textContent='Arrow Keys or WASD to move';
+  const c=document.getElementById('gameCanvas');
+  c.width=400;c.height=400;
+  snakeHi=parseInt(localStorage.getItem('snakeHi')||'0');
+  snakeScore=0; snakeSpeed=150; snakeRunning=true;
+  snake=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];
+  snakeDir={x:1,y:0};
+  placeSnakeFood();
+  updateSnakeScore();
+  stopCurrentGame();
+  snakeLoop();
+}
+
+function placeSnakeFood(){
+  const cols=20,rows=20;
+  let pos;
+  do{pos={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)};}
+  while(snake.some(s=>s.x===pos.x&&s.y===pos.y));
+  snakeFood=pos;
+}
+
+function updateSnakeScore(){
+  document.getElementById('scoreBar').innerHTML=`
+    <div class="score-item"><div class="score-label">Score</div><div class="score-val">${snakeScore}</div></div>
+    <div class="score-item"><div class="score-label">Best</div><div class="score-val">${snakeHi}</div></div>
+    <div class="score-item"><div class="score-label">Length</div><div class="score-val">${snake.length}</div></div>`;
+}
+
+function snakeStep(){
+  if(paused||!snakeRunning)return;
+  const head={x:snake[0].x+snakeDir.x,y:snake[0].y+snakeDir.y};
+  if(head.x<0||head.x>=20||head.y<0||head.y>=20||snake.some(s=>s.x===head.x&&s.y===head.y)){
+    snakeRunning=false;
+    if(snakeScore>snakeHi){snakeHi=snakeScore;localStorage.setItem('snakeHi',snakeHi);}
+    drawSnake();
+    setTimeout(()=>showGameOver('Game Over!',`Score: ${snakeScore} | Best: ${snakeHi}`),200);
+    return;
+  }
+  snake.unshift(head);
+  if(head.x===snakeFood.x&&head.y===snakeFood.y){
+    snakeScore+=10; placeSnakeFood();
+    snakeSpeed=Math.max(60,150-Math.floor(snakeScore/50)*10);
+    updateSnakeScore();
+  } else snake.pop();
+  drawSnake();
+  gameLoop=setTimeout(snakeStep,snakeSpeed);
+}
+
+function snakeLoop(){stopCurrentGame();snakeStep();}
+
+function drawSnake(){
+  const c=document.getElementById('gameCanvas'),ctx=c.getContext('2d');
+  const W=c.width,H=c.height,cs=W/20;
+  ctx.fillStyle='#0d0800';ctx.fillRect(0,0,W,H);
+  // Grid dots
+  ctx.fillStyle='rgba(245,158,11,0.04)';
+  for(let x=0;x<20;x++)for(let y=0;y<20;y++)ctx.fillRect(x*cs+cs/2-1,y*cs+cs/2-1,2,2);
+  // Food
+  ctx.fillStyle='#ef4444';
+  ctx.beginPath();ctx.arc(snakeFood.x*cs+cs/2,snakeFood.y*cs+cs/2,cs/2-3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fca5a5';ctx.beginPath();ctx.arc(snakeFood.x*cs+cs/2-2,snakeFood.y*cs+cs/2-2,cs/6,0,Math.PI*2);ctx.fill();
+  // Snake
+  snake.forEach((seg,i)=>{
+    const t=i/snake.length;
+    ctx.fillStyle=`hsl(${43-t*10},${90-t*20}%,${60-t*20}%)`;
+    const r=i===0?cs/2-1:cs/2-2;
+    ctx.beginPath();ctx.roundRect(seg.x*cs+1,seg.y*cs+1,cs-2,cs-2,r);ctx.fill();
+    if(i===0){
+      // eyes
+      const ex=snakeDir.x,ey=snakeDir.y;
+      ctx.fillStyle='#1a0a00';
+      const e1x=seg.x*cs+cs/2+ey*4-ex*2,e1y=seg.y*cs+cs/2-ex*4-ey*2;
+      const e2x=seg.x*cs+cs/2-ey*4-ex*2,e2y=seg.y*cs+cs/2+ex*4-ey*2;
+      ctx.beginPath();ctx.arc(e1x,e1y,2,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(e2x,e2y,2,0,Math.PI*2);ctx.fill();
+    }
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────
+// TETRIS
+// ──────────────────────────────────────────────────────────────────
+const TETROMINOS = [
+  {shape:[[1,1,1,1]],color:'#06b6d4'},                            // I
+  {shape:[[1,1],[1,1]],color:'#f59e0b'},                          // O
+  {shape:[[0,1,0],[1,1,1]],color:'#8b5cf6'},                      // T
+  {shape:[[0,1,1],[1,1,0]],color:'#22c55e'},                      // S
+  {shape:[[1,1,0],[0,1,1]],color:'#ef4444'},                      // Z
+  {shape:[[1,0,0],[1,1,1]],color:'#3b82f6'},                      // J
+  {shape:[[0,0,1],[1,1,1]],color:'#f97316'},                      // L
+];
+
+let tetBoard,tetPiece,tetNext,tetScore,tetLines,tetLevel,tetHi,tetRunning,tetRaf;
+
+function initTetris(){
+  document.getElementById('gameTitle').textContent='🟦 Tetris';
+  document.getElementById('gameCanvas').style.display='none';
+  document.getElementById('tetrisWrapper').style.display='flex';
+  document.getElementById('controlsHint').textContent='← → move | ↑ rotate | ↓ speed up | Space drop';
+  tetHi=parseInt(localStorage.getItem('tetHi')||'0');
+  tetScore=0;tetLines=0;tetLevel=1;tetRunning=true;
+  tetBoard=Array.from({length:20},()=>Array(10).fill(null));
+  tetNext=randomTetromino();
+  spawnTetPiece();
+  updateTetScore();
+  stopCurrentGame();
+  tetRafLoop();
+}
+
+function randomTetromino(){
+  const t=TETROMINOS[Math.floor(Math.random()*TETROMINOS.length)];
+  return {shape:t.shape.map(r=>[...r]),color:t.color};
+}
+
+function spawnTetPiece(){
+  tetPiece={...tetNext,x:Math.floor((10-tetNext.shape[0].length)/2),y:0};
+  tetNext=randomTetromino();
+  drawNextPiece();
+  if(!isValidTet(tetPiece.shape,tetPiece.x,tetPiece.y)){
+    tetRunning=false;
+    cancelAnimationFrame(tetRaf);
+    if(tetScore>tetHi){tetHi=tetScore;localStorage.setItem('tetHi',tetHi);}
+    drawTetris();
+    setTimeout(()=>showGameOver('Game Over!',`Score: ${tetScore} | Lines: ${tetLines}`),200);
+  }
+}
+
+function isValidTet(shape,ox,oy){
+  for(let y=0;y<shape.length;y++)for(let x=0;x<shape[y].length;x++){
+    if(!shape[y][x])continue;
+    const nx=ox+x,ny=oy+y;
+    if(nx<0||nx>=10||ny>=20)return false;
+    if(ny>=0&&tetBoard[ny][nx])return false;
+  }
+  return true;
+}
+
+function rotateTet(shape){
+  const r=shape[0].length,c=shape.length;
+  return Array.from({length:r},(_,i)=>Array.from({length:c},(_,j)=>shape[c-1-j][i]));
+}
+
+let tetLastTime=0,tetDropInterval=600;
+function tetRafLoop(ts=0){
+  if(!tetRunning)return;
+  if(!paused){
+    if(ts-tetLastTime>tetDropInterval/tetLevel){
+      tetLastTime=ts;
+      tetMoveDown();
+    }
+    drawTetris();
+  }
+  tetRaf=requestAnimationFrame(tetRafLoop);
+}
+
+function tetMoveDown(){
+  if(isValidTet(tetPiece.shape,tetPiece.x,tetPiece.y+1)){tetPiece.y++;}
+  else{lockTetPiece();clearTetLines();spawnTetPiece();}
+}
+
+function lockTetPiece(){
+  for(let y=0;y<tetPiece.shape.length;y++)for(let x=0;x<tetPiece.shape[y].length;x++){
+    if(tetPiece.shape[y][x]&&tetPiece.y+y>=0)tetBoard[tetPiece.y+y][tetPiece.x+x]=tetPiece.color;
+  }
+}
+
+function clearTetLines(){
+  let cleared=0;
+  for(let y=19;y>=0;y--){
+    if(tetBoard[y].every(c=>c)){
+      tetBoard.splice(y,1);tetBoard.unshift(Array(10).fill(null));
+      cleared++;y++;
+    }
+  }
+  if(cleared){
+    const pts=[0,100,300,500,800];
+    tetScore+=pts[cleared]*tetLevel;
+    tetLines+=cleared;
+    tetLevel=Math.floor(tetLines/10)+1;
+    updateTetScore();
+  }
+}
+
+function updateTetScore(){
+  if(tetScore>tetHi){tetHi=tetScore;localStorage.setItem('tetHi',tetHi);}
+  document.getElementById('scoreBar').innerHTML=`
+    <div class="score-item"><div class="score-label">Score</div><div class="score-val">${tetScore}</div></div>
+    <div class="score-item"><div class="score-label">Lines</div><div class="score-val">${tetLines}</div></div>
+    <div class="score-item"><div class="score-label">Level</div><div class="score-val">${tetLevel}</div></div>
+    <div class="score-item"><div class="score-label">Best</div><div class="score-val">${tetHi}</div></div>`;
+}
+
+function drawNextPiece(){
+  const c=document.getElementById('nextPieceCanvas'),ctx=c.getContext('2d'),cs=20;
+  ctx.fillStyle='#0d0800';ctx.fillRect(0,0,c.width,c.height);
+  const s=tetNext.shape,ox=(5-s[0].length)/2,oy=(5-s.length)/2;
+  for(let y=0;y<s.length;y++)for(let x=0;x<s[y].length;x++){
+    if(s[y][x]){
+      ctx.fillStyle=tetNext.color;
+      ctx.beginPath();ctx.roundRect((ox+x)*cs+1,(oy+y)*cs+1,cs-2,cs-2,3);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.2)';ctx.beginPath();ctx.roundRect((ox+x)*cs+2,(oy+y)*cs+2,cs/3,cs/4,2);ctx.fill();
+    }
+  }
+}
+
+function drawTetris(){
+  const c=document.getElementById('tetrisCanvas'),ctx=c.getContext('2d'),cs=24;
+  ctx.fillStyle='#0d0800';ctx.fillRect(0,0,c.width,c.height);
+  // Grid
+  ctx.strokeStyle='rgba(245,158,11,0.05)';ctx.lineWidth=.5;
+  for(let x=0;x<=10;x++){ctx.beginPath();ctx.moveTo(x*cs,0);ctx.lineTo(x*cs,c.height);ctx.stroke();}
+  for(let y=0;y<=20;y++){ctx.beginPath();ctx.moveTo(0,y*cs);ctx.lineTo(c.width,y*cs);ctx.stroke();}
+  // Board
+  for(let y=0;y<20;y++)for(let x=0;x<10;x++){
+    if(tetBoard[y][x]){
+      ctx.fillStyle=tetBoard[y][x];ctx.beginPath();ctx.roundRect(x*cs+1,y*cs+1,cs-2,cs-2,3);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.15)';ctx.beginPath();ctx.roundRect(x*cs+2,y*cs+2,cs/3,cs/4,2);ctx.fill();
+    }
+  }
+  // Ghost
+  if(tetPiece){
+    let ghostY=tetPiece.y;
+    while(isValidTet(tetPiece.shape,tetPiece.x,ghostY+1))ghostY++;
+    for(let y=0;y<tetPiece.shape.length;y++)for(let x=0;x<tetPiece.shape[y].length;x++){
+      if(tetPiece.shape[y][x]&&ghostY+y>=0){
+        ctx.fillStyle='rgba(255,255,255,0.08)';ctx.beginPath();ctx.roundRect((tetPiece.x+x)*cs+1,(ghostY+y)*cs+1,cs-2,cs-2,3);ctx.fill();
+      }
+    }
+    // Current piece
+    for(let y=0;y<tetPiece.shape.length;y++)for(let x=0;x<tetPiece.shape[y].length;x++){
+      if(tetPiece.shape[y][x]&&tetPiece.y+y>=0){
+        ctx.fillStyle=tetPiece.color;ctx.beginPath();ctx.roundRect((tetPiece.x+x)*cs+1,(tetPiece.y+y)*cs+1,cs-2,cs-2,3);ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,0.2)';ctx.beginPath();ctx.roundRect((tetPiece.x+x)*cs+2,(tetPiece.y+y)*cs+2,cs/3,cs/4,2);ctx.fill();
+      }
+    }
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────
+// BREAKOUT
+// ──────────────────────────────────────────────────────────────────
+let bBall,bPaddle,bBricks,bScore,bLives,bLevel,bHi,bRunning,bRaf,bKeys={};
+let bPowerUps=[];
+
+const BRICK_LAYOUTS=[
+  // Level 1
+  ()=>{const b=[];for(let r=0;r<4;r++)for(let c=0;c<10;c++)b.push({x:c*40+2,y:r*22+50,w:36,h:18,hp:1,color:`hsl(${r*30+20},80%,55%)`,alive:true,pw:Math.random()<.1?['wide','multi'][Math.floor(Math.random()*2)]:null});return b;},
+  // Level 2
+  ()=>{const b=[];for(let r=0;r<5;r++)for(let c=0;c<10;c++){const hp=r<2?1:2;b.push({x:c*40+2,y:r*22+40,w:36,h:18,hp,color:hp===2?`hsl(${c*15},70%,45%)`:`hsl(${c*20+180},70%,55%)`,alive:true,pw:Math.random()<.12?['wide','multi'][Math.floor(Math.random()*2)]:null});}return b;},
+  // Level 3
+  ()=>{const b=[];for(let r=0;r<6;r++)for(let c=0;c<10;c++){const skip=(r+c)%3===0&&r>2;if(!skip){const hp=r<3?1:r<5?2:3;b.push({x:c*40+2,y:r*22+35,w:36,h:18,hp,color:`hsl(${c*20+r*15},75%,${55-hp*8}%)`,alive:true,pw:Math.random()<.15?['wide','multi'][Math.floor(Math.random()*2)]:null});}}return b;},
+];
+
+function initBreakout(){
+  document.getElementById('gameTitle').textContent='🧱 Breakout';
+  document.getElementById('gameCanvas').style.display='block';
+  document.getElementById('tetrisWrapper').style.display='none';
+  document.getElementById('controlsHint').textContent='Mouse or Arrow Keys to move paddle | Click to launch';
+  const c=document.getElementById('gameCanvas');
+  c.width=400;c.height=500;
+  bHi=parseInt(localStorage.getItem('breakHi')||'0');
+  bScore=0;bLives=3;bLevel=1;bRunning=true;bPowerUps=[];bKeys={};
+  bPaddle={x:150,y:465,w:80,h:10,speed:6};
+  bBall={x:200,y:440,vx:3,vy:-4,r:7,launched:false};
+  bBricks=BRICK_LAYOUTS[0]();
+  updateBreakScore();
+  stopCurrentGame();
+  bRaf=requestAnimationFrame(breakoutRaf);
+  c.addEventListener('mousemove',bMouseMove);
+  c.addEventListener('click',bLaunch);
+}
+
+function bMouseMove(e){
+  const c=document.getElementById('gameCanvas');
+  const rect=c.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)*(c.width/rect.width);
+  bPaddle.x=Math.max(0,Math.min(c.width-bPaddle.w,mx-bPaddle.w/2));
+  if(!bBall.launched)bBall.x=bPaddle.x+bPaddle.w/2;
+}
+
+function bLaunch(){if(!bBall.launched){bBall.launched=true;bBall.vx=(Math.random()-.5)*4+2;bBall.vy=-4;}}
+
+function breakoutRaf(){
+  if(!bRunning)return;
+  if(!paused){
+    updateBreakout();
+    drawBreakout();
+  }
+  bRaf=requestAnimationFrame(breakoutRaf);
+}
+
+function updateBreakout(){
+  const c=document.getElementById('gameCanvas');
+  // Keyboard paddle
+  if(bKeys['ArrowLeft']||bKeys['a'])bPaddle.x=Math.max(0,bPaddle.x-bPaddle.speed);
+  if(bKeys['ArrowRight']||bKeys['d'])bPaddle.x=Math.min(c.width-bPaddle.w,bPaddle.x+bPaddle.speed);
+  if(!bBall.launched){bBall.x=bPaddle.x+bPaddle.w/2;return;}
+
+  bBall.x+=bBall.vx; bBall.y+=bBall.vy;
+  // Walls
+  if(bBall.x-bBall.r<0){bBall.x=bBall.r;bBall.vx=Math.abs(bBall.vx);}
+  if(bBall.x+bBall.r>c.width){bBall.x=c.width-bBall.r;bBall.vx=-Math.abs(bBall.vx);}
+  if(bBall.y-bBall.r<0){bBall.y=bBall.r;bBall.vy=Math.abs(bBall.vy);}
+  // Bottom
+  if(bBall.y+bBall.r>c.height){
+    bLives--;bBall={...bBall,x:bPaddle.x+bPaddle.w/2,y:bPaddle.y-15,vx:3,vy:-4,launched:false};
+    updateBreakScore();
+    if(bLives<=0){
+      bRunning=false;cancelAnimationFrame(bRaf);
+      if(bScore>bHi){bHi=bScore;localStorage.setItem('breakHi',bHi);}
+      drawBreakout();
+      setTimeout(()=>showGameOver('Game Over!',`Score: ${bScore} | Best: ${bHi}`),200);
+    }
+    return;
+  }
+  // Paddle collision
+  if(bBall.y+bBall.r>=bPaddle.y&&bBall.y+bBall.r<=bPaddle.y+bPaddle.h+5&&bBall.x>=bPaddle.x&&bBall.x<=bPaddle.x+bPaddle.w){
+    bBall.vy=-Math.abs(bBall.vy);
+    const hitPos=(bBall.x-bPaddle.x)/bPaddle.w;
+    bBall.vx=(hitPos-.5)*8;
+  }
+  // Brick collision
+  for(const brick of bBricks){
+    if(!brick.alive)continue;
+    if(bBall.x+bBall.r>brick.x&&bBall.x-bBall.r<brick.x+brick.w&&bBall.y+bBall.r>brick.y&&bBall.y-bBall.r<brick.y+brick.h){
+      brick.hp--;
+      if(brick.hp<=0){
+        brick.alive=false;bScore+=10;
+        if(brick.pw)bPowerUps.push({x:brick.x+brick.w/2,y:brick.y,vy:2,type:brick.pw});
+      }
+      const overlapX=Math.min(bBall.x+bBall.r-brick.x,brick.x+brick.w-(bBall.x-bBall.r));
+      const overlapY=Math.min(bBall.y+bBall.r-brick.y,brick.y+brick.h-(bBall.y-bBall.r));
+      if(overlapX<overlapY)bBall.vx*=-1;else bBall.vy*=-1;
+      updateBreakScore();
+      break;
+    }
+  }
+  // Power-ups
+  bPowerUps=bPowerUps.filter(p=>{
+    p.y+=p.vy;
+    if(p.y>500)return false;
+    if(p.y+10>bPaddle.y&&p.y<bPaddle.y+bPaddle.h&&p.x>bPaddle.x&&p.x<bPaddle.x+bPaddle.w){
+      if(p.type==='wide'){bPaddle.w=Math.min(140,bPaddle.w+30);setTimeout(()=>{bPaddle.w=Math.max(60,bPaddle.w-30);},8000);}
+      if(p.type==='multi'){/* extra ball effect - speed boost */bBall.vy*=1.1;}
+      return false;
+    }
+    return true;
+  });
+  // Level clear
+  if(bBricks.every(b=>!b.alive)){
+    bLevel++;bScore+=100;
+    if(bLevel>3){
+      bRunning=false;cancelAnimationFrame(bRaf);
+      if(bScore>bHi){bHi=bScore;localStorage.setItem('breakHi',bHi);}
+      drawBreakout();
+      setTimeout(()=>showGameOver('🎉 You Win!',`Final Score: ${bScore}`),200);
+      return;
+    }
+    bBricks=BRICK_LAYOUTS[Math.min(bLevel-1,2)]();
+    bBall={...bBall,x:bPaddle.x+bPaddle.w/2,y:bPaddle.y-15,vx:3.5,vy:-4.5,launched:false};
+    updateBreakScore();
+  }
+}
+
+function drawBreakout(){
+  const c=document.getElementById('gameCanvas'),ctx=c.getContext('2d');
+  ctx.fillStyle='#0d0800';ctx.fillRect(0,0,c.width,c.height);
+  // Bricks
+  for(const b of bBricks){
+    if(!b.alive)continue;
+    const alpha=b.hp>1?'1':'0.85';
+    ctx.fillStyle=b.color;ctx.globalAlpha=parseFloat(alpha);
+    ctx.beginPath();ctx.roundRect(b.x,b.y,b.w,b.h,4);ctx.fill();
+    ctx.globalAlpha=.15;ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(b.x+2,b.y+2,b.w/3,b.h/3,2);ctx.fill();
+    ctx.globalAlpha=1;
+    if(b.pw){ctx.fillStyle='#fff';ctx.font='8px Inter';ctx.textAlign='center';ctx.fillText(b.pw==='wide'?'W':'M',b.x+b.w/2,b.y+b.h/2+3);}
+  }
+  // Power-ups
+  for(const p of bPowerUps){
+    ctx.fillStyle=p.type==='wide'?'#22c55e':'#f59e0b';
+    ctx.beginPath();ctx.roundRect(p.x-12,p.y-8,24,16,4);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='bold 9px Inter';ctx.textAlign='center';ctx.fillText(p.type==='wide'?'WIDE':'⚡',p.x,p.y+3);
+  }
+  // Paddle
+  const grad=ctx.createLinearGradient(bPaddle.x,bPaddle.y,bPaddle.x,bPaddle.y+bPaddle.h);
+  grad.addColorStop(0,'#f59e0b');grad.addColorStop(1,'#92400e');
+  ctx.fillStyle=grad;ctx.beginPath();ctx.roundRect(bPaddle.x,bPaddle.y,bPaddle.w,bPaddle.h,5);ctx.fill();
+  // Ball
+  const bg=ctx.createRadialGradient(bBall.x-2,bBall.y-2,1,bBall.x,bBall.y,bBall.r);
+  bg.addColorStop(0,'#fde68a');bg.addColorStop(1,'#f59e0b');
+  ctx.fillStyle=bg;ctx.beginPath();ctx.arc(bBall.x,bBall.y,bBall.r,0,Math.PI*2);ctx.fill();
+  // Launch hint
+  if(!bBall.launched){ctx.fillStyle='rgba(245,158,11,0.6)';ctx.font='13px Inter';ctx.textAlign='center';ctx.fillText('Click or Space to launch',c.width/2,c.height/2);}
+}
+
+function updateBreakScore(){
+  if(bScore>bHi){bHi=bScore;localStorage.setItem('breakHi',bHi);}
+  const hearts='❤️'.repeat(bLives)+'🖤'.repeat(Math.max(0,3-bLives));
+  document.getElementById('scoreBar').innerHTML=`
+    <div class="score-item"><div class="score-label">Score</div><div class="score-val">${bScore}</div></div>
+    <div class="score-item"><div class="score-label">Level</div><div class="score-val">${bLevel}</div></div>
+    <div class="score-item"><div class="score-label">Lives</div><div class="score-val">${hearts}</div></div>
+    <div class="score-item"><div class="score-label">Best</div><div class="score-val">${bHi}</div></div>`;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// KEYBOARD
+// ──────────────────────────────────────────────────────────────────
+let snakeNextDir=null;
+document.addEventListener('keydown',e=>{
+  bKeys[e.key]=true;
+  if(currentGame==='snake'){
+    const dirs={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0},
+                 w:{x:0,y:-1},s:{x:0,y:1},a:{x:-1,y:0},d:{x:1,y:0}};
+    const nd=dirs[e.key];
+    if(nd&&!(nd.x===-snakeDir.x&&nd.y===-snakeDir.y)){snakeDir=nd;}
+    e.preventDefault();
+  }
+  if(currentGame==='tetris'&&tetRunning&&!paused){
+    if(e.key==='ArrowLeft'&&isValidTet(tetPiece.shape,tetPiece.x-1,tetPiece.y))tetPiece.x--;
+    if(e.key==='ArrowRight'&&isValidTet(tetPiece.shape,tetPiece.x+1,tetPiece.y))tetPiece.x++;
+    if(e.key==='ArrowDown'){tetMoveDown();tetLastTime=performance.now();}
+    if(e.key==='ArrowUp'){
+      const r=rotateTet(tetPiece.shape);
+      if(isValidTet(r,tetPiece.x,tetPiece.y))tetPiece.shape=r;
+      else if(isValidTet(r,tetPiece.x-1,tetPiece.y)){tetPiece.x--;tetPiece.shape=r;}
+      else if(isValidTet(r,tetPiece.x+1,tetPiece.y)){tetPiece.x++;tetPiece.shape=r;}
+    }
+    if(e.key===' '){let d=tetPiece.y;while(isValidTet(tetPiece.shape,tetPiece.x,d+1))d++;tetPiece.y=d;lockTetPiece();clearTetLines();spawnTetPiece();}
+    e.preventDefault();
+  }
+  if(currentGame==='breakout'){
+    if(e.key===' ')bLaunch();
+    if(['ArrowLeft','ArrowRight','a','d'].includes(e.key))e.preventDefault();
+  }
+});
+document.addEventListener('keyup',e=>{bKeys[e.key]=false;});
+</script>
+</body>
+</html>

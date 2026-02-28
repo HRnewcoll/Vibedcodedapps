@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--accent:#6366f1;--accent-dim:rgba(99,102,241,0.15);--glass:rgba(255,255,255,0.05);--glass-border:rgba(255,255,255,0.1);--text:#e2e8f0;--text-muted:#94a3b8;--success:#22c55e;--danger:#ef4444;--warning:#f59e0b}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);min-height:100vh;color:var(--text);overflow-x:hidden}
+a.back-btn{position:fixed;top:20px;left:20px;z-index:100;display:flex;align-items:center;gap:8px;padding:10px 18px;background:var(--glass);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-weight:500;backdrop-filter:blur(20px);transition:all .3s;cursor:pointer;text-decoration:none}
+a.back-btn:hover{background:var(--accent-dim);border-color:var(--accent);transform:translateX(-3px)}
+.container{max-width:700px;margin:0 auto;padding:80px 16px 40px}
+h1{font-size:clamp(1.8rem,4vw,2.3rem);font-weight:800;background:linear-gradient(135deg,#a78bfa,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+.subtitle{color:var(--text-muted);font-size:14px;margin-bottom:26px}
+.glass-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;backdrop-filter:blur(20px);padding:24px}
+.section-title{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px}
+input,select,textarea{background:rgba(255,255,255,0.07);border:1px solid var(--glass-border);border-radius:12px;padding:11px 16px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input::placeholder{color:var(--text-muted)}
+select option{background:#1e1b4b}
+textarea{resize:vertical;min-height:70px}
+.btn{padding:11px 22px;border-radius:12px;border:none;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#5558e3;transform:translateY(-2px);box-shadow:0 8px 25px rgba(99,102,241,0.4)}
+.btn-sm{padding:7px 14px;font-size:12px;border-radius:9px}
+.btn-ghost{background:transparent;border:1px solid var(--glass-border);color:var(--text-muted)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.25);color:var(--danger)}
+.btn-danger:hover{background:rgba(239,68,68,0.25)}
+
+/* Lock screen */
+#lockScreen{position:fixed;inset:0;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.lock-icon{font-size:64px;margin-bottom:20px}
+.lock-title{font-size:1.6rem;font-weight:800;margin-bottom:8px;text-align:center}
+.lock-subtitle{color:var(--text-muted);font-size:14px;margin-bottom:32px;text-align:center}
+.pin-input{display:flex;gap:10px;justify-content:center;margin-bottom:20px}
+.pin-digit{width:52px;height:64px;border-radius:14px;background:rgba(255,255,255,0.07);border:2px solid var(--glass-border);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;transition:all .2s}
+.pin-digit.filled{border-color:var(--accent);background:var(--accent-dim)}
+.pin-digit.error{border-color:var(--danger);background:rgba(239,68,68,0.1);animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,72px);gap:10px;justify-content:center}
+.pin-key{height:60px;border-radius:14px;background:rgba(255,255,255,0.07);border:1px solid var(--glass-border);color:var(--text);font-family:'Inter',sans-serif;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.pin-key:hover{background:var(--accent-dim);border-color:var(--accent);transform:scale(1.05)}
+.pin-key:active{transform:scale(0.95)}
+.pin-key.del{font-size:1.3rem;background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:var(--danger)}
+.pin-key.ok{background:var(--accent);border-color:var(--accent);color:#fff}
+.pin-key.ok:hover{background:#5558e3}
+.lock-msg{font-size:13px;color:var(--danger);margin-top:14px;min-height:18px;text-align:center}
+
+/* Vault */
+.vault-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.search-bar{position:relative;margin-bottom:20px}
+.search-bar input{padding-left:42px}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:16px}
+.filter-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.chip{padding:5px 14px;border-radius:20px;background:var(--glass);border:1px solid var(--glass-border);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text-muted)}
+.chip:hover,.chip.active{background:var(--accent-dim);border-color:rgba(99,102,241,0.4);color:#a5b4fc}
+.entries-list{display:flex;flex-direction:column;gap:10px}
+.entry-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px;transition:all .25s}
+.entry-card:hover{border-color:rgba(99,102,241,0.3);background:rgba(255,255,255,0.06)}
+.entry-icon{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--accent-dim);border:1px solid rgba(99,102,241,0.25)}
+.entry-info{flex:1;min-width:0}
+.entry-site{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry-user{font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry-meta{display:flex;gap:8px;align-items:center}
+.cat-badge{padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+/* Add/Edit form */
+.form-section{margin-bottom:20px}
+.form-grid{display:flex;flex-direction:column;gap:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.form-row{grid-template-columns:1fr}}
+.pass-field{position:relative}
+.pass-field input{padding-right:86px;font-family:monospace;letter-spacing:.08em}
+.pass-toggle{position:absolute;right:48px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--text-muted);cursor:pointer;padding:4px;font-size:16px;transition:color .2s}
+.pass-toggle:hover{color:var(--accent)}
+.pass-gen{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--text-muted);cursor:pointer;padding:4px;font-size:16px;transition:color .2s}
+.pass-gen:hover{color:var(--accent)}
+/* Strength */
+.strength-bar{height:4px;border-radius:4px;background:rgba(255,255,255,0.08);margin-top:6px;overflow:hidden}
+.strength-fill{height:100%;border-radius:4px;transition:width .4s,background .4s}
+.strength-label{font-size:11px;margin-top:4px}
+/* Generator popup */
+.gen-popup{background:rgba(15,12,41,0.97);border:1px solid var(--glass-border);border-radius:16px;padding:18px;margin-top:10px;backdrop-filter:blur(20px);display:none}
+.gen-popup.open{display:block}
+.gen-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.gen-result{font-family:monospace;font-size:15px;background:rgba(255,255,255,0.07);border:1px solid var(--glass-border);border-radius:10px;padding:10px 14px;word-break:break-all;color:#a5b4fc;margin-bottom:10px;cursor:pointer;transition:all .2s;letter-spacing:.06em}
+.gen-result:hover{border-color:var(--accent)}
+.toggle-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.toggle-chip{padding:5px 12px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid var(--glass-border);font-size:12px;font-weight:600;cursor:pointer;color:var(--text-muted);transition:all .2s;user-select:none}
+.toggle-chip.on{background:var(--accent-dim);border-color:rgba(99,102,241,0.4);color:#a5b4fc}
+/* Entry detail modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:150;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:linear-gradient(135deg,#1e1b4b,#2e1065);border:1px solid var(--glass-border);border-radius:22px;padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:1.3rem;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.field-row{margin-bottom:14px}
+.field-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:6px}
+.field-value{font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px}
+.copy-btn{background:transparent;border:1px solid var(--glass-border);border-radius:8px;padding:4px 10px;color:var(--text-muted);cursor:pointer;font-size:11px;transition:all .2s;font-family:'Inter',sans-serif}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* Toast */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;padding:13px 26px;border-radius:13px;font-weight:600;font-size:13px;z-index:999;transition:transform .4s;box-shadow:0 10px 40px rgba(99,102,241,0.4)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.view{display:none}.view.active{display:block}
+.empty{text-align:center;padding:40px;color:var(--text-muted)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<a href="../../index.html" class="back-btn">← Back</a>
+
+<!-- LOCK SCREEN -->
+<div id="lockScreen">
+  <div class="lock-icon" id="lockIcon">🔒</div>
+  <div class="lock-title" id="lockTitle">Password Vault</div>
+  <div class="lock-subtitle" id="lockSubtitle">Enter your PIN to unlock</div>
+  <div class="pin-input" id="pinDisplay">
+    <div class="pin-digit" id="pd0"></div>
+    <div class="pin-digit" id="pd1"></div>
+    <div class="pin-digit" id="pd2"></div>
+    <div class="pin-digit" id="pd3"></div>
+  </div>
+  <div class="pin-keypad">
+    <button class="pin-key" onclick="pinPress('1')">1</button>
+    <button class="pin-key" onclick="pinPress('2')">2</button>
+    <button class="pin-key" onclick="pinPress('3')">3</button>
+    <button class="pin-key" onclick="pinPress('4')">4</button>
+    <button class="pin-key" onclick="pinPress('5')">5</button>
+    <button class="pin-key" onclick="pinPress('6')">6</button>
+    <button class="pin-key" onclick="pinPress('7')">7</button>
+    <button class="pin-key" onclick="pinPress('8')">8</button>
+    <button class="pin-key" onclick="pinPress('9')">9</button>
+    <button class="pin-key del" onclick="pinDel()">⌫</button>
+    <button class="pin-key" onclick="pinPress('0')">0</button>
+    <button class="pin-key ok" onclick="pinOk()">OK</button>
+  </div>
+  <div class="lock-msg" id="lockMsg"></div>
+</div>
+
+<!-- VAULT -->
+<div class="container" id="vaultApp" style="display:none">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px">
+    <h1>🔒 Vault</h1>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="lockVault()">🔒 Lock</button>
+      <button class="btn btn-primary btn-sm" onclick="showAddForm()">+ Add</button>
+    </div>
+  </div>
+  <p class="subtitle" id="vaultSubtitle"></p>
+  <p style="font-size:11px;color:var(--text-muted);margin-bottom:20px;padding:8px 14px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px">⚠ Demo app — entries are obfuscated with XOR+SHA-256 PIN. Do not store real passwords.</p>
+
+  <!-- Views -->
+  <div class="view active" id="view-list">
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search entries..." oninput="renderEntries()">
+    </div>
+    <div class="filter-chips" id="filterChips"></div>
+    <div class="entries-list" id="entriesList"></div>
+  </div>
+
+  <div class="view" id="view-add">
+    <div class="glass-card">
+      <div class="section-title" id="formTitle">Add New Entry</div>
+      <div class="form-grid">
+        <div class="form-row">
+          <input type="text" id="fSite" placeholder="Site / App name">
+          <select id="fCategory">
+            <option value="Social">🌐 Social</option>
+            <option value="Banking">🏦 Banking</option>
+            <option value="Work">💼 Work</option>
+            <option value="Shopping">🛒 Shopping</option>
+            <option value="Other">📦 Other</option>
+          </select>
+        </div>
+        <input type="text" id="fUsername" placeholder="Username / Email">
+        <div class="pass-field">
+          <input type="password" id="fPassword" placeholder="Password" oninput="updateStrength()">
+          <button class="pass-toggle" onclick="togglePasswordVis('fPassword',this)" title="Show/Hide">👁</button>
+          <button class="pass-gen" onclick="toggleGenPopup()" title="Generate">⚙</button>
+        </div>
+        <div class="strength-bar"><div class="strength-fill" id="strengthFill" style="width:0"></div></div>
+        <div class="strength-label" id="strengthLabel" style="color:var(--text-muted)">Enter a password</div>
+        <!-- Generator popup -->
+        <div class="gen-popup" id="genPopup">
+          <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:10px">Password Generator</div>
+          <div class="gen-result" id="genResult" onclick="useGenerated()" title="Click to use">Click ⚙ then here to use</div>
+          <div class="gen-row">
+            <span style="font-size:12px;color:var(--text-muted)">Length: <span id="lenLabel">16</span></span>
+            <input type="range" id="genLen" min="8" max="32" value="16" oninput="runGenerator()" style="width:120px;background:transparent;cursor:pointer">
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-chip on" id="tog-upper" onclick="toggleOpt('upper')">ABC</div>
+            <div class="toggle-chip on" id="tog-lower" onclick="toggleOpt('lower')">abc</div>
+            <div class="toggle-chip on" id="tog-num" onclick="toggleOpt('num')">123</div>
+            <div class="toggle-chip on" id="tog-sym" onclick="toggleOpt('sym')">!@#</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="width:100%" onclick="runGenerator()">🔄 Generate Again</button>
+        </div>
+        <textarea id="fNotes" placeholder="Notes (optional)" rows="2"></textarea>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary" onclick="saveEntry()">Save Entry</button>
+          <button class="btn btn-ghost" onclick="showView('list')">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Entry detail modal -->
+<div class="modal-overlay" id="entryModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="entryModalContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── XOR Cipher (demo-quality obfuscation — not production-grade) ───
+function xorCipher(text, key) {
+  let result = '';
+  for (let i = 0; i < text.length; i++) {
+    result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+  }
+  return result;
+}
+function encrypt(text, pin) { return btoa(unescape(encodeURIComponent(xorCipher(text, pin)))); }
+function decrypt(enc, pin) { try { return xorCipher(decodeURIComponent(escape(atob(enc))), pin); } catch (e) { return null; } }
+
+// ─── PIN State ───
+let pinBuffer = '';
+let pinAttempts = 0;
+let lockUntil = 0;
+let currentPin = '';
+let isFirstTime = !localStorage.getItem('vault_pin_hash');
+let entries = [];
+const CAT_ICONS = { Social: '🌐', Banking: '🏦', Work: '💼', Shopping: '🛒', Other: '📦' };
+const CAT_COLORS = { Social: 'rgba(59,130,246,0.2)', Banking: 'rgba(34,197,94,0.2)', Work: 'rgba(99,102,241,0.2)', Shopping: 'rgba(245,158,11,0.2)', Other: 'rgba(148,163,184,0.15)' };
+let filterCat = 'All';
+let editId = null;
+let generatorOpts = { upper: true, lower: true, num: true, sym: true };
+
+// ─── Setup PIN screen ───
+if (isFirstTime) {
+  document.getElementById('lockTitle').textContent = 'Create Your PIN';
+  document.getElementById('lockSubtitle').textContent = 'Set a 4-6 digit PIN to secure your vault';
+  document.getElementById('lockIcon').textContent = '🔑';
+}
+
+function pinPress(d) {
+  if (pinBuffer.length >= 6) return;
+  pinBuffer += d;
+  updatePinDisplay();
+}
+function pinDel() { pinBuffer = pinBuffer.slice(0, -1); updatePinDisplay(); }
+function updatePinDisplay() {
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('pd' + i);
+    if (!el) continue;
+    el.textContent = i < pinBuffer.length ? '●' : '';
+    el.classList.toggle('filled', i < pinBuffer.length);
+    el.classList.remove('error');
+  }
+}
+
+function pinError(msg) {
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('pd' + i);
+    if (el) el.classList.add('error');
+  }
+  document.getElementById('lockMsg').textContent = msg;
+  setTimeout(() => { pinBuffer = ''; updatePinDisplay(); document.getElementById('lockMsg').textContent = ''; }, 700);
+}
+
+async function pinOk() {
+  const now = Date.now();
+  if (now < lockUntil) { document.getElementById('lockMsg').textContent = 'Too many attempts. Wait ' + Math.ceil((lockUntil - now) / 1000) + 's'; return; }
+  if (pinBuffer.length < 4) { pinError('PIN must be 4-6 digits'); return; }
+
+  const hash = await simpleHash(pinBuffer);
+  if (isFirstTime) {
+    localStorage.setItem('vault_pin_hash', hash);
+    currentPin = pinBuffer;
+    isFirstTime = false;
+    unlockVault();
+  } else {
+    if (hash === localStorage.getItem('vault_pin_hash')) {
+      currentPin = pinBuffer;
+      pinAttempts = 0;
+      unlockVault();
+    } else {
+      pinAttempts++;
+      if (pinAttempts >= 3) { lockUntil = Date.now() + 30000; pinError('Locked for 30 seconds'); pinAttempts = 0; }
+      else { pinError(`Wrong PIN (${3 - pinAttempts} attempts left)`); }
+    }
+  }
+}
+
+async function simpleHash(s) {
+  const enc = new TextEncoder().encode(s + 'vault-salt-v1');
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function unlockVault() {
+  document.getElementById('lockScreen').style.display = 'none';
+  document.getElementById('vaultApp').style.display = 'block';
+  loadEntries();
+  updateSubtitle();
+  renderEntries();
+  renderFilterChips();
+}
+
+function lockVault() {
+  currentPin = '';
+  pinBuffer = '';
+  updatePinDisplay();
+  document.getElementById('lockMsg').textContent = '';
+  document.getElementById('lockIcon').textContent = '🔒';
+  document.getElementById('lockTitle').textContent = 'Password Vault';
+  document.getElementById('lockSubtitle').textContent = 'Enter your PIN to unlock';
+  document.getElementById('lockScreen').style.display = 'flex';
+  document.getElementById('vaultApp').style.display = 'none';
+  isFirstTime = false;
+}
+
+function loadEntries() {
+  try {
+    const raw = localStorage.getItem('vault_entries');
+    if (!raw) { entries = []; return; }
+    const dec = decrypt(raw, currentPin);
+    entries = JSON.parse(dec) || [];
+  } catch (e) { entries = []; }
+}
+
+function saveEntries() {
+  const enc = encrypt(JSON.stringify(entries), currentPin);
+  localStorage.setItem('vault_entries', enc);
+}
+
+function updateSubtitle() {
+  document.getElementById('vaultSubtitle').textContent = `${entries.length} stored password${entries.length !== 1 ? 's' : ''} · encrypted`;
+}
+
+// ─── Entries CRUD ───
+let genPopupOpen = false;
+function toggleGenPopup() {
+  genPopupOpen = !genPopupOpen;
+  document.getElementById('genPopup').classList.toggle('open', genPopupOpen);
+  if (genPopupOpen) runGenerator();
+}
+
+function toggleOpt(opt) {
+  generatorOpts[opt] = !generatorOpts[opt];
+  document.getElementById('tog-' + opt).classList.toggle('on', generatorOpts[opt]);
+  runGenerator();
+}
+
+function runGenerator() {
+  const len = +document.getElementById('genLen').value;
+  document.getElementById('lenLabel').textContent = len;
+  let chars = '';
+  if (generatorOpts.upper) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  if (generatorOpts.lower) chars += 'abcdefghijklmnopqrstuvwxyz';
+  if (generatorOpts.num) chars += '0123456789';
+  if (generatorOpts.sym) chars += '!@#$%^&*()-_=+[]{}|;:,.<>?';
+  if (!chars) chars = 'abcdefghijklmnopqrstuvwxyz';
+  let pw = '';
+  const arr = new Uint32Array(len);
+  crypto.getRandomValues(arr);
+  for (let i = 0; i < len; i++) pw += chars[arr[i] % chars.length];
+  document.getElementById('genResult').textContent = pw;
+}
+
+function useGenerated() {
+  const pw = document.getElementById('genResult').textContent;
+  document.getElementById('fPassword').value = pw;
+  updateStrength();
+  genPopupOpen = false;
+  document.getElementById('genPopup').classList.remove('open');
+  showToast('Password applied!');
+}
+
+function updateStrength() {
+  const pw = document.getElementById('fPassword').value;
+  const result = getStrength(pw);
+  document.getElementById('strengthFill').style.width = result.pct + '%';
+  document.getElementById('strengthFill').style.background = result.color;
+  document.getElementById('strengthLabel').textContent = pw ? result.label : 'Enter a password';
+  document.getElementById('strengthLabel').style.color = pw ? result.color : 'var(--text-muted)';
+}
+
+function getStrength(pw) {
+  if (!pw) return { pct: 0, label: '', color: 'var(--text-muted)' };
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (pw.length >= 16) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (score <= 2) return { pct: 20, label: '⚡ Weak', color: '#ef4444' };
+  if (score <= 4) return { pct: 50, label: '⚠ Fair', color: '#f59e0b' };
+  if (score <= 5) return { pct: 75, label: '✓ Good', color: '#22c55e' };
+  return { pct: 100, label: '🔒 Strong', color: '#10b981' };
+}
+
+function togglePasswordVis(id, btn) {
+  const el = document.getElementById(id);
+  if (el.type === 'password') { el.type = 'text'; btn.textContent = '🙈'; }
+  else { el.type = 'password'; btn.textContent = '👁'; }
+}
+
+function showAddForm() { editId = null; document.getElementById('formTitle').textContent = 'Add New Entry'; clearForm(); showView('add'); }
+
+function clearForm() {
+  ['fSite','fUsername','fPassword','fNotes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('fCategory').value = 'Social';
+  document.getElementById('fPassword').type = 'password';
+  updateStrength();
+  genPopupOpen = false;
+  document.getElementById('genPopup').classList.remove('open');
+}
+
+function saveEntry() {
+  const site = document.getElementById('fSite').value.trim();
+  const user = document.getElementById('fUsername').value.trim();
+  const pass = document.getElementById('fPassword').value;
+  if (!site || !pass) { showToast('Site and password are required'); return; }
+  if (editId) {
+    const idx = entries.findIndex(e => e.id === editId);
+    if (idx >= 0) entries[idx] = { ...entries[idx], site, username: user, password: pass, category: document.getElementById('fCategory').value, notes: document.getElementById('fNotes').value.trim(), updated: Date.now() };
+  } else {
+    entries.push({ id: Date.now().toString(), site, username: user, password: pass, category: document.getElementById('fCategory').value, notes: document.getElementById('fNotes').value.trim(), created: Date.now(), updated: Date.now() });
+  }
+  saveEntries(); renderEntries(); renderFilterChips(); updateSubtitle();
+  showView('list'); editId = null;
+  showToast(editId ? 'Entry updated!' : 'Entry saved!');
+}
+
+function deleteEntry(id) {
+  entries = entries.filter(e => e.id !== id);
+  saveEntries(); renderEntries(); updateSubtitle();
+  closeModal(); showToast('Entry deleted');
+}
+
+function editEntry(id) {
+  const e = entries.find(en => en.id === id);
+  if (!e) return;
+  editId = id;
+  document.getElementById('formTitle').textContent = 'Edit Entry';
+  document.getElementById('fSite').value = e.site;
+  document.getElementById('fUsername').value = e.username || '';
+  document.getElementById('fPassword').value = e.password;
+  document.getElementById('fCategory').value = e.category || 'Other';
+  document.getElementById('fNotes').value = e.notes || '';
+  document.getElementById('fPassword').type = 'password';
+  updateStrength();
+  closeModal(); showView('add');
+}
+
+function openEntry(id) {
+  const e = entries.find(en => en.id === id);
+  if (!e) return;
+  document.getElementById('entryModalContent').innerHTML = `
+    <h2>${CAT_ICONS[e.category]||'🔐'} ${escHtml(e.site)}</h2>
+    <div class="field-row"><div class="field-label">Category</div><div class="field-value">${escHtml(e.category||'Other')}</div></div>
+    <div class="field-row"><div class="field-label">Username / Email</div>
+      <div class="field-value">${escHtml(e.username||'—')}<button class="copy-btn" onclick="copyField('${id}','username')">Copy</button></div></div>
+    <div class="field-row"><div class="field-label">Password</div>
+      <div class="field-value">
+        <span id="pwView" style="font-family:monospace;letter-spacing:.1em">••••••••</span>
+        <button class="copy-btn" onclick="copyField('${id}','password')">Copy</button>
+        <button class="copy-btn" onclick="revealPw('${id}')">Show</button>
+      </div></div>
+    ${e.notes?`<div class="field-row"><div class="field-label">Notes</div><div class="field-value" style="white-space:pre-wrap">${escHtml(e.notes)}</div></div>`:''}
+    <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="editEntry('${id}')">✏ Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteEntry('${id}')">🗑 Delete</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Close</button>
+    </div>`;
+  document.getElementById('entryModal').classList.add('open');
+}
+
+function revealPw(id) {
+  const e = entries.find(en => en.id === id);
+  const el = document.getElementById('pwView');
+  if (!e || !el) return;
+  el.textContent = el.textContent === '••••••••' ? e.password : '••••••••';
+}
+
+let copyTimer = null;
+function copyField(id, field) {
+  const e = entries.find(en => en.id === id);
+  if (!e) return;
+  const val = e[field] || '';
+  navigator.clipboard.writeText(val).then(() => {
+    showToast(field === 'password' ? '🔑 Password copied (clears in 30s)' : '📋 Copied!');
+    if (field === 'password') {
+      if (copyTimer) clearTimeout(copyTimer);
+      copyTimer = setTimeout(() => navigator.clipboard.writeText(''), 30000);
+    }
+  });
+}
+
+function closeModal() { document.getElementById('entryModal').classList.remove('open'); }
+
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+}
+
+function renderFilterChips() {
+  const cats = ['All', ...new Set(entries.map(e => e.category || 'Other'))];
+  document.getElementById('filterChips').innerHTML = cats.map(c => `<div class="chip${filterCat===c?' active':''}" onclick="setFilter('${c}')">${CAT_ICONS[c]||'📦'} ${c}</div>`).join('');
+}
+
+function setFilter(cat) { filterCat = cat; renderFilterChips(); renderEntries(); }
+
+function renderEntries() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  let filtered = entries.filter(e => {
+    const matchQ = !q || e.site.toLowerCase().includes(q) || (e.username||'').toLowerCase().includes(q);
+    const matchCat = filterCat === 'All' || e.category === filterCat;
+    return matchQ && matchCat;
+  });
+  filtered.sort((a, b) => b.updated - a.updated);
+  const el = document.getElementById('entriesList');
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><div>' + (entries.length ? 'No matching entries' : 'No passwords saved yet') + '</div></div>';
+    return;
+  }
+  el.innerHTML = filtered.map(e => `
+    <div class="entry-card" onclick="openEntry('${e.id}')">
+      <div class="entry-icon" style="background:${CAT_COLORS[e.category]||'var(--accent-dim)'}">${CAT_ICONS[e.category]||'🔐'}</div>
+      <div class="entry-info">
+        <div class="entry-site">${escHtml(e.site)}</div>
+        <div class="entry-user">${escHtml(e.username||'No username')}</div>
+      </div>
+      <div class="entry-meta">
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();copyField('${e.id}','password')" title="Copy password">📋</button>
+      </div>
+    </div>`).join('');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// Initial generator run
+runGenerator();
+</script>
+</body>
+</html>

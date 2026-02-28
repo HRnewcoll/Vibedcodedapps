@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LocalBuy – Buy &amp; Sell Near You</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg1: #0f0c29; --bg2: #302b63; --accent: #f43f5e;
+    --glass: rgba(255,255,255,0.06); --glass-border: rgba(255,255,255,0.12);
+    --text: #f1f5f9; --subtext: #94a3b8;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 50%, #24243e 100%);
+    min-height: 100vh; color: var(--text);
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 12px; padding: 14px 24px;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 6px; color: var(--accent);
+    text-decoration: none; font-size: 14px; font-weight: 500;
+    padding: 6px 12px; border-radius: 8px;
+    background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3); transition: all .2s;
+  }
+  .back-btn:hover { background: rgba(244,63,94,0.2); transform: translateX(-2px); }
+  .nav-title { font-size: 18px; font-weight: 800; flex: 1; }
+  .sell-btn {
+    padding: 9px 20px; border-radius: 10px;
+    background: linear-gradient(135deg,var(--accent),#e11d48);
+    border: none; color: #fff; font-family: 'Inter', sans-serif;
+    font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s;
+  }
+  .sell-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(244,63,94,.4); }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 32px 24px 0; max-width: 1100px; margin: 0 auto;
+  }
+  .hero-inner {
+    background: linear-gradient(135deg,rgba(244,63,94,.12),rgba(139,92,246,.1));
+    border: 1px solid rgba(244,63,94,.2); border-radius: 20px;
+    padding: 28px 32px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+  }
+  .hero-text h1 { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+  .hero-text p { color: var(--subtext); font-size: 14px; }
+  .hero-stats { display: flex; gap: 24px; margin-left: auto; }
+  .hero-stat { text-align: center; }
+  .hero-stat-num { font-size: 24px; font-weight: 800; color: var(--accent); }
+  .hero-stat-label { font-size: 11px; color: var(--subtext); text-transform: uppercase; letter-spacing: .06em; }
+
+  /* ── CONTROLS ── */
+  .controls-wrap { max-width: 1100px; margin: 24px auto 0; padding: 0 24px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .search-box {
+    flex: 1; min-width: 200px; display: flex; align-items: center; gap: 8px;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    border-radius: 12px; padding: 0 14px; transition: border-color .2s;
+  }
+  .search-box:focus-within { border-color: rgba(244,63,94,.4); }
+  .search-icon { font-size: 16px; color: var(--subtext); }
+  .search-input {
+    flex: 1; background: none; border: none; color: var(--text);
+    font-family: 'Inter', sans-serif; font-size: 14px; padding: 11px 0; outline: none;
+  }
+  .search-input::placeholder { color: var(--subtext); }
+
+  .filter-select {
+    padding: 11px 14px; background: var(--glass); border: 1px solid var(--glass-border);
+    border-radius: 12px; color: var(--text); font-family: 'Inter', sans-serif;
+    font-size: 13px; outline: none; cursor: pointer;
+  }
+  .filter-select option { background: #1a1a2e; }
+
+  .sort-group { display: flex; gap: 6px; }
+  .sort-btn {
+    padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 500;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    color: var(--subtext); cursor: pointer; transition: all .2s;
+  }
+  .sort-btn.active { background: rgba(244,63,94,.12); border-color: rgba(244,63,94,.35); color: var(--accent); }
+
+  .results-count { font-size: 13px; color: var(--subtext); margin-left: auto; white-space: nowrap; }
+
+  /* ── CATEGORY PILLS ── */
+  .cat-pills { max-width: 1100px; margin: 16px auto 0; padding: 0 24px; display: flex; gap: 8px; overflow-x: auto; }
+  .cat-pills::-webkit-scrollbar { display: none; }
+  .cat-pill {
+    padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    color: var(--subtext); cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .cat-pill.active { background: rgba(244,63,94,.12); border-color: rgba(244,63,94,.35); color: var(--accent); }
+  .cat-pill:hover:not(.active) { background: rgba(255,255,255,.1); color: var(--text); }
+
+  /* ── GRID ── */
+  .listings-grid {
+    max-width: 1100px; margin: 20px auto 60px; padding: 0 24px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 18px;
+  }
+  .listing-card {
+    background: var(--glass); backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border); border-radius: 18px; overflow: hidden;
+    animation: cardIn .35s ease; transition: transform .2s, border-color .2s;
+    position: relative; display: flex; flex-direction: column;
+  }
+  .listing-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,.2); }
+  .listing-card.sold { opacity: .65; }
+  @keyframes cardIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+  .listing-image {
+    height: 160px; display: flex; align-items: center; justify-content: center;
+    font-size: 56px; position: relative;
+    background: linear-gradient(135deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+  }
+  .sold-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,.6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 800; color: #fff; letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .condition-badge {
+    position: absolute; top: 10px; right: 10px;
+    font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 8px;
+  }
+  .condition-badge.new { background: rgba(34,197,94,.25); color: #22c55e; }
+  .condition-badge.like-new { background: rgba(16,185,129,.2); color: #10b981; }
+  .condition-badge.good { background: rgba(245,158,11,.2); color: #f59e0b; }
+  .condition-badge.fair { background: rgba(249,115,22,.2); color: #fb923c; }
+  .condition-badge.poor { background: rgba(244,63,94,.2); color: var(--accent); }
+
+  .listing-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .listing-cat-row { display: flex; align-items: center; gap: 6px; }
+  .listing-cat {
+    font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 8px;
+    background: rgba(244,63,94,.15); color: var(--accent);
+  }
+  .listing-time { font-size: 11px; color: var(--subtext); margin-left: auto; }
+  .listing-title { font-size: 15px; font-weight: 700; line-height: 1.3; }
+  .listing-desc { font-size: 13px; color: var(--subtext); line-height: 1.5; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .listing-price { font-size: 22px; font-weight: 800; color: var(--accent); }
+  .listing-price.free { color: #22c55e; }
+
+  .listing-actions { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--glass-border); }
+  .contact-btn {
+    flex: 1; padding: 9px; border-radius: 10px;
+    background: linear-gradient(135deg,var(--accent),#e11d48);
+    border: none; color: #fff; font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s;
+  }
+  .contact-btn:hover { transform: translateY(-1px); }
+  .contact-btn:disabled { opacity: .4; pointer-events: none; }
+  .sold-btn {
+    padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 600;
+    background: rgba(255,255,255,.07); border: 1px solid var(--glass-border);
+    color: var(--subtext); cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .sold-btn:hover { background: rgba(255,255,255,.12); color: var(--text); }
+  .del-btn {
+    padding: 9px 10px; border-radius: 10px;
+    background: rgba(244,63,94,.1); border: 1px solid rgba(244,63,94,.25);
+    color: var(--accent); cursor: pointer; transition: all .2s;
+  }
+  .del-btn:hover { background: rgba(244,63,94,.2); }
+
+  /* ── MODALS ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,.75); backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal-card {
+    background: linear-gradient(135deg,rgba(15,12,41,.97),rgba(48,43,99,.97));
+    border: 1px solid var(--glass-border); border-radius: 24px;
+    padding: 32px; max-width: 500px; width: 100%;
+    animation: fadeUp .4s ease; max-height: 90vh; overflow-y: auto;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  .modal-card::-webkit-scrollbar { width: 4px; }
+  .modal-card::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+  .modal-card h2 { font-size: 20px; font-weight: 800; margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--subtext); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 7px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 12px 14px; background: rgba(255,255,255,.07);
+    border: 1px solid var(--glass-border); border-radius: 12px;
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px;
+    outline: none; transition: border-color .2s;
+  }
+  .form-select option { background: #1a1a2e; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: none; min-height: 70px; line-height: 1.5; }
+  .form-row { display: flex; gap: 12px; }
+  .form-row .form-group { flex: 1; }
+  .modal-btns { display: flex; gap: 10px; margin-top: 8px; }
+  .btn-cancel { flex: 1; padding: 12px; border-radius: 10px; background: rgba(255,255,255,.07); border: 1px solid var(--glass-border); color: var(--subtext); font-family: 'Inter', sans-serif; font-size: 14px; cursor: pointer; transition: all .2s; }
+  .btn-cancel:hover { background: rgba(255,255,255,.12); color: var(--text); }
+  .btn-list { flex: 2; padding: 12px; border-radius: 10px; background: linear-gradient(135deg,var(--accent),#e11d48); border: none; color: #fff; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; }
+  .btn-list:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(244,63,94,.4); }
+
+  /* ── CONTACT MODAL ── */
+  .contact-modal .contact-avatar { font-size: 56px; text-align: center; margin-bottom: 16px; }
+  .contact-modal h2 { text-align: center; margin-bottom: 6px; }
+  .contact-modal .item-ref { text-align: center; font-size: 13px; color: var(--subtext); margin-bottom: 24px; }
+  .contact-detail { background: rgba(255,255,255,.06); border: 1px solid var(--glass-border); border-radius: 14px; padding: 16px 18px; margin-bottom: 12px; }
+  .contact-detail-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--subtext); margin-bottom: 6px; }
+  .contact-detail-value { font-size: 15px; font-weight: 600; color: var(--text); }
+  .contact-note { font-size: 13px; color: var(--subtext); text-align: center; line-height: 1.6; margin-top: 16px; }
+
+  /* ── EMPTY ── */
+  .empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--subtext); }
+  .empty .icon { font-size: 52px; opacity: .4; margin-bottom: 16px; }
+  .empty h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: rgba(34,197,94,.9); color: #fff; padding: 12px 24px;
+    border-radius: 12px; font-size: 14px; font-weight: 500;
+    transition: transform .3s; z-index: 999; pointer-events: none;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media(max-width:560px) { .form-row { flex-direction: column; } .hero-stats { display: none; } }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../../index.html" class="back-btn">← Back</a>
+  <div class="nav-title">🛒 LocalBuy</div>
+  <button class="sell-btn" onclick="showListModal()">+ Sell Item</button>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <h1>🛒 Buy &amp; Sell Locally</h1>
+      <p>List items for sale, browse local listings, find great deals near you.</p>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-num" id="stat-active">0</div><div class="hero-stat-label">Active</div></div>
+      <div class="hero-stat"><div class="hero-stat-num" id="stat-sold">0</div><div class="hero-stat-label">Sold</div></div>
+      <div class="hero-stat"><div class="hero-stat-num" id="stat-total">0</div><div class="hero-stat-label">Total</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls-wrap">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" id="search-input" placeholder="Search listings…" oninput="renderListings()">
+  </div>
+  <select class="filter-select" id="cat-filter" onchange="renderListings()">
+    <option value="">All Categories</option>
+    <option value="Electronics">📱 Electronics</option>
+    <option value="Clothes">👕 Clothes</option>
+    <option value="Books">📚 Books</option>
+    <option value="Home">🏠 Home</option>
+    <option value="Sports">⚽ Sports</option>
+    <option value="Other">📦 Other</option>
+  </select>
+  <div class="sort-group">
+    <button class="sort-btn active" id="sort-newest" onclick="setSort('newest',this)">🕐 Newest</button>
+    <button class="sort-btn" id="sort-price-asc" onclick="setSort('price-asc',this)">💰 Price ↑</button>
+    <button class="sort-btn" id="sort-price-desc" onclick="setSort('price-desc',this)">💰 Price ↓</button>
+  </div>
+  <div class="results-count" id="results-count"></div>
+</div>
+
+<!-- Category pills -->
+<div class="cat-pills">
+  <div class="cat-pill active" onclick="setCatFilter('',this)">🏪 All</div>
+  <div class="cat-pill" onclick="setCatFilter('Electronics',this)">📱 Electronics</div>
+  <div class="cat-pill" onclick="setCatFilter('Clothes',this)">👕 Clothes</div>
+  <div class="cat-pill" onclick="setCatFilter('Books',this)">📚 Books</div>
+  <div class="cat-pill" onclick="setCatFilter('Home',this)">🏠 Home</div>
+  <div class="cat-pill" onclick="setCatFilter('Sports',this)">⚽ Sports</div>
+  <div class="cat-pill" onclick="setCatFilter('Other',this)">📦 Other</div>
+</div>
+
+<!-- Grid -->
+<div class="listings-grid" id="listings-grid"></div>
+
+<!-- List Item Modal -->
+<div class="modal-overlay hidden" id="list-modal">
+  <div class="modal-card">
+    <h2>📦 List an Item for Sale</h2>
+    <div class="form-group">
+      <label>Item Title</label>
+      <input class="form-input" id="li-title" type="text" placeholder="e.g. iPhone 13 Pro, Nike Air Max…" maxlength="80">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea class="form-textarea" id="li-desc" placeholder="Describe the item, any flaws, reason for selling…" maxlength="300"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Price (£)</label>
+        <input class="form-input" id="li-price" type="number" min="0" step="0.01" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select class="form-select" id="li-cat">
+          <option value="Electronics">📱 Electronics</option>
+          <option value="Clothes">👕 Clothes</option>
+          <option value="Books">📚 Books</option>
+          <option value="Home">🏠 Home</option>
+          <option value="Sports">⚽ Sports</option>
+          <option value="Other">📦 Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Condition</label>
+        <select class="form-select" id="li-condition">
+          <option value="New">New</option>
+          <option value="Like New">Like New</option>
+          <option value="Good" selected>Good</option>
+          <option value="Fair">Fair</option>
+          <option value="Poor">Poor</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Seller Name</label>
+        <input class="form-input" id="li-seller" type="text" placeholder="Your name" maxlength="25">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="hideListModal()">Cancel</button>
+      <button class="btn-list" onclick="listItem()">List Item →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Contact Modal -->
+<div class="modal-overlay hidden contact-modal" id="contact-modal">
+  <div class="modal-card">
+    <div class="contact-avatar" id="cm-avatar">👤</div>
+    <h2 id="cm-name">Seller Name</h2>
+    <div class="item-ref" id="cm-item-ref">Re: Item Title</div>
+    <div class="contact-detail">
+      <div class="contact-detail-label">Contact via</div>
+      <div class="contact-detail-value" id="cm-contact"></div>
+    </div>
+    <div class="contact-detail">
+      <div class="contact-detail-label">Location</div>
+      <div class="contact-detail-value" id="cm-location"></div>
+    </div>
+    <div class="contact-detail">
+      <div class="contact-detail-label">Best Time to Contact</div>
+      <div class="contact-detail-value" id="cm-time"></div>
+    </div>
+    <div class="contact-note">💬 Mention you found this on LocalBuy when you get in touch!</div>
+    <div style="margin-top:20px">
+      <button class="btn-list" style="width:100%" onclick="hideContactModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const STORAGE_KEY = 'localbuy_v2';
+  const CAT_ICONS = { Electronics:'📱', Clothes:'👕', Books:'📚', Home:'🏠', Sports:'⚽', Other:'📦' };
+  const CAT_COLORS = { Electronics:'#3b82f6', Clothes:'#ec4899', Books:'#10b981', Home:'#f59e0b', Sports:'#22c55e', Other:'#94a3b8' };
+  const CONDITION_MAP = { 'New':'new', 'Like New':'like-new', 'Good':'good', 'Fair':'fair', 'Poor':'poor' };
+  const CONTACTS = [
+    { phone: '07700 900123', location: 'Town Centre', time: 'Evenings after 6pm' },
+    { phone: '07700 900456', location: 'North Side', time: 'Weekends preferred' },
+    { phone: '07700 900789', location: 'East Quarter', time: 'Any time' },
+    { phone: '07700 900234', location: 'South End', time: 'Mornings before 10am' },
+  ];
+  const AVATARS = ['👨','👩','🧔','👱','🧑','👴','👵','🧒'];
+
+  let listings = [], currentSort = 'newest', currentCat = '';
+
+  function load() {
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      listings = d.listings || [];
+      if (listings.length === 0) listings = seedListings();
+    } catch(e) { listings = seedListings(); }
+  }
+
+  function seedListings() {
+    return [
+      { id:'seed1', title:'Sony WH-1000XM5 Headphones', desc:'Barely used noise cancelling headphones. Box included, all accessories. Selling as I got AirPods.', price:180, cat:'Electronics', condition:'Like New', seller:'Marcus', time: Date.now()-3600000*2, sold:false },
+      { id:'seed2', title:'Nike Air Force 1 (Size 10)', desc:'Worn twice, like new condition. White colourway. Too small for me unfortunately.', price:65, cat:'Clothes', condition:'Like New', seller:'Priya', time: Date.now()-3600000*5, sold:false },
+      { id:'seed3', title:'Harry Potter Complete Book Set', desc:'All 7 books in hardback. Some light wear on spines but excellent condition overall.', price:35, cat:'Books', condition:'Good', seller:'Tom', time: Date.now()-3600000*8, sold:false },
+      { id:'seed4', title:'IKEA Desk Lamp', desc:'White desk lamp, works perfectly. Moving house so selling cheap. Collection only.', price:8, cat:'Home', condition:'Good', seller:'Aisha', time: Date.now()-86400000, sold:false },
+      { id:'seed5', title:'Trek Mountain Bike', desc:'21-speed Trek mountain bike. Serviced last year. Some scratches but rides beautifully.', price:250, cat:'Sports', condition:'Good', seller:'Dan', time: Date.now()-86400000*2, sold:true },
+      { id:'seed6', title:'MacBook Air M1 2020', desc:'M1 MacBook Air, 8GB RAM, 256GB SSD. Perfect condition, still has AppleCare.', price:750, cat:'Electronics', condition:'Good', seller:'Sophie', time: Date.now()-86400000*3, sold:false },
+    ];
+  }
+
+  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ listings })); }
+
+  function listItem() {
+    const title = document.getElementById('li-title').value.trim();
+    const desc = document.getElementById('li-desc').value.trim();
+    const priceRaw = parseFloat(document.getElementById('li-price').value);
+    const cat = document.getElementById('li-cat').value;
+    const condition = document.getElementById('li-condition').value;
+    const seller = document.getElementById('li-seller').value.trim() || 'Anonymous';
+    if (!title) { document.getElementById('li-title').focus(); return; }
+
+    listings.unshift({
+      id: Date.now().toString() + Math.random().toString(36).slice(2),
+      title, desc, price: isNaN(priceRaw) ? 0 : priceRaw,
+      cat, condition, seller, time: Date.now(), sold: false
+    });
+    save(); hideListModal();
+    ['li-title','li-desc','li-price','li-seller'].forEach(id => document.getElementById(id).value = '');
+    renderListings(); updateStats();
+    showToast('🛒 Item listed successfully!');
+  }
+
+  function markSold(id) {
+    const l = listings.find(l => l.id === id);
+    if (l) { l.sold = !l.sold; save(); renderListings(); updateStats(); }
+  }
+
+  function deleteListing(id) {
+    listings = listings.filter(l => l.id !== id);
+    save(); renderListings(); updateStats();
+  }
+
+  function showContact(id) {
+    const l = listings.find(l => l.id === id);
+    if (!l) return;
+    const ci = CONTACTS[Math.floor(Math.random() * CONTACTS.length)];
+    const av = AVATARS[Math.floor(Math.random() * AVATARS.length)];
+    document.getElementById('cm-avatar').textContent = av;
+    document.getElementById('cm-name').textContent = escHtml(l.seller);
+    document.getElementById('cm-item-ref').textContent = 'Re: ' + escHtml(l.title);
+    document.getElementById('cm-contact').textContent = ci.phone;
+    document.getElementById('cm-location').textContent = ci.location;
+    document.getElementById('cm-time').textContent = ci.time;
+    document.getElementById('contact-modal').classList.remove('hidden');
+  }
+
+  function hideContactModal() { document.getElementById('contact-modal').classList.add('hidden'); }
+  function showListModal() { document.getElementById('list-modal').classList.remove('hidden'); }
+  function hideListModal() { document.getElementById('list-modal').classList.add('hidden'); }
+
+  function setSort(s, el) {
+    currentSort = s;
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderListings();
+  }
+
+  function setCatFilter(cat, el) {
+    currentCat = cat;
+    document.getElementById('cat-filter').value = cat;
+    document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    renderListings();
+  }
+
+  function getFiltered() {
+    const q = document.getElementById('search-input').value.toLowerCase().trim();
+    const selCat = document.getElementById('cat-filter').value || currentCat;
+    let list = listings.filter(l => {
+      const matchQ = !q || l.title.toLowerCase().includes(q) || l.desc.toLowerCase().includes(q) || l.seller.toLowerCase().includes(q);
+      const matchCat = !selCat || l.cat === selCat;
+      return matchQ && matchCat;
+    });
+    if (currentSort === 'newest') list.sort((a,b) => b.time - a.time);
+    else if (currentSort === 'price-asc') list.sort((a,b) => a.price - b.price);
+    else list.sort((a,b) => b.price - a.price);
+    return list;
+  }
+
+  function updateStats() {
+    const active = listings.filter(l => !l.sold).length;
+    const sold = listings.filter(l => l.sold).length;
+    document.getElementById('stat-active').textContent = active;
+    document.getElementById('stat-sold').textContent = sold;
+    document.getElementById('stat-total').textContent = listings.length;
+  }
+
+  function timeAgo(ts) {
+    const s = Math.floor((Date.now()-ts)/1000);
+    if(s<60) return 'just now'; if(s<3600) return Math.floor(s/60)+'m ago';
+    if(s<86400) return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago';
+  }
+
+  function renderListings() {
+    const grid = document.getElementById('listings-grid');
+    const filtered = getFiltered();
+    document.getElementById('results-count').textContent = filtered.length + ' listing' + (filtered.length!==1?'s':'');
+    updateStats();
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="empty"><div class="icon">🛒</div><h3>No listings found</h3><p>Try adjusting your search or be the first to list something!</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(l => {
+      const condClass = CONDITION_MAP[l.condition] || 'good';
+      const priceStr = l.price === 0 ? 'Free' : '£' + l.price.toFixed(2);
+      const catColor = CAT_COLORS[l.cat] || '#94a3b8';
+
+      return `
+        <div class="listing-card ${l.sold?'sold':''}">
+          <div class="listing-image" style="background:linear-gradient(135deg,${catColor}22,${catColor}11)">
+            ${CAT_ICONS[l.cat] || '📦'}
+            ${l.sold ? '<div class="sold-overlay">⭕ Sold</div>' : ''}
+            <div class="condition-badge ${condClass}">${l.condition}</div>
+          </div>
+          <div class="listing-body">
+            <div class="listing-cat-row">
+              <span class="listing-cat" style="background:${catColor}22;color:${catColor}">${l.cat}</span>
+              <span class="listing-time">${timeAgo(l.time)}</span>
+            </div>
+            <div class="listing-title">${escHtml(l.title)}</div>
+            <div class="listing-desc">${escHtml(l.desc)}</div>
+            <div class="listing-price ${l.price===0?'free':''}">${priceStr}</div>
+          </div>
+          <div class="listing-actions">
+            <button class="contact-btn" onclick="showContact('${l.id}')" ${l.sold?'disabled':''}>
+              ${l.sold ? '✓ Sold' : '📞 Contact Seller'}
+            </button>
+            <button class="sold-btn" onclick="markSold('${l.id}')">${l.sold?'Relist':'✓ Sold'}</button>
+            <button class="del-btn" onclick="deleteListing('${l.id}')">🗑</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  document.getElementById('list-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('list-modal')) hideListModal();
+  });
+  document.getElementById('contact-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('contact-modal')) hideContactModal();
+  });
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  load(); renderListings();
+</script>
+</body>
+</html>
