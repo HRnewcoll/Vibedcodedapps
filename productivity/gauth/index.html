@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Authenticator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--accent:#6366f1;--accent-dim:rgba(99,102,241,0.15);--glass:rgba(255,255,255,0.05);--glass-border:rgba(255,255,255,0.1);--text:#e2e8f0;--text-muted:#94a3b8;--success:#22c55e;--danger:#ef4444}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);min-height:100vh;color:var(--text);overflow-x:hidden}
+.back-btn{position:fixed;top:20px;left:20px;z-index:100;display:flex;align-items:center;gap:8px;padding:10px 18px;background:var(--glass);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-weight:500;backdrop-filter:blur(20px);transition:all .3s;cursor:pointer;text-decoration:none}
+.back-btn:hover{background:var(--accent-dim);border-color:var(--accent);transform:translateX(-3px)}
+.container{max-width:600px;margin:0 auto;padding:80px 16px 40px}
+h1{font-size:clamp(1.8rem,4vw,2.3rem);font-weight:800;background:linear-gradient(135deg,#a78bfa,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+.subtitle{color:var(--text-muted);font-size:14px;margin-bottom:26px}
+.glass-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;backdrop-filter:blur(20px);padding:22px}
+.section-title{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px}
+input,select,textarea{background:rgba(255,255,255,0.07);border:1px solid var(--glass-border);border-radius:12px;padding:11px 16px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input::placeholder{color:var(--text-muted)}
+select option{background:#1e1b4b}
+.btn{padding:11px 22px;border-radius:12px;border:none;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#5558e3;transform:translateY(-2px);box-shadow:0 8px 25px rgba(99,102,241,0.4)}
+.btn-sm{padding:7px 14px;font-size:12px;border-radius:9px}
+.btn-ghost{background:transparent;border:1px solid var(--glass-border);color:var(--text-muted)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.25);color:var(--danger)}
+.btn-danger:hover{background:rgba(239,68,68,0.25)}
+
+/* Account card */
+.accounts-list{display:flex;flex-direction:column;gap:14px;margin-bottom:20px}
+.account-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:18px;backdrop-filter:blur(20px);padding:20px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.account-card:hover{border-color:rgba(99,102,241,0.4)}
+.account-card:active{transform:scale(0.99)}
+.account-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.account-icon{width:44px;height:44px;border-radius:12px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1px solid rgba(99,102,241,0.3)}
+.account-info{flex:1}
+.account-name{font-weight:700;font-size:16px}
+.account-issuer{font-size:12px;color:var(--text-muted)}
+.code-row{display:flex;align-items:center;gap:16px}
+.totp-code{font-size:2rem;font-weight:800;letter-spacing:.2em;font-family:'Inter',monospace;background:linear-gradient(135deg,#a78bfa,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex:1}
+/* Circular timer */
+.timer-wrap{position:relative;width:44px;height:44px;flex-shrink:0}
+.timer-svg{transform:rotate(-90deg)}
+.timer-circle-bg{fill:none;stroke:rgba(255,255,255,0.1);stroke-width:4}
+.timer-circle{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .9s linear,stroke .5s}
+.timer-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text-muted)}
+.copy-hint{font-size:11px;color:var(--text-muted);margin-top:8px}
+.card-del{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:7px;background:transparent;border:1px solid transparent;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;opacity:0}
+.account-card:hover .card-del{opacity:1}
+.card-del:hover{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.3);color:var(--danger)}
+/* Copied flash */
+@keyframes flashCopy{0%{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4)}100%{background:var(--glass);border-color:var(--glass-border)}}
+.account-card.copied{animation:flashCopy .6s ease forwards}
+/* Form */
+.form-grid{display:flex;flex-direction:column;gap:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.form-row{grid-template-columns:1fr}}
+.helper{font-size:11px;color:var(--text-muted);margin-top:4px}
+/* Add panel */
+.add-panel{background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;backdrop-filter:blur(20px);padding:22px;margin-bottom:20px;display:none}
+.add-panel.open{display:block}
+/* Toast */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;padding:13px 26px;border-radius:13px;font-weight:600;font-size:13px;z-index:999;transition:transform .4s;box-shadow:0 10px 40px rgba(99,102,241,0.4)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+/* Header row */
+.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+.empty{text-align:center;padding:48px 20px;color:var(--text-muted)}
+.empty-icon{font-size:52px;margin-bottom:14px}
+</style>
+</head>
+<body>
+<a href="../../index.html" class="back-btn">← Back</a>
+<div class="container">
+  <h1>🔐 Authenticator</h1>
+  <p class="subtitle">TOTP two-factor authentication codes</p>
+
+  <div class="hdr">
+    <div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="toggleUriPanel()">📷 Add via URI</button>
+      <button class="btn btn-primary btn-sm" onclick="toggleAddPanel()">+ Add Account</button>
+    </div>
+  </div>
+
+  <!-- URI input panel -->
+  <div class="add-panel" id="uriPanel">
+    <div class="section-title">Parse OTPAuth URI</div>
+    <div class="form-grid">
+      <input type="text" id="uriInput" placeholder="otpauth://totp/Example:user@example.com?secret=BASE32SECRET&issuer=Example">
+      <div class="helper">Paste an otpauth:// URI from any service</div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary btn-sm" onclick="addFromUri()">Parse & Add</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleUriPanel()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual add panel -->
+  <div class="add-panel" id="addPanel">
+    <div class="section-title">Add Account Manually</div>
+    <div class="form-grid">
+      <div class="form-row">
+        <input type="text" id="accName" placeholder="Account name (e.g. john@gmail.com)">
+        <input type="text" id="accIssuer" placeholder="Issuer (e.g. Google)">
+      </div>
+      <input type="text" id="accSecret" placeholder="Base32 secret key (e.g. JBSWY3DPEHPK3PXP)" style="font-family:monospace;letter-spacing:.08em">
+      <div class="helper">The secret key is provided by the service when you enable 2FA</div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary btn-sm" onclick="addAccount()">Add Account</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleAddPanel()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accounts list -->
+  <div class="accounts-list" id="accountsList"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// TOTP Implementation (RFC 6238 / RFC 4226)
+// ─────────────────────────────────────────────
+
+// Base32 decode
+function base32Decode(input) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const clean = input.toUpperCase().replace(/=+$/, '').replace(/\s/g, '');
+  let bits = 0, value = 0;
+  const output = [];
+  for (const ch of clean) {
+    const idx = alphabet.indexOf(ch);
+    if (idx === -1) continue;
+    value = (value << 5) | idx;
+    bits += 5;
+    if (bits >= 8) { bits -= 8; output.push((value >>> bits) & 0xff); }
+  }
+  return new Uint8Array(output);
+}
+
+// HMAC-SHA1 using SubtleCrypto
+async function hmacSha1(keyBytes, msgBytes) {
+  const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, msgBytes);
+  return new Uint8Array(sig);
+}
+
+// Convert 64-bit counter to 8-byte big-endian Uint8Array
+function counterToBytes(counter) {
+  const bytes = new Uint8Array(8);
+  let c = BigInt(counter);
+  for (let i = 7; i >= 0; i--) { bytes[i] = Number(c & 0xffn); c >>= 8n; }
+  return bytes;
+}
+
+async function generateTOTP(secret, digits = 6, period = 30) {
+  const t = Math.floor(Date.now() / 1000 / period);
+  const keyBytes = base32Decode(secret);
+  const msgBytes = counterToBytes(t);
+  const hmac = await hmacSha1(keyBytes, msgBytes);
+  const offset = hmac[19] & 0x0f;
+  const code = ((hmac[offset] & 0x7f) << 24) | (hmac[offset+1] << 16) | (hmac[offset+2] << 8) | hmac[offset+3];
+  return String(code % Math.pow(10, digits)).padStart(digits, '0');
+}
+
+// ─── State ───
+let accounts = JSON.parse(localStorage.getItem('totp_accounts') || '[]');
+
+// Demo accounts if empty
+if (!accounts.length) {
+  accounts = [
+    { id: 'demo1', name: 'demo@gmail.com', issuer: 'Google', secret: 'JBSWY3DPEHPK3PXP' },
+    { id: 'demo2', name: 'demo@github.com', issuer: 'GitHub', secret: 'HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ' }
+  ];
+  save();
+}
+
+function save() { localStorage.setItem('totp_accounts', JSON.stringify(accounts)); }
+
+function toggleAddPanel() {
+  const p = document.getElementById('addPanel');
+  p.classList.toggle('open');
+  document.getElementById('uriPanel').classList.remove('open');
+}
+function toggleUriPanel() {
+  const p = document.getElementById('uriPanel');
+  p.classList.toggle('open');
+  document.getElementById('addPanel').classList.remove('open');
+}
+
+function addAccount() {
+  const name = document.getElementById('accName').value.trim();
+  const issuer = document.getElementById('accIssuer').value.trim();
+  const secret = document.getElementById('accSecret').value.trim().toUpperCase().replace(/\s/g,'');
+  if (!name || !secret) { showToast('Name and secret are required'); return; }
+  if (!isValidBase32(secret)) { showToast('Invalid Base32 secret'); return; }
+  accounts.push({ id: Date.now().toString(), name, issuer, secret });
+  save(); renderAccounts();
+  document.getElementById('accName').value = '';
+  document.getElementById('accIssuer').value = '';
+  document.getElementById('accSecret').value = '';
+  document.getElementById('addPanel').classList.remove('open');
+  showToast('Account added!');
+}
+
+function addFromUri() {
+  const uri = document.getElementById('uriInput').value.trim();
+  try {
+    const url = new URL(uri);
+    if (url.protocol !== 'otpauth:') throw new Error();
+    const label = decodeURIComponent(url.pathname.slice(1));
+    const secret = url.searchParams.get('secret');
+    const issuer = url.searchParams.get('issuer') || '';
+    const nameParts = label.split(':');
+    const name = nameParts[nameParts.length - 1].trim();
+    if (!secret) throw new Error('No secret');
+    accounts.push({ id: Date.now().toString(), name, issuer, secret: secret.toUpperCase() });
+    save(); renderAccounts();
+    document.getElementById('uriInput').value = '';
+    document.getElementById('uriPanel').classList.remove('open');
+    showToast('Account added from URI!');
+  } catch (e) { showToast('Invalid otpauth URI'); }
+}
+
+function deleteAccount(id) {
+  accounts = accounts.filter(a => a.id !== id); save(); renderAccounts();
+  showToast('Account removed');
+}
+
+function isValidBase32(s) {
+  return /^[A-Z2-7]+=*$/.test(s) && s.replace(/=/g,'').length > 0;
+}
+
+function getIssuerEmoji(issuer) {
+  const map = { google: '🔵', github: '🐙', facebook: '🔷', twitter: '🐦', instagram: '📸', amazon: '📦', apple: '🍎', microsoft: '🪟', discord: '💬', slack: '💼', dropbox: '📦', steam: '🎮', twitch: '🟣', reddit: '🔴', linkedin: '🔗' };
+  return map[(issuer||'').toLowerCase()] || '🔐';
+}
+
+let codeCache = {};
+
+async function refreshCodes() {
+  for (const acc of accounts) {
+    try {
+      codeCache[acc.id] = await generateTOTP(acc.secret);
+    } catch (e) {
+      codeCache[acc.id] = '------';
+    }
+  }
+  updateCodeDisplays();
+}
+
+function updateCodeDisplays() {
+  const now = Date.now() / 1000;
+  const period = 30;
+  const remaining = period - (Math.floor(now) % period);
+  const CIRCUMFERENCE = 2 * Math.PI * 18;
+  const fraction = remaining / period;
+
+  accounts.forEach(acc => {
+    const codeEl = document.getElementById('code-' + acc.id);
+    const circleEl = document.getElementById('circle-' + acc.id);
+    const timerEl = document.getElementById('timer-' + acc.id);
+    if (codeEl) {
+      const raw = codeCache[acc.id] || '------';
+      codeEl.textContent = raw.slice(0,3) + ' ' + raw.slice(3);
+    }
+    if (circleEl) {
+      const dash = CIRCUMFERENCE * fraction;
+      const stroke = remaining <= 5 ? '#ef4444' : remaining <= 10 ? '#f59e0b' : '#6366f1';
+      circleEl.style.strokeDashoffset = CIRCUMFERENCE - dash;
+      circleEl.style.stroke = stroke;
+    }
+    if (timerEl) timerEl.textContent = remaining;
+  });
+}
+
+function renderAccounts() {
+  const el = document.getElementById('accountsList');
+  if (!accounts.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🔐</div><div>No accounts yet.<br>Add one to get started!</div></div>';
+    return;
+  }
+  const CIRCUMFERENCE = 2 * Math.PI * 18;
+  el.innerHTML = accounts.map(acc => `
+    <div class="account-card" id="card-${acc.id}" onclick="copyCode('${acc.id}')">
+      <button class="card-del" onclick="event.stopPropagation();deleteAccount('${acc.id}')" title="Remove">✕</button>
+      <div class="account-top">
+        <div class="account-icon">${getIssuerEmoji(acc.issuer)}</div>
+        <div class="account-info">
+          <div class="account-name">${escHtml(acc.name)}</div>
+          <div class="account-issuer">${escHtml(acc.issuer||'Manual')}</div>
+        </div>
+      </div>
+      <div class="code-row">
+        <div class="totp-code" id="code-${acc.id}">--- ---</div>
+        <div class="timer-wrap">
+          <svg class="timer-svg" width="44" height="44" viewBox="0 0 44 44">
+            <circle class="timer-circle-bg" cx="22" cy="22" r="18"/>
+            <circle class="timer-circle" id="circle-${acc.id}" cx="22" cy="22" r="18"
+              stroke-dasharray="${CIRCUMFERENCE}"
+              stroke-dashoffset="${CIRCUMFERENCE}"/>
+          </svg>
+          <div class="timer-text" id="timer-${acc.id}">30</div>
+        </div>
+      </div>
+      <div class="copy-hint">Tap to copy</div>
+    </div>`).join('');
+
+  refreshCodes();
+}
+
+async function copyCode(id) {
+  const raw = codeCache[id];
+  if (!raw || raw === '------') { showToast('Code not ready yet'); return; }
+  try {
+    await navigator.clipboard.writeText(raw);
+    showToast('Code copied: ' + raw.slice(0,3) + ' ' + raw.slice(3));
+    const card = document.getElementById('card-' + id);
+    if (card) { card.classList.add('copied'); setTimeout(() => card.classList.remove('copied'), 700); }
+  } catch (e) { showToast('Copy failed'); }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ─── Timing loop ───
+let lastMinute = -1;
+function tick() {
+  const now = Math.floor(Date.now() / 1000);
+  const period = 30;
+  const step = Math.floor(now / period);
+  if (step !== lastMinute) { lastMinute = step; refreshCodes(); }
+  else updateCodeDisplays();
+}
+
+renderAccounts();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>

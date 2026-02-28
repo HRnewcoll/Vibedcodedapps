@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Motivation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--accent:#6366f1;--accent-dim:rgba(99,102,241,0.15);--glass:rgba(255,255,255,0.05);--glass-border:rgba(255,255,255,0.1);--text:#e2e8f0;--text-muted:#94a3b8;--success:#22c55e}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);min-height:100vh;color:var(--text);overflow-x:hidden}
+.back-btn{position:fixed;top:20px;left:20px;z-index:100;display:flex;align-items:center;gap:8px;padding:10px 18px;background:var(--glass);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-weight:500;backdrop-filter:blur(20px);transition:all .3s;cursor:pointer;text-decoration:none}
+.back-btn:hover{background:var(--accent-dim);border-color:var(--accent);transform:translateX(-3px)}
+.container{max-width:800px;margin:0 auto;padding:80px 20px 40px}
+h1{font-size:clamp(1.8rem,4vw,2.4rem);font-weight:800;background:linear-gradient(135deg,#a78bfa,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+.subtitle{color:var(--text-muted);font-size:15px;margin-bottom:28px}
+.glass-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;backdrop-filter:blur(20px);padding:26px;margin-bottom:20px}
+.section-title{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px}
+input,textarea{background:rgba(255,255,255,0.07);border:1px solid var(--glass-border);border-radius:12px;padding:12px 16px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s;width:100%}
+input:focus,textarea:focus{border-color:var(--accent)}
+input::placeholder,textarea::placeholder{color:var(--text-muted)}
+textarea{resize:none}
+.btn{padding:11px 22px;border-radius:12px;border:none;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#5558e3;transform:translateY(-2px);box-shadow:0 8px 25px rgba(99,102,241,0.4)}
+.btn-sm{padding:8px 16px;font-size:13px;border-radius:10px}
+.btn-ghost{background:transparent;border:1px solid var(--glass-border);color:var(--text-muted)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Quote Card */
+.quote-card{background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(124,58,237,0.12));border:1px solid rgba(99,102,241,0.3);border-radius:24px;padding:36px;margin-bottom:20px;text-align:center;position:relative;overflow:hidden}
+.quote-card::before{content:'❝';position:absolute;top:16px;left:24px;font-size:64px;color:rgba(99,102,241,0.15);line-height:1;font-family:Georgia,serif}
+.quote-text{font-size:clamp(1.05rem,2.5vw,1.3rem);font-weight:600;line-height:1.7;color:#e0e7ff;margin-bottom:18px;position:relative;z-index:1}
+.quote-author{font-size:14px;color:#a5b4fc;font-weight:500}
+.quote-actions{display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap}
+
+/* Goals */
+.goals-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.goal-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:12px;transition:all .25s}
+.goal-item.done{background:rgba(34,197,94,0.07);border-color:rgba(34,197,94,0.25)}
+.goal-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--glass-border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;background:transparent;flex-shrink:0;font-size:13px;color:transparent}
+.goal-check:hover{border-color:var(--success)}
+.goal-item.done .goal-check{background:var(--success);border-color:var(--success);color:#fff}
+.goal-text{flex:1;font-size:14px;font-weight:500}
+.goal-item.done .goal-text{text-decoration:line-through;color:var(--text-muted)}
+.goal-del{background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:4px;transition:color .2s}
+.goal-del:hover{color:#ef4444}
+.goal-add{display:flex;gap:10px}
+
+/* Mood */
+.mood-options{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.mood-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 16px;border-radius:14px;border:2px solid transparent;background:rgba(255,255,255,0.05);cursor:pointer;transition:all .25s;min-width:60px}
+.mood-btn:hover{background:var(--accent-dim);border-color:var(--accent)}
+.mood-btn.selected{background:var(--accent-dim);border-color:var(--accent);transform:scale(1.08)}
+.mood-emoji{font-size:28px}
+.mood-label{font-size:10px;color:var(--text-muted);font-weight:500}
+
+/* Weekly mood chart */
+.mood-chart{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.mood-day{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:36px}
+.mood-bar{width:100%;height:40px;border-radius:8px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-size:18px;border:1px solid rgba(255,255,255,0.06)}
+.mood-day-label{font-size:9px;color:var(--text-muted);text-align:center}
+
+/* Gratitude */
+.gratitude-list{display:flex;flex-direction:column;gap:10px}
+.gratitude-item{display:flex;align-items:flex-start;gap:12px}
+.gratitude-num{width:26px;height:26px;border-radius:50%;background:var(--accent-dim);border:1px solid rgba(99,102,241,0.3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#a5b4fc;flex-shrink:0;margin-top:8px}
+
+/* Toast */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;padding:14px 28px;border-radius:14px;font-weight:600;font-size:14px;z-index:999;transition:transform .4s;box-shadow:0 10px 40px rgba(99,102,241,0.4)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.glass-card{animation:fadeInUp .5s ease both}
+.quote-card{animation:fadeInUp .4s ease both}
+</style>
+</head>
+<body>
+<a href="../../index.html" class="back-btn">← Back</a>
+<div class="container">
+  <h1>✨ Daily Motivation</h1>
+  <p class="subtitle" id="todayDate"></p>
+
+  <!-- Quote Section -->
+  <div class="quote-card" id="quoteCard">
+    <div class="quote-text" id="quoteText"></div>
+    <div class="quote-author" id="quoteAuthor"></div>
+    <div class="quote-actions">
+      <button class="btn btn-ghost btn-sm" onclick="newQuote()">🔄 New Quote</button>
+      <button class="btn btn-ghost btn-sm" onclick="shareQuote()">📋 Copy</button>
+    </div>
+  </div>
+
+  <!-- Mood -->
+  <div class="glass-card">
+    <div class="section-title">How are you feeling today?</div>
+    <div class="mood-options" id="moodOptions">
+      <div class="mood-btn" data-mood="1" onclick="setMood(1)"><div class="mood-emoji">😔</div><div class="mood-label">Rough</div></div>
+      <div class="mood-btn" data-mood="2" onclick="setMood(2)"><div class="mood-emoji">😕</div><div class="mood-label">Meh</div></div>
+      <div class="mood-btn" data-mood="3" onclick="setMood(3)"><div class="mood-emoji">😐</div><div class="mood-label">Okay</div></div>
+      <div class="mood-btn" data-mood="4" onclick="setMood(4)"><div class="mood-emoji">😊</div><div class="mood-label">Good</div></div>
+      <div class="mood-btn" data-mood="5" onclick="setMood(5)"><div class="mood-emoji">🤩</div><div class="mood-label">Amazing</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:8px" id="moodSaved"></div>
+    <div style="margin-top:18px">
+      <div class="section-title">This week's mood</div>
+      <div class="mood-chart" id="moodChart"></div>
+    </div>
+  </div>
+
+  <!-- Goals -->
+  <div class="glass-card">
+    <div class="section-title">Today's Goals <span style="color:var(--accent)" id="goalProgress"></span></div>
+    <div class="goals-list" id="goalsList"></div>
+    <div class="goal-add" id="goalAddRow">
+      <input type="text" id="goalInput" placeholder="Add a goal for today..." maxlength="120" onkeydown="if(event.key==='Enter')addGoal()">
+      <button class="btn btn-primary btn-sm" onclick="addGoal()" style="white-space:nowrap">Add</button>
+    </div>
+  </div>
+
+  <!-- Gratitude Journal -->
+  <div class="glass-card">
+    <div class="section-title">🙏 Gratitude Journal</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">What are 3 things you're grateful for today?</p>
+    <div class="gratitude-list" id="gratitudeList">
+      <div class="gratitude-item"><div class="gratitude-num">1</div><textarea id="g1" rows="2" placeholder="I'm grateful for..." onblur="saveGratitude()"></textarea></div>
+      <div class="gratitude-item"><div class="gratitude-num">2</div><textarea id="g2" rows="2" placeholder="I'm grateful for..." onblur="saveGratitude()"></textarea></div>
+      <div class="gratitude-item"><div class="gratitude-num">3</div><textarea id="g3" rows="2" placeholder="I'm grateful for..." onblur="saveGratitude()"></textarea></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const QUOTES=[
+  {text:"The secret of getting ahead is getting started.",author:"Mark Twain"},
+  {text:"It always seems impossible until it's done.",author:"Nelson Mandela"},
+  {text:"Don't watch the clock; do what it does. Keep going.",author:"Sam Levenson"},
+  {text:"Believe you can and you're halfway there.",author:"Theodore Roosevelt"},
+  {text:"You don't have to be great to start, but you have to start to be great.",author:"Zig Ziglar"},
+  {text:"Success is not final, failure is not fatal: it is the courage to continue that counts.",author:"Winston Churchill"},
+  {text:"The only way to do great work is to love what you do.",author:"Steve Jobs"},
+  {text:"In the middle of every difficulty lies opportunity.",author:"Albert Einstein"},
+  {text:"Act as if what you do makes a difference. It does.",author:"William James"},
+  {text:"Quality is not an act, it is a habit.",author:"Aristotle"},
+  {text:"It does not matter how slowly you go as long as you do not stop.",author:"Confucius"},
+  {text:"Everything you've ever wanted is on the other side of fear.",author:"George Addair"},
+  {text:"Try to be a rainbow in someone's cloud.",author:"Maya Angelou"},
+  {text:"You miss 100% of the shots you don't take.",author:"Wayne Gretzky"},
+  {text:"Whether you think you can or you think you can't, you're right.",author:"Henry Ford"},
+  {text:"The best time to plant a tree was 20 years ago. The second best time is now.",author:"Chinese Proverb"},
+  {text:"An unexamined life is not worth living.",author:"Socrates"},
+  {text:"Spread love everywhere you go.",author:"Mother Teresa"},
+  {text:"When you reach the end of your rope, tie a knot in it and hang on.",author:"Franklin D. Roosevelt"},
+  {text:"Always remember that you are absolutely unique. Just like everyone else.",author:"Margaret Mead"},
+  {text:"Do not go where the path may lead; go instead where there is no path and leave a trail.",author:"Ralph Waldo Emerson"},
+  {text:"You will face many defeats in life, but never let yourself be defeated.",author:"Maya Angelou"},
+  {text:"The greatest glory in living lies not in never falling, but in rising every time we fall.",author:"Nelson Mandela"},
+  {text:"In the end, it's not the years in your life that count. It's the life in your years.",author:"Abraham Lincoln"},
+  {text:"Never let the fear of striking out keep you from playing the game.",author:"Babe Ruth"},
+  {text:"Life is either a daring adventure or nothing at all.",author:"Helen Keller"},
+  {text:"Many of life's failures are people who did not realize how close they were to success when they gave up.",author:"Thomas A. Edison"},
+  {text:"You have brains in your head. You have feet in your shoes. You can steer yourself any direction you choose.",author:"Dr. Seuss"},
+  {text:"If life were predictable it would cease to be life, and be without flavor.",author:"Eleanor Roosevelt"},
+  {text:"If you look at what you have in life, you'll always have more.",author:"Oprah Winfrey"},
+  {text:"If you want to live a happy life, tie it to a goal, not to people or things.",author:"Albert Einstein"},
+  {text:"Never let the fear of striking out keep you from playing the game.",author:"Babe Ruth"},
+  {text:"Money and success don't change people; they merely amplify what is already there.",author:"Will Smith"},
+  {text:"Your time is limited, so don't waste it living someone else's life.",author:"Steve Jobs"},
+  {text:"Not how long, but how well you have lived is the main thing.",author:"Seneca"},
+  {text:"If life were predictable it would cease to be life, and be without flavor.",author:"Eleanor Roosevelt"},
+  {text:"The purpose of our lives is to be happy.",author:"Dalai Lama"},
+  {text:"Get busy living or get busy dying.",author:"Stephen King"},
+  {text:"You only live once, but if you do it right, once is enough.",author:"Mae West"},
+  {text:"Live in the sunshine, swim the sea, drink the wild air.",author:"Ralph Waldo Emerson"},
+  {text:"Go confidently in the direction of your dreams! Live the life you've imagined.",author:"Henry David Thoreau"},
+  {text:"When I stand before God at the end of my life, I would hope that I would not have a single bit of talent left.",author:"Erma Bombeck"},
+  {text:"Dost thou love life? Then do not squander time, for that's the stuff life is made of.",author:"Benjamin Franklin"},
+  {text:"Do not stop thinking of life as an adventure.",author:"Eleanor Roosevelt"},
+  {text:"Happiness is not something ready-made. It comes from your own actions.",author:"Dalai Lama"},
+  {text:"First, have a definite, clear practical ideal; a goal, an objective.",author:"Aristotle"},
+  {text:"Clouds come floating into my life, no longer to carry rain or usher storm, but to add color to my sunset sky.",author:"Rabindranath Tagore"},
+  {text:"Success usually comes to those who are too busy to be looking for it.",author:"Henry David Thoreau"},
+  {text:"Opportunities don't happen. You create them.",author:"Chris Grosser"},
+  {text:"If you really look closely, most overnight successes took a long time.",author:"Steve Jobs"},
+  {text:"The way to get started is to quit talking and begin doing.",author:"Walt Disney"},
+  {text:"If you are not willing to risk the usual, you will have to settle for the ordinary.",author:"Jim Rohn"},
+  {text:"The road to success and the road to failure are almost exactly the same.",author:"Colin R. Davis"}
+];
+const MOOD_EMOJIS={1:'😔',2:'😕',3:'😐',4:'😊',5:'🤩'};
+const DAYS_SHORT=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function todayKey(){return new Date().toISOString().slice(0,10)}
+function dateKey(d){return d.toISOString().slice(0,10)}
+function getData(){return JSON.parse(localStorage.getItem('motivation_data')||'{}')}
+function setData(d){localStorage.setItem('motivation_data',JSON.stringify(d))}
+function getDayData(key){const d=getData();return d[key]||(d[key]={goals:[],mood:0,gratitude:['','',''],quoteIndex:-1}),d[key]}
+function saveDayData(key,day){const d=getData();d[key]=day;setData(d)}
+
+let currentQuoteIndex=-1;
+
+// Date display
+(function(){
+  const now=new Date();
+  document.querySelector('.subtitle').textContent=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+})();
+
+// Quote logic
+function showQuote(idx){
+  const q=QUOTES[idx];
+  document.getElementById('quoteText').textContent=q.text;
+  document.getElementById('quoteAuthor').textContent='— '+q.author;
+  currentQuoteIndex=idx;
+  // Save daily quote
+  const day=getDayData(todayKey());
+  if(day.quoteIndex===-1){day.quoteIndex=idx;saveDayData(todayKey(),day)}
+}
+
+function newQuote(){
+  let idx=Math.floor(Math.random()*QUOTES.length);
+  if(idx===currentQuoteIndex)idx=(idx+1)%QUOTES.length;
+  showQuote(idx);
+}
+
+function shareQuote(){
+  const q=QUOTES[currentQuoteIndex];
+  navigator.clipboard.writeText(`"${q.text}" — ${q.author}`).then(()=>showToast('Quote copied to clipboard!'));
+}
+
+// Mood
+function setMood(val){
+  const day=getDayData(todayKey());
+  day.mood=val;saveDayData(todayKey(),day);
+  document.querySelectorAll('.mood-btn').forEach(b=>{b.classList.toggle('selected',+b.dataset.mood===val)});
+  document.getElementById('moodSaved').textContent=`Mood saved: ${MOOD_EMOJIS[val]}`;
+  renderMoodChart();
+}
+
+function renderMoodChart(){
+  const chart=document.getElementById('moodChart');
+  let html='';
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const k=dateKey(d);
+    const data=getData()[k];
+    const mood=data&&data.mood?data.mood:0;
+    html+=`<div class="mood-day">
+      <div class="mood-bar" style="${mood?'background:var(--accent-dim);border-color:rgba(99,102,241,0.3)':''}">${mood?MOOD_EMOJIS[mood]:''}</div>
+      <div class="mood-day-label">${DAYS_SHORT[d.getDay()]}</div>
+    </div>`;
+  }
+  chart.innerHTML=html;
+}
+
+// Goals
+function addGoal(){
+  const day=getDayData(todayKey());
+  if(day.goals.length>=5){showToast('Max 5 goals per day');return}
+  const val=document.getElementById('goalInput').value.trim();
+  if(!val)return;
+  day.goals.push({id:Date.now().toString(),text:val,done:false});
+  saveDayData(todayKey(),day);
+  document.getElementById('goalInput').value='';
+  renderGoals();
+}
+
+function toggleGoal(id){
+  const day=getDayData(todayKey());
+  const g=day.goals.find(g=>g.id===id);
+  if(g)g.done=!g.done;
+  saveDayData(todayKey(),day);renderGoals();
+}
+
+function deleteGoal(id){
+  const day=getDayData(todayKey());
+  day.goals=day.goals.filter(g=>g.id!==id);
+  saveDayData(todayKey(),day);renderGoals();
+}
+
+function renderGoals(){
+  const day=getDayData(todayKey());
+  const done=day.goals.filter(g=>g.done).length;
+  document.getElementById('goalProgress').textContent=day.goals.length?`(${done}/${day.goals.length})`:'';
+  document.getElementById('goalsList').innerHTML=day.goals.map(g=>`
+    <div class="goal-item ${g.done?'done':''}">
+      <button class="goal-check" onclick="toggleGoal('${g.id}')">${g.done?'✓':''}</button>
+      <div class="goal-text">${escHtml(g.text)}</div>
+      <button class="goal-del" onclick="deleteGoal('${g.id}')">✕</button>
+    </div>`).join('');
+  // Show/hide add row
+  document.getElementById('goalAddRow').style.display=day.goals.length>=5?'none':'flex';
+}
+
+// Gratitude
+function saveGratitude(){
+  const day=getDayData(todayKey());
+  day.gratitude=[
+    document.getElementById('g1').value,
+    document.getElementById('g2').value,
+    document.getElementById('g3').value
+  ];
+  saveDayData(todayKey(),day);
+}
+
+function loadGratitude(){
+  const day=getDayData(todayKey());
+  if(day.gratitude){
+    document.getElementById('g1').value=day.gratitude[0]||'';
+    document.getElementById('g2').value=day.gratitude[1]||'';
+    document.getElementById('g3').value=day.gratitude[2]||'';
+  }
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+// Init
+(function(){
+  const day=getDayData(todayKey());
+  const qi=day.quoteIndex>=0?day.quoteIndex:Math.floor(Math.random()*QUOTES.length);
+  showQuote(qi);
+  if(day.mood){
+    document.querySelectorAll('.mood-btn').forEach(b=>{b.classList.toggle('selected',+b.dataset.mood===day.mood)});
+    document.getElementById('moodSaved').textContent=`Mood saved: ${MOOD_EMOJIS[day.mood]}`;
+  }
+  renderGoals();renderMoodChart();loadGratitude();
+})();
+</script>
+</body>
+</html>
