@@ -276,15 +276,15 @@ async function runOCR(){
       logger:m=>{
         if(m.status==='recognizing text'){
           const pct=Math.round(m.progress*100);
-          setProgress(pct,'Recognising text… '+pct+'%');
+          setProgress(pct,'Recognizing text… '+pct+'%');
         } else if(m.status==='loading tesseract core'){
           setProgress(5,'Loading Tesseract core…');
         } else if(m.status==='initializing tesseract'){
-          setProgress(15,'Initialising engine…');
+          setProgress(15,'Initializing engine…');
         } else if(m.status==='loading language traineddata'){
           setProgress(30,'Loading language data…');
         } else if(m.status==='initializing api'){
-          setProgress(50,'Initialising API…');
+          setProgress(50,'Initializing API…');
         }
       }
     });
