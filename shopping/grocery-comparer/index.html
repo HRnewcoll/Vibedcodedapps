@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Grocery Price Comparer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg1:#0d1b2a;--bg2:#1b2838;--bg3:#1e3a5f;
+  --blue:#3b82f6;--blue2:#2563eb;--tesco:#e02020;
+  --glass:rgba(59,130,246,0.08);--glass2:rgba(255,255,255,0.04);
+  --border:rgba(59,130,246,0.2);--text:#e0f2fe;--text2:#93c5fd;
+}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));min-height:100vh;color:var(--text)}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 70%,rgba(59,130,246,0.08) 0%,transparent 60%);pointer-events:none;z-index:0}
+
+nav{position:sticky;top:0;z-index:100;background:rgba(13,27,42,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:16px}
+.back-btn{display:flex;align-items:center;gap:6px;text-decoration:none;color:var(--text2);font-size:14px;font-weight:500;padding:7px 14px;border:1px solid var(--border);border-radius:8px;background:var(--glass);transition:.2s}
+.back-btn:hover{background:rgba(59,130,246,0.2);color:#bfdbfe}
+.back-btn svg{width:16px;height:16px}
+nav h1{font-size:18px;font-weight:800;background:linear-gradient(90deg,var(--blue),#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-actions{margin-left:auto;display:flex;gap:8px}
+.nav-btn{padding:7px 14px;border:1px solid var(--border);border-radius:8px;background:var(--glass);color:var(--text2);cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;transition:.2s}
+.nav-btn:hover{background:rgba(59,130,246,0.2)}
+
+main{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:24px 20px;display:flex;flex-direction:column;gap:24px}
+
+/* Add Item section */
+.add-section{background:rgba(20,35,55,0.7);border:1px solid var(--border);border-radius:20px;padding:22px 24px;backdrop-filter:blur(10px)}
+.add-section h2{font-size:18px;font-weight:700;color:var(--blue);margin-bottom:16px}
+.add-row{display:flex;gap:10px;flex-wrap:wrap}
+.add-row input{flex:1;min-width:140px;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:.2s}
+.add-row input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
+.add-row input::placeholder{color:rgba(147,197,253,0.3)}
+.add-btn{padding:10px 20px;background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:.2s;white-space:nowrap}
+.add-btn:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(59,130,246,0.4)}
+
+/* Supermarket headers */
+.store-headers{display:flex;gap:0;background:rgba(20,35,55,0.5);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:4px}
+.store-head{flex:1;text-align:center;padding:10px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;min-width:0}
+
+/* Items table */
+.items-container{display:flex;flex-direction:column;gap:6px}
+.item-row{background:rgba(20,35,55,0.65);border:1px solid var(--border);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);transition:.2s}
+.item-row:hover{border-color:rgba(59,130,246,0.4)}
+.item-name-cell{flex:1.2;min-width:0}
+.item-name{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-unit{font-size:11px;color:var(--text2);opacity:.55}
+.prices-cells{display:flex;flex:3;gap:6px}
+.price-cell{flex:1;min-width:0;text-align:center}
+.price-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(59,130,246,0.15);color:var(--text);padding:6px 4px;border-radius:7px;font-size:13px;font-family:'Inter',sans-serif;text-align:center;outline:none;transition:.2s}
+.price-input:focus{border-color:var(--blue);background:rgba(59,130,246,0.08)}
+.price-input.best-price{background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.4);color:#86efac;font-weight:700}
+.price-input.worst-price{background:rgba(239,68,68,0.07);border-color:rgba(239,68,68,0.2)}
+.delete-btn{width:28px;height:28px;background:none;border:1px solid rgba(239,68,68,0.2);border-radius:7px;color:rgba(239,68,68,0.5);cursor:pointer;font-size:14px;transition:.2s;flex-shrink:0}
+.delete-btn:hover{background:rgba(239,68,68,0.15);color:#fca5a5;border-color:rgba(239,68,68,0.5)}
+.best-badge-mini{display:inline-block;font-size:9px;background:#22c55e;color:#fff;border-radius:4px;padding:1px 4px;margin-top:2px;font-weight:700}
+
+/* Summary */
+.summary-section{background:rgba(20,35,55,0.7);border:1px solid var(--border);border-radius:20px;padding:24px;backdrop-filter:blur(10px)}
+.summary-title{font-size:18px;font-weight:700;color:var(--blue);margin-bottom:20px}
+.totals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.total-card{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;transition:.3s}
+.total-card.cheapest{border-color:#22c55e;background:rgba(34,197,94,0.08);box-shadow:0 0 20px rgba(34,197,94,0.15)}
+.total-card.priciest{border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.06)}
+.total-store{font-size:12px;font-weight:700;margin-bottom:4px}
+.total-price{font-size:22px;font-weight:800;color:var(--blue)}
+.total-card.cheapest .total-price{color:#86efac}
+.total-card.priciest .total-price{color:#fca5a5}
+.total-badge{font-size:10px;margin-top:4px;font-weight:600}
+.savings-banner{background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(16,185,129,0.08));border:1px solid rgba(34,197,94,0.3);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.savings-icon{font-size:28px}
+.savings-text{font-size:15px;font-weight:600;color:#86efac}
+.savings-sub{font-size:12px;color:var(--text2);opacity:.7;margin-top:2px}
+
+/* Bar chart */
+.chart-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:12px}
+.bar-chart{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-store-name{font-size:12px;color:var(--text2);min-width:90px;text-align:right}
+.bar-track{flex:1;height:22px;background:rgba(255,255,255,0.05);border-radius:11px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:11px;transition:width .6s cubic-bezier(.22,1,.36,1);display:flex;align-items:center;padding-left:10px}
+.bar-val{font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+
+/* Empty state */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text2);opacity:.45}
+
+@media(max-width:700px){
+  .prices-cells{display:grid;grid-template-columns:repeat(3,1fr)}
+  .item-row{flex-wrap:wrap}
+  .totals-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:480px){
+  .totals-grid{grid-template-columns:repeat(2,1fr)}
+  .prices-cells{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<nav>
+  <a class="back-btn" href="../../index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>Back
+  </a>
+  <h1>🛒 Grocery Comparer</h1>
+  <div class="nav-actions">
+    <button class="nav-btn" onclick="exportList()">📋 Export</button>
+    <button class="nav-btn" onclick="resetToSample()">🔄 Sample Data</button>
+  </div>
+</nav>
+
+<main>
+  <!-- Add item -->
+  <div class="add-section">
+    <h2>➕ Add Grocery Item</h2>
+    <div class="add-row">
+      <input id="newItemName" type="text" placeholder="Item name (e.g. Whole Milk 2L)" onkeydown="if(event.key==='Enter')addItem()"/>
+      <input id="newItemUnit" type="text" placeholder="Unit (e.g. 2L, 800g)" style="max-width:110px"/>
+      <button class="add-btn" onclick="addItem()">+ Add Item</button>
+    </div>
+  </div>
+
+  <!-- Table headers + items -->
+  <div>
+    <div class="store-headers" id="storeHeaders"></div>
+    <div class="items-container" id="itemsContainer">
+      <div class="empty-state">Loading sample groceries…</div>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-section" id="summarySection">
+    <div class="summary-title">📊 Basket Comparison</div>
+    <div class="totals-grid" id="totalsGrid"></div>
+    <div class="savings-banner" id="savingsBanner" style="display:none">
+      <span class="savings-icon">💰</span>
+      <div>
+        <div class="savings-text" id="savingsText"></div>
+        <div class="savings-sub" id="savingsSub"></div>
+      </div>
+    </div>
+    <div class="chart-title">Total Basket Cost by Supermarket</div>
+    <div class="bar-chart" id="barChart"></div>
+  </div>
+</main>
+
+<script>
+const STORES=[
+  {id:'tesco',name:'Tesco',color:'#e02020',icon:'🛒'},
+  {id:'sainsburys',name:"Sainsbury's",color:'#f59e0b',icon:'🟠'},
+  {id:'asda',name:'Asda',color:'#22c55e',icon:'🟢'},
+  {id:'morrisons',name:'Morrisons',color:'#f97316',icon:'🟡'},
+  {id:'lidl',name:'Lidl',color:'#3b82f6',icon:'🔵'},
+  {id:'aldi',name:'Aldi',color:'#8b5cf6',icon:'🟣'},
+];
+
+const SAMPLE_ITEMS=[
+  {id:'1',name:'Whole Milk 2L',unit:'2L',prices:{tesco:1.09,sainsburys:1.10,asda:1.05,morrisons:1.08,lidl:0.99,aldi:0.95}},
+  {id:'2',name:'White Bread 800g',unit:'800g',prices:{tesco:1.15,sainsburys:1.20,asda:1.09,morrisons:1.10,lidl:0.89,aldi:0.85}},
+  {id:'3',name:'Free Range Eggs 12pk',unit:'12 eggs',prices:{tesco:2.75,sainsburys:2.89,asda:2.65,morrisons:2.70,lidl:2.49,aldi:2.45}},
+  {id:'4',name:'Cheddar Cheese 400g',unit:'400g',prices:{tesco:2.50,sainsburys:2.65,asda:2.45,morrisons:2.55,lidl:2.29,aldi:2.19}},
+  {id:'5',name:'Chicken Breast 500g',unit:'500g',prices:{tesco:3.50,sainsburys:3.75,asda:3.25,morrisons:3.40,lidl:3.09,aldi:2.99}},
+  {id:'6',name:'Baked Beans 400g',unit:'400g',prices:{tesco:0.65,sainsburys:0.70,asda:0.60,morrisons:0.62,lidl:0.49,aldi:0.45}},
+  {id:'7',name:'Orange Juice 1L',unit:'1L',prices:{tesco:1.25,sainsburys:1.35,asda:1.20,morrisons:1.25,lidl:1.09,aldi:0.99}},
+  {id:'8',name:'Butter 250g',unit:'250g',prices:{tesco:1.75,sainsburys:1.85,asda:1.70,morrisons:1.72,lidl:1.59,aldi:1.49}},
+  {id:'9',name:'Bananas (5 pack)',unit:'5 pack',prices:{tesco:0.69,sainsburys:0.72,asda:0.65,morrisons:0.67,lidl:0.59,aldi:0.55}},
+  {id:'10',name:'Pasta 500g',unit:'500g',prices:{tesco:0.85,sainsburys:0.90,asda:0.79,morrisons:0.82,lidl:0.65,aldi:0.59}},
+  {id:'11',name:'Tomato Sauce 500g',unit:'500g',prices:{tesco:0.95,sainsburys:1.05,asda:0.89,morrisons:0.92,lidl:0.79,aldi:0.75}},
+  {id:'12',name:'Greek Yoghurt 500g',unit:'500g',prices:{tesco:1.50,sainsburys:1.60,asda:1.45,morrisons:1.48,lidl:1.29,aldi:1.19}},
+];
+
+let items=[];
+let nextId=100;
+
+function loadData(){
+  const saved=localStorage.getItem('groceryItems');
+  if(saved){
+    try{items=JSON.parse(saved);return;}catch(e){}
+  }
+  resetToSample();
+}
+
+function saveData(){
+  localStorage.setItem('groceryItems',JSON.stringify(items));
+}
+
+function resetToSample(){
+  items=JSON.parse(JSON.stringify(SAMPLE_ITEMS));
+  saveData();
+  renderAll();
+}
+
+function addItem(){
+  const name=document.getElementById('newItemName').value.trim();
+  const unit=document.getElementById('newItemUnit').value.trim();
+  if(!name)return;
+  const prices={};
+  STORES.forEach(s=>{prices[s.id]=null;});
+  items.push({id:String(nextId++),name,unit,prices});
+  saveData();
+  renderAll();
+  document.getElementById('newItemName').value='';
+  document.getElementById('newItemUnit').value='';
+}
+
+function deleteItem(id){
+  items=items.filter(i=>i.id!==id);
+  saveData();
+  renderAll();
+}
+
+function updatePrice(itemId,storeId,value){
+  const item=items.find(i=>i.id===itemId);
+  if(!item)return;
+  const v=parseFloat(value);
+  item.prices[storeId]=isNaN(v)||value===''?null:Math.round(v*100)/100;
+  saveData();
+  updateHighlights(itemId);
+  renderSummary();
+}
+
+function updateHighlights(itemId){
+  const item=items.find(i=>i.id===itemId);
+  if(!item)return;
+  const vals=STORES.map(s=>({id:s.id,v:item.prices[s.id]})).filter(x=>x.v!==null);
+  if(!vals.length)return;
+  const min=Math.min(...vals.map(x=>x.v));
+  const max=Math.max(...vals.map(x=>x.v));
+  STORES.forEach(s=>{
+    const inp=document.querySelector(`input[data-item="${itemId}"][data-store="${s.id}"]`);
+    if(!inp)return;
+    inp.classList.remove('best-price','worst-price');
+    if(item.prices[s.id]===min&&vals.length>1)inp.classList.add('best-price');
+    else if(item.prices[s.id]===max&&vals.length>1)inp.classList.add('worst-price');
+  });
+}
+
+function renderAll(){
+  renderHeaders();
+  renderItems();
+  renderSummary();
+}
+
+function renderHeaders(){
+  const el=document.getElementById('storeHeaders');
+  const nameW=Math.round(100/6); // percentage for store cols (approx)
+  el.innerHTML=`<div style="flex:1.4;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text2);opacity:.6;letter-spacing:.5px">ITEM</div>`+
+    STORES.map(s=>`<div class="store-head" style="color:${s.color};border-left:1px solid rgba(59,130,246,0.1)">${s.icon} ${s.name}</div>`).join('')+
+    `<div style="width:36px"></div>`;
+}
+
+function renderItems(){
+  const el=document.getElementById('itemsContainer');
+  if(!items.length){el.innerHTML='<div class="empty-state">📦 No items yet. Add your first grocery item above!</div>';return;}
+  el.innerHTML=items.map(item=>{
+    const vals=STORES.map(s=>item.prices[s.id]).filter(v=>v!==null);
+    const min=vals.length?Math.min(...vals):null;
+    const max=vals.length?Math.max(...vals):null;
+    const priceCells=STORES.map(s=>{
+      const v=item.prices[s.id];
+      const isBest=v!==null&&v===min&&vals.length>1;
+      const isWorst=v!==null&&v===max&&vals.length>1;
+      return `<div class="price-cell">
+        <input class="price-input${isBest?' best-price':isWorst?' worst-price':''}" 
+          type="number" min="0" step="0.01" 
+          value="${v!==null?v.toFixed(2):''}" 
+          placeholder="—"
+          data-item="${item.id}" data-store="${s.id}"
+          onchange="updatePrice('${item.id}','${s.id}',this.value)"
+          oninput="updatePrice('${item.id}','${s.id}',this.value)"/>
+        ${isBest?'<div class="best-badge-mini">BEST</div>':''}
+      </div>`;
+    }).join('');
+    return `<div class="item-row">
+      <div class="item-name-cell">
+        <div class="item-name">${item.name}</div>
+        ${item.unit?`<div class="item-unit">${item.unit}</div>`:''}
+      </div>
+      <div class="prices-cells">${priceCells}</div>
+      <button class="delete-btn" onclick="deleteItem('${item.id}')" title="Remove item">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderSummary(){
+  const totals={};
+  STORES.forEach(s=>{
+    totals[s.id]=items.reduce((sum,item)=>sum+(item.prices[s.id]||0),0);
+  });
+  const validStores=STORES.filter(s=>totals[s.id]>0);
+  if(!validStores.length){
+    document.getElementById('totalsGrid').innerHTML='<p style="color:var(--text2);opacity:.5;font-size:13px">Enter prices to see comparison</p>';
+    document.getElementById('barChart').innerHTML='';
+    document.getElementById('savingsBanner').style.display='none';
+    return;
+  }
+  const prices=validStores.map(s=>totals[s.id]);
+  const minPrice=Math.min(...prices);
+  const maxPrice=Math.max(...prices);
+  const cheapestStore=validStores.find(s=>totals[s.id]===minPrice);
+  const priciest=validStores.find(s=>totals[s.id]===maxPrice);
+  const saving=maxPrice-minPrice;
+
+  // Totals grid
+  document.getElementById('totalsGrid').innerHTML=STORES.map(s=>{
+    const t=totals[s.id];
+    if(!t)return '';
+    const isCheapest=t===minPrice&&validStores.length>1;
+    const isPriciest=t===maxPrice&&validStores.length>1;
+    return `<div class="total-card${isCheapest?' cheapest':isPriciest?' priciest':''}">
+      <div class="total-store" style="color:${s.color}">${s.icon} ${s.name}</div>
+      <div class="total-price">£${t.toFixed(2)}</div>
+      ${isCheapest?'<div class="total-badge" style="color:#86efac">✓ Cheapest</div>':''}
+      ${isPriciest?'<div class="total-badge" style="color:#fca5a5">↑ Most Expensive</div>':''}
+    </div>`;
+  }).join('');
+
+  // Savings banner
+  if(saving>0.01&&validStores.length>1){
+    document.getElementById('savingsBanner').style.display='flex';
+    document.getElementById('savingsText').textContent=`Shop at ${cheapestStore.name} and save £${saving.toFixed(2)} vs ${priciest.name}`;
+    document.getElementById('savingsSub').textContent=`That's ${Math.round((saving/maxPrice)*100)}% cheaper — £${minPrice.toFixed(2)} vs £${maxPrice.toFixed(2)}`;
+  } else document.getElementById('savingsBanner').style.display='none';
+
+  // Bar chart
+  const chartMax=maxPrice*1.05;
+  document.getElementById('barChart').innerHTML=STORES.map(s=>{
+    const t=totals[s.id];if(!t)return '';
+    const pct=(t/chartMax)*100;
+    const isCheapest=t===minPrice&&validStores.length>1;
+    return `<div class="bar-row">
+      <div class="bar-store-name" style="color:${s.color}">${s.icon} ${s.name}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pct}%;background:${isCheapest?'#22c55e':s.color};opacity:${isCheapest?1:.75}">
+          <span class="bar-val">£${t.toFixed(2)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function exportList(){
+  const lines=['🛒 Grocery Shopping List','='+'='.repeat(40),''];
+  items.forEach(item=>{
+    lines.push(`• ${item.name}${item.unit?' ('+item.unit+')':''}`);
+    const vals=STORES.map(s=>item.prices[s.id]!==null?`${s.name}: £${item.prices[s.id].toFixed(2)}`:'').filter(Boolean);
+    if(vals.length)lines.push('  '+vals.join(' | '));
+  });
+  lines.push('','─'.repeat(40));
+  lines.push('BASKET TOTALS:');
+  STORES.forEach(s=>{
+    const t=items.reduce((sum,item)=>sum+(item.prices[s.id]||0),0);
+    if(t>0)lines.push(`  ${s.name}: £${t.toFixed(2)}`);
+  });
+  lines.push('','Generated by Grocery Comparer');
+  const text=lines.join('\n');
+  const blob=new Blob([text],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='grocery-list.txt';a.click();URL.revokeObjectURL(a.href);
+}
+
+loadData();
+</script>
+</body>
+</html>
