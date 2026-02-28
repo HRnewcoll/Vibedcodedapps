@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Quran Reader</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bg1:#040f07;--bg2:#071a0e;--bg3:#0a2414;--bg4:#0d2e19;
+    --accent:#10b981;--accent2:#059669;--accent3:#34d399;
+    --gold:#f59e0b;--gold2:#fbbf24;--gold3:#fde68a;
+    --glass:rgba(16,185,129,0.06);--glass2:rgba(16,185,129,0.12);
+    --border:rgba(16,185,129,0.18);--border2:rgba(16,185,129,0.3);
+    --text:#e8f5ee;--text2:#a7c4b0;--text3:#5a8a6d;
+    --sidebar-w:280px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:linear-gradient(160deg,var(--bg1) 0%,var(--bg2) 30%,var(--bg3) 60%,var(--bg4) 100%);
+    min-height:100vh;color:var(--text);overflow:hidden;
+    height:100vh;display:flex;flex-direction:column;
+  }
+
+  /* TOP BAR */
+  .topbar{
+    display:flex;align-items:center;gap:12px;
+    padding:12px 20px;background:rgba(4,15,7,0.97);
+    border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;
+  }
+  .back-btn{
+    display:flex;align-items:center;gap:6px;color:var(--accent);
+    text-decoration:none;font-size:13px;font-weight:500;
+    padding:7px 13px;border-radius:9px;border:1px solid var(--border);
+    background:var(--glass);white-space:nowrap;transition:all .2s;
+  }
+  .back-btn:hover{background:var(--glass2);}
+  .app-title{
+    font-size:18px;font-weight:700;
+    background:linear-gradient(135deg,var(--gold2),var(--accent3));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    flex:1;text-align:center;
+  }
+  .search-wrap{display:flex;gap:8px;min-width:200px;}
+  .search-input{
+    padding:8px 13px;border-radius:9px;border:1px solid var(--border);
+    background:rgba(0,0,0,0.4);color:var(--text);
+    font-family:'Inter',sans-serif;font-size:13px;outline:none;width:160px;
+  }
+  .search-input:focus{border-color:var(--accent);}
+  .search-btn{
+    padding:8px 14px;border-radius:9px;border:none;
+    background:var(--accent2);color:#fff;font-size:13px;cursor:pointer;
+    font-family:'Inter',sans-serif;font-weight:500;
+  }
+
+  /* MAIN */
+  .main{display:flex;flex:1;overflow:hidden;}
+
+  /* SIDEBAR */
+  .sidebar{
+    width:var(--sidebar-w);flex-shrink:0;
+    background:rgba(4,10,7,0.98);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  .sidebar-header{
+    padding:12px 16px;border-bottom:1px solid var(--border);
+    font-size:12px;font-weight:600;color:var(--accent3);
+    text-transform:uppercase;letter-spacing:.8px;
+  }
+  .surah-list{flex:1;overflow-y:auto;padding:6px;}
+  .surah-list::-webkit-scrollbar{width:4px;}
+  .surah-list::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:2px;}
+
+  .surah-item{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;
+    border-radius:10px;cursor:pointer;transition:all .2s;margin-bottom:2px;
+    border:1px solid transparent;
+  }
+  .surah-item:hover{background:var(--glass);border-color:var(--border);}
+  .surah-item.active{background:var(--glass2);border-color:var(--border2);}
+  .surah-num{
+    width:28px;height:28px;border-radius:50%;
+    background:var(--glass2);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0;
+  }
+  .surah-item.active .surah-num{background:var(--accent2);color:#fff;border-color:var(--accent);}
+  .surah-info{flex:1;min-width:0;}
+  .surah-name-en{font-size:12px;font-weight:600;color:var(--text);line-height:1.2;}
+  .surah-meta{font-size:10px;color:var(--text3);}
+  .surah-ar{font-family:'Amiri',serif;font-size:14px;color:var(--gold2);text-align:right;}
+
+  /* READER */
+  .reader{flex:1;overflow-y:auto;padding:0;}
+  .reader::-webkit-scrollbar{width:5px;}
+  .reader::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:3px;}
+
+  .reader-inner{max-width:780px;margin:0 auto;padding:24px 28px 60px;}
+
+  /* SURAH HEADER */
+  .surah-header{
+    text-align:center;padding:28px 20px;
+    background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(245,158,11,0.05));
+    border:1px solid var(--border);border-radius:20px;margin-bottom:24px;
+    position:relative;overflow:hidden;
+  }
+  .surah-header::before{
+    content:'';position:absolute;inset:0;opacity:0.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpolygon points='30,2 36,20 54,20 40,31 46,49 30,38 14,49 20,31 6,20 24,20' fill='%23f59e0b'/%3E%3C/svg%3E");
+    background-size:60px;
+  }
+  .surah-header-num{font-size:11px;color:var(--text3);margin-bottom:8px;}
+  .surah-header-arabic{font-family:'Scheherazade New',serif;font-size:42px;color:var(--gold2);line-height:1.3;}
+  .surah-header-en{font-size:22px;font-weight:700;color:var(--text);margin-top:6px;}
+  .surah-header-meaning{font-size:14px;color:var(--text2);margin-top:4px;font-style:italic;}
+  .surah-header-badges{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+  .badge{
+    padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;
+    background:var(--glass2);border:1px solid var(--border);color:var(--accent3);
+  }
+  .badge.gold{color:var(--gold2);border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.08);}
+
+  /* BISMILLAH */
+  .bismillah{
+    text-align:center;font-family:'Scheherazade New',serif;
+    font-size:36px;color:var(--gold);padding:20px;
+    border-bottom:1px solid var(--border);margin-bottom:16px;
+  }
+
+  /* VERSE */
+  .verse-item{
+    padding:20px 0;border-bottom:1px solid rgba(16,185,129,0.1);
+    transition:background .2s;
+    position:relative;
+  }
+  .verse-item:hover{background:rgba(16,185,129,0.03);border-radius:12px;padding:20px 12px;}
+  .verse-item.highlighted{background:rgba(245,158,11,0.07);border-radius:12px;padding:20px 12px;}
+  .verse-item.bookmarked{border-left:3px solid var(--gold);padding-left:16px;}
+  .verse-num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:30px;height:30px;border-radius:50%;
+    background:var(--glass2);border:1px solid var(--border);
+    font-size:11px;color:var(--gold);font-weight:700;
+    margin-bottom:10px;float:right;margin-left:10px;cursor:pointer;
+    flex-shrink:0;
+  }
+  .verse-arabic{
+    font-family:'Scheherazade New',serif;font-size:28px;
+    color:var(--gold3);line-height:2.2;text-align:right;direction:rtl;
+    clear:right;margin-bottom:12px;
+  }
+  .verse-translation{
+    font-size:15px;line-height:1.8;color:var(--text2);
+    padding-top:8px;border-top:1px solid rgba(16,185,129,0.08);
+  }
+  .verse-actions{
+    display:flex;gap:8px;margin-top:10px;align-items:center;
+  }
+  .verse-action-btn{
+    padding:4px 12px;border-radius:8px;border:1px solid var(--border);
+    background:var(--glass);color:var(--text3);font-size:11px;cursor:pointer;
+    font-family:'Inter',sans-serif;transition:all .2s;
+  }
+  .verse-action-btn:hover{background:var(--glass2);color:var(--text2);}
+  .verse-action-btn.bookmarked-btn{color:var(--gold);border-color:rgba(245,158,11,0.3);}
+
+  /* LOADING */
+  .loading-wrap{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:60px 20px;gap:16px;
+  }
+  .loader{
+    width:44px;height:44px;border:3px solid var(--border);
+    border-top-color:var(--accent);border-radius:50%;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{font-size:14px;color:var(--text3);}
+
+  .error-box{
+    background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
+    border-radius:14px;padding:20px;text-align:center;margin:20px;
+    color:#fca5a5;font-size:14px;
+  }
+
+  /* BOOKMARKS TAB */
+  .top-actions{
+    display:flex;gap:8px;padding:12px;border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .top-action-btn{
+    padding:6px 14px;border-radius:9px;border:1px solid var(--border);
+    background:var(--glass);color:var(--text2);font-size:12px;cursor:pointer;
+    font-family:'Inter',sans-serif;transition:all .2s;
+  }
+  .top-action-btn:hover{background:var(--glass2);}
+  .top-action-btn.active{background:var(--glass2);color:var(--accent3);border-color:var(--accent);}
+
+  .bookmarks-panel{
+    display:none;padding:12px;flex:1;overflow-y:auto;
+  }
+  .bookmarks-panel.visible{display:block;}
+  .bookmark-entry{
+    padding:12px 14px;border-radius:12px;border:1px solid rgba(245,158,11,0.2);
+    background:rgba(245,158,11,0.05);margin-bottom:8px;cursor:pointer;
+  }
+  .bookmark-entry:hover{background:rgba(245,158,11,0.1);}
+  .bk-ref{font-size:11px;color:var(--gold);font-weight:600;margin-bottom:4px;}
+  .bk-arabic{font-family:'Scheherazade New',serif;font-size:18px;color:var(--gold3);text-align:right;direction:rtl;line-height:1.8;}
+  .bk-trans{font-size:12px;color:var(--text3);margin-top:4px;line-height:1.5;}
+  .no-bookmarks{padding:24px;text-align:center;font-size:13px;color:var(--text3);}
+
+  /* SEARCH HIGHLIGHT */
+  .highlight{background:rgba(245,158,11,0.3);border-radius:3px;padding:0 2px;}
+
+  @media(max-width:700px){
+    :root{--sidebar-w:100%;}
+    .main{flex-direction:column;}
+    .sidebar{width:100%;height:200px;border-right:none;border-bottom:1px solid var(--border);}
+    .reader-inner{padding:16px 16px 60px;}
+    .verse-arabic{font-size:22px;}
+    .surah-header-arabic{font-size:32px;}
+    .bismillah{font-size:28px;}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="../../index.html" class="back-btn">&#8592; Back</a>
+  <div class="app-title">📖 Quran Reader</div>
+  <div class="search-wrap">
+    <input class="search-input" id="searchBox" type="text" placeholder="Search in surah…" oninput="searchInSurah()"/>
+  </div>
+</div>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">114 Surahs</div>
+    <div class="top-actions">
+      <button class="top-action-btn active" id="btnSurahs" onclick="showSurahList()">Surahs</button>
+      <button class="top-action-btn" id="btnBookmarks" onclick="showBookmarks()">🔖 Bookmarks</button>
+    </div>
+    <div class="surah-list" id="surahList"></div>
+    <div class="bookmarks-panel" id="bookmarksPanel"></div>
+  </div>
+
+  <!-- READER -->
+  <div class="reader" id="reader">
+    <div class="reader-inner" id="readerInner">
+      <div class="loading-wrap">
+        <div class="loader"></div>
+        <div class="loading-text">Loading Al-Fatiha…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://api.alquran.cloud/v1';
+
+// ========== SURAH DATA (all 114) ==========
+const SURAHS = [
+  [1,'Al-Fatihah','The Opening',7,'Meccan'],[2,'Al-Baqarah','The Cow',286,'Medinan'],[3,'Ali \'Imran','Family of Imran',200,'Medinan'],
+  [4,'An-Nisa','The Women',176,'Medinan'],[5,'Al-Ma\'idah','The Table',176,'Medinan'],[6,'Al-An\'am','The Cattle',165,'Meccan'],
+  [7,'Al-A\'raf','The Heights',206,'Meccan'],[8,'Al-Anfal','The Spoils',75,'Medinan'],[9,'At-Tawbah','The Repentance',129,'Medinan'],
+  [10,'Yunus','Jonah',109,'Meccan'],[11,'Hud','Hud',123,'Meccan'],[12,'Yusuf','Joseph',111,'Meccan'],
+  [13,'Ar-Ra\'d','The Thunder',43,'Medinan'],[14,'Ibrahim','Abraham',52,'Meccan'],[15,'Al-Hijr','The Rocky Tract',99,'Meccan'],
+  [16,'An-Nahl','The Bee',128,'Meccan'],[17,'Al-Isra','The Night Journey',111,'Meccan'],[18,'Al-Kahf','The Cave',110,'Meccan'],
+  [19,'Maryam','Mary',98,'Meccan'],[20,'Ta-Ha','Ta-Ha',135,'Meccan'],[21,'Al-Anbiya','The Prophets',112,'Meccan'],
+  [22,'Al-Hajj','The Pilgrimage',78,'Medinan'],[23,'Al-Mu\'minun','The Believers',118,'Meccan'],[24,'An-Nur','The Light',64,'Medinan'],
+  [25,'Al-Furqan','The Criterion',77,'Meccan'],[26,'Ash-Shu\'ara','The Poets',227,'Meccan'],[27,'An-Naml','The Ant',93,'Meccan'],
+  [28,'Al-Qasas','The Stories',88,'Meccan'],[29,'Al-\'Ankabut','The Spider',69,'Meccan'],[30,'Ar-Rum','The Romans',60,'Meccan'],
+  [31,'Luqman','Luqman',34,'Meccan'],[32,'As-Sajdah','The Prostration',30,'Meccan'],[33,'Al-Ahzab','The Confederates',73,'Medinan'],
+  [34,'Saba','Sheba',54,'Meccan'],[35,'Fatir','The Originator',45,'Meccan'],[36,'Ya-Sin','Ya-Sin',83,'Meccan'],
+  [37,'As-Saffat','Those Ranged in Ranks',182,'Meccan'],[38,'Sad','Sad',88,'Meccan'],[39,'Az-Zumar','The Groups',75,'Meccan'],
+  [40,'Ghafir','The Forgiver',85,'Meccan'],[41,'Fussilat','Explained in Detail',54,'Meccan'],[42,'Ash-Shura','The Consultation',53,'Meccan'],
+  [43,'Az-Zukhruf','The Ornaments',89,'Meccan'],[44,'Ad-Dukhan','The Smoke',59,'Meccan'],[45,'Al-Jathiyah','The Kneeling',37,'Meccan'],
+  [46,'Al-Ahqaf','The Wind-Curved Sandhills',35,'Meccan'],[47,'Muhammad','Muhammad',38,'Medinan'],[48,'Al-Fath','The Victory',29,'Medinan'],
+  [49,'Al-Hujurat','The Rooms',18,'Medinan'],[50,'Qaf','Qaf',45,'Meccan'],[51,'Adh-Dhariyat','The Winnowing Winds',60,'Meccan'],
+  [52,'At-Tur','The Mount',49,'Meccan'],[53,'An-Najm','The Star',62,'Meccan'],[54,'Al-Qamar','The Moon',55,'Meccan'],
+  [55,'Ar-Rahman','The Beneficent',78,'Medinan'],[56,'Al-Waqi\'ah','The Inevitable',96,'Meccan'],[57,'Al-Hadid','The Iron',29,'Medinan'],
+  [58,'Al-Mujadila','She That Disputes',22,'Medinan'],[59,'Al-Hashr','The Exile',24,'Medinan'],[60,'Al-Mumtahanah','She That is to be Examined',13,'Medinan'],
+  [61,'As-Saff','The Ranks',14,'Medinan'],[62,'Al-Jumu\'ah','Friday',11,'Medinan'],[63,'Al-Munafiqun','The Hypocrites',11,'Medinan'],
+  [64,'At-Taghabun','The Mutual Disillusion',18,'Medinan'],[65,'At-Talaq','The Divorce',12,'Medinan'],[66,'At-Tahrim','The Prohibition',12,'Medinan'],
+  [67,'Al-Mulk','The Sovereignty',30,'Meccan'],[68,'Al-Qalam','The Pen',52,'Meccan'],[69,'Al-Haqqah','The Reality',52,'Meccan'],
+  [70,'Al-Ma\'arij','The Ascending Stairways',44,'Meccan'],[71,'Nuh','Noah',28,'Meccan'],[72,'Al-Jinn','The Jinn',28,'Meccan'],
+  [73,'Al-Muzzammil','The Enshrouded One',20,'Meccan'],[74,'Al-Muddaththir','The Cloaked One',56,'Meccan'],[75,'Al-Qiyamah','The Resurrection',40,'Meccan'],
+  [76,'Al-Insan','The Human',31,'Medinan'],[77,'Al-Mursalat','The Emissaries',50,'Meccan'],[78,'An-Naba','The Tidings',40,'Meccan'],
+  [79,'An-Nazi\'at','Those who drag forth',46,'Meccan'],[80,'\'Abasa','He Frowned',42,'Meccan'],[81,'At-Takwir','The Overthrowing',29,'Meccan'],
+  [82,'Al-Infitar','The Cleaving',19,'Meccan'],[83,'Al-Mutaffifin','The Defrauding',36,'Meccan'],[84,'Al-Inshiqaq','The Sundering',25,'Meccan'],
+  [85,'Al-Buruj','The Mansions of the Stars',22,'Meccan'],[86,'At-Tariq','The Morning Star',17,'Meccan'],[87,'Al-A\'la','The Most High',19,'Meccan'],
+  [88,'Al-Ghashiyah','The Overwhelming',26,'Meccan'],[89,'Al-Fajr','The Dawn',30,'Meccan'],[90,'Al-Balad','The City',20,'Meccan'],
+  [91,'Ash-Shams','The Sun',15,'Meccan'],[92,'Al-Layl','The Night',21,'Meccan'],[93,'Ad-Duha','The Morning Hours',11,'Meccan'],
+  [94,'Ash-Sharh','The Consolation',8,'Meccan'],[95,'At-Tin','The Fig',8,'Meccan'],[96,'Al-\'Alaq','The Clot',19,'Meccan'],
+  [97,'Al-Qadr','The Power',5,'Meccan'],[98,'Al-Bayyinah','The Clear Proof',8,'Medinan'],[99,'Az-Zalzalah','The Earthquake',8,'Medinan'],
+  [100,'Al-\'Adiyat','The Courser',11,'Meccan'],[101,'Al-Qari\'ah','The Calamity',11,'Meccan'],[102,'At-Takathur','The Rivalry in World Increase',8,'Meccan'],
+  [103,'Al-\'Asr','The Declining Day',3,'Meccan'],[104,'Al-Humazah','The Traducer',9,'Meccan'],[105,'Al-Fil','The Elephant',5,'Meccan'],
+  [106,'Quraysh','Quraysh',4,'Meccan'],[107,'Al-Ma\'un','The Small Kindnesses',7,'Meccan'],[108,'Al-Kawthar','The Abundance',3,'Meccan'],
+  [109,'Al-Kafirun','The Disbelievers',6,'Meccan'],[110,'An-Nasr','The Divine Support',3,'Medinan'],[111,'Al-Masad','The Palm Fiber',5,'Meccan'],
+  [112,'Al-Ikhlas','The Sincerity',4,'Meccan'],[113,'Al-Falaq','The Daybreak',5,'Meccan'],[114,'An-Nas','Mankind',6,'Meccan'],
+];
+
+// Arabic names for surahs 1-114
+const ARABIC_NAMES = ['الفاتحة','البقرة','آل عمران','النساء','المائدة','الأنعام','الأعراف','الأنفال','التوبة','يونس','هود','يوسف','الرعد','إبراهيم','الحجر','النحل','الإسراء','الكهف','مريم','طه','الأنبياء','الحج','المؤمنون','النور','الفرقان','الشعراء','النمل','القصص','العنكبوت','الروم','لقمان','السجدة','الأحزاب','سبأ','فاطر','يس','الصافات','ص','الزمر','غافر','فصلت','الشورى','الزخرف','الدخان','الجاثية','الأحقاف','محمد','الفتح','الحجرات','ق','الذاريات','الطور','النجم','القمر','الرحمن','الواقعة','الحديد','المجادلة','الحشر','الممتحنة','الصف','الجمعة','المنافقون','التغابن','الطلاق','التحريم','الملك','القلم','الحاقة','المعارج','نوح','الجن','المزمل','المدثر','القيامة','الإنسان','المرسلات','النبأ','النازعات','عبس','التكوير','الانفطار','المطففين','الانشقاق','البروج','الطارق','الأعلى','الغاشية','الفجر','البلد','الشمس','الليل','الضحى','الشرح','التين','العلق','القدر','البينة','الزلزلة','العاديات','القارعة','التكاثر','العصر','الهمزة','الفيل','قريش','الماعون','الكوثر','الكافرون','النصر','المسد','الإخلاص','الفلق','الناس'];
+
+let currentSurah = null;
+let currentVerses = [];
+let bookmarks = JSON.parse(localStorage.getItem('quran_bookmarks') || '{}');
+let searchQuery = '';
+
+// ========== RENDER SIDEBAR ==========
+function renderSurahList() {
+  const list = document.getElementById('surahList');
+  list.innerHTML = '';
+  SURAHS.forEach(([num, nameEn, meaning, verses, type]) => {
+    const item = document.createElement('div');
+    item.className = 'surah-item' + (currentSurah === num ? ' active' : '');
+    item.id = `surah-item-${num}`;
+    item.innerHTML = `
+      <div class="surah-num">${num}</div>
+      <div class="surah-info">
+        <div class="surah-name-en">${nameEn}</div>
+        <div class="surah-meta">${verses} verses · ${type}</div>
+      </div>
+      <div class="surah-ar">${ARABIC_NAMES[num-1]}</div>
+    `;
+    item.addEventListener('click', () => loadSurah(num));
+    list.appendChild(item);
+  });
+}
+
+// ========== LOAD SURAH ==========
+async function loadSurah(num) {
+  currentSurah = num;
+  searchQuery = '';
+  document.getElementById('searchBox').value = '';
+  document.querySelectorAll('.surah-item').forEach(el => el.classList.remove('active'));
+  const activeItem = document.getElementById(`surah-item-${num}`);
+  if (activeItem) {
+    activeItem.classList.add('active');
+    activeItem.scrollIntoView({ block: 'nearest' });
+  }
+  showSurahList();
+  const inner = document.getElementById('readerInner');
+  inner.innerHTML = `<div class="loading-wrap"><div class="loader"></div><div class="loading-text">Loading ${SURAHS[num-1][1]}…</div></div>`;
+
+  try {
+    const [arRes, enRes] = await Promise.all([
+      fetch(`${API}/surah/${num}/quran-uthmani`),
+      fetch(`${API}/surah/${num}/en.asad`)
+    ]);
+    const [arData, enData] = await Promise.all([arRes.json(), enRes.json()]);
+
+    if (arData.code !== 200) throw new Error('API error');
+    const arVerses = arData.data.ayahs;
+    const enVerses = enData.data.ayahs;
+    currentVerses = arVerses.map((v, i) => ({
+      num: v.numberInSurah,
+      arabic: v.text,
+      translation: enVerses[i]?.text || ''
+    }));
+    renderSurah(num, currentVerses);
+  } catch (e) {
+    inner.innerHTML = `<div class="error-box">⚠️ Could not load surah. Please check your internet connection.<br><small>${e.message}</small></div>`;
+  }
+}
+
+function renderSurah(num, verses, highlight = '') {
+  const [, nameEn, meaning, verseCount, type] = SURAHS[num - 1];
+  const arName = ARABIC_NAMES[num - 1];
+  const inner = document.getElementById('readerInner');
+  inner.innerHTML = '';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'surah-header';
+  header.innerHTML = `
+    <div class="surah-header-num">Surah ${num}</div>
+    <div class="surah-header-arabic">${arName}</div>
+    <div class="surah-header-en">${nameEn}</div>
+    <div class="surah-header-meaning">"${meaning}"</div>
+    <div class="surah-header-badges">
+      <span class="badge">${verseCount} Verses</span>
+      <span class="badge gold">${type}</span>
+    </div>
+  `;
+  inner.appendChild(header);
+
+  // Bismillah (all except At-Tawbah & Al-Fatiha)
+  if (num !== 9 && num !== 1) {
+    const bism = document.createElement('div');
+    bism.className = 'bismillah';
+    bism.textContent = 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ';
+    inner.appendChild(bism);
+  }
+
+  // Verses
+  const bkKey = n => `${num}:${n}`;
+  verses.forEach(v => {
+    const isBk = !!bookmarks[bkKey(v.num)];
+    const div = document.createElement('div');
+    div.className = 'verse-item' + (isBk ? ' bookmarked' : '');
+    div.id = `verse-${v.num}`;
+
+    let transText = v.translation;
+    let arText = v.arabic;
+    if (highlight) {
+      const re = new RegExp(`(${highlight.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+      transText = transText.replace(re, '<span class="highlight">$1</span>');
+    }
+
+    div.innerHTML = `
+      <div class="verse-num" title="Verse ${v.num}">${v.num}</div>
+      <div class="verse-arabic">${arText}</div>
+      <div class="verse-translation">${transText}</div>
+      <div class="verse-actions">
+        <button class="verse-action-btn ${isBk ? 'bookmarked-btn' : ''}" onclick="toggleBookmark(${num},${v.num})" id="bk-btn-${v.num}">
+          ${isBk ? '🔖 Bookmarked' : '🔖 Bookmark'}
+        </button>
+        <span style="font-size:11px;color:var(--text3)">${num}:${v.num}</span>
+      </div>
+    `;
+    inner.appendChild(div);
+  });
+
+  document.getElementById('reader').scrollTo(0, 0);
+}
+
+function toggleBookmark(surahNum, verseNum) {
+  const key = `${surahNum}:${verseNum}`;
+  const v = currentVerses.find(v => v.num === verseNum);
+  if (!v) return;
+  if (bookmarks[key]) {
+    delete bookmarks[key];
+  } else {
+    bookmarks[key] = { surah: surahNum, verse: verseNum, arabic: v.arabic, translation: v.translation, surahName: SURAHS[surahNum-1][1] };
+  }
+  localStorage.setItem('quran_bookmarks', JSON.stringify(bookmarks));
+  // Update button
+  const btn = document.getElementById(`bk-btn-${verseNum}`);
+  const item = document.getElementById(`verse-${verseNum}`);
+  if (btn) {
+    btn.textContent = bookmarks[key] ? '🔖 Bookmarked' : '🔖 Bookmark';
+    btn.classList.toggle('bookmarked-btn', !!bookmarks[key]);
+  }
+  if (item) item.classList.toggle('bookmarked', !!bookmarks[key]);
+}
+
+// ========== SEARCH ==========
+function searchInSurah() {
+  searchQuery = document.getElementById('searchBox').value.trim();
+  if (!currentSurah || !currentVerses.length) return;
+  if (!searchQuery) {
+    renderSurah(currentSurah, currentVerses);
+    return;
+  }
+  const re = new RegExp(searchQuery.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
+  const filtered = currentVerses.filter(v => re.test(v.translation) || re.test(String(v.num)));
+  renderSurah(currentSurah, filtered, searchQuery);
+}
+
+// ========== BOOKMARKS PANEL ==========
+function showSurahList() {
+  document.getElementById('surahList').style.display = 'block';
+  document.getElementById('bookmarksPanel').classList.remove('visible');
+  document.getElementById('btnSurahs').classList.add('active');
+  document.getElementById('btnBookmarks').classList.remove('active');
+}
+
+function showBookmarks() {
+  document.getElementById('surahList').style.display = 'none';
+  document.getElementById('bookmarksPanel').classList.add('visible');
+  document.getElementById('btnSurahs').classList.remove('active');
+  document.getElementById('btnBookmarks').classList.add('active');
+  renderBookmarksPanel();
+}
+
+function renderBookmarksPanel() {
+  const panel = document.getElementById('bookmarksPanel');
+  const keys = Object.keys(bookmarks);
+  if (!keys.length) {
+    panel.innerHTML = '<div class="no-bookmarks">No bookmarks yet.<br>Tap 🔖 on any verse to save it.</div>';
+    return;
+  }
+  panel.innerHTML = '';
+  keys.forEach(key => {
+    const bk = bookmarks[key];
+    const div = document.createElement('div');
+    div.className = 'bookmark-entry';
+    div.innerHTML = `
+      <div class="bk-ref">${bk.surahName} ${key}</div>
+      <div class="bk-arabic">${bk.arabic}</div>
+      <div class="bk-trans">${bk.translation.slice(0,100)}${bk.translation.length>100?'…':''}</div>
+    `;
+    div.addEventListener('click', () => {
+      loadSurah(bk.surah).then(() => {
+        setTimeout(() => {
+          const el = document.getElementById(`verse-${bk.verse}`);
+          if (el) { el.scrollIntoView({ behavior:'smooth', block:'center' }); el.classList.add('highlighted'); }
+        }, 500);
+      });
+    });
+    panel.appendChild(div);
+  });
+}
+
+// ========== INIT ==========
+renderSurahList();
+loadSurah(1);
+</script>
+</body>
+</html>

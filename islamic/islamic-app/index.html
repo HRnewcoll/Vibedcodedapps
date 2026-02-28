@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Islamic Companion</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg1: #051a0d; --bg2: #0a2e1a; --bg3: #134e2a;
+    --accent: #10b981; --accent2: #059669; --accent3: #34d399;
+    --gold: #f59e0b; --gold2: #fbbf24;
+    --glass: rgba(16,185,129,0.07); --glass2: rgba(16,185,129,0.13);
+    --border: rgba(16,185,129,0.2); --border2: rgba(16,185,129,0.35);
+    --text: #e2f0e8; --text2: #a7c4b0; --text3: #6b9a7d;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Inter',sans-serif;
+    background: linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 40%,var(--bg3) 100%);
+    min-height:100vh; color:var(--text); overflow-x:hidden;
+  }
+  /* Islamic geometric pattern overlay */
+  body::before{
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      repeating-linear-gradient(60deg,transparent,transparent 40px,rgba(16,185,129,0.03) 40px,rgba(16,185,129,0.03) 41px),
+      repeating-linear-gradient(-60deg,transparent,transparent 40px,rgba(16,185,129,0.03) 40px,rgba(16,185,129,0.03) 41px),
+      repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(16,185,129,0.02) 40px,rgba(16,185,129,0.02) 41px);
+  }
+  /* Geometric star pattern */
+  body::after{
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpolygon points='40,5 47,28 70,28 52,42 59,65 40,51 21,65 28,42 10,28 33,28' fill='%2310b981' opacity='0.6'/%3E%3C/svg%3E");
+    background-size:80px 80px;
+  }
+
+  .app-wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 16px 80px;}
+
+  /* NAV */
+  nav{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:24px;
+  }
+  .back-btn{
+    display:flex;align-items:center;gap:6px;color:var(--accent);
+    text-decoration:none;font-size:14px;font-weight:500;
+    padding:8px 14px;border-radius:10px;border:1px solid var(--border);
+    background:var(--glass);transition:all .2s;
+  }
+  .back-btn:hover{background:var(--glass2);border-color:var(--border2);}
+  .nav-title{
+    text-align:center;flex:1;
+    font-size:20px;font-weight:700;
+    background:linear-gradient(135deg,var(--accent3),var(--gold));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .nav-date{font-size:12px;color:var(--text3);text-align:right;min-width:80px;}
+
+  /* HIJRI DATE BAR */
+  .hijri-bar{
+    background:var(--glass);border:1px solid var(--border);border-radius:14px;
+    padding:12px 20px;margin-bottom:20px;
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  }
+  .hijri-bar .hijri-date{font-size:17px;font-weight:600;color:var(--gold2);}
+  .hijri-bar .greg-date{font-size:13px;color:var(--text2);}
+
+  /* TABS */
+  .tabs{display:flex;gap:6px;margin-bottom:24px;overflow-x:auto;padding-bottom:4px;}
+  .tabs::-webkit-scrollbar{height:3px;}
+  .tabs::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:3px;}
+  .tab-btn{
+    flex-shrink:0;padding:10px 18px;border-radius:12px;border:1px solid var(--border);
+    background:var(--glass);color:var(--text2);font-size:13px;font-weight:500;
+    cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;
+  }
+  .tab-btn.active{background:var(--accent2);color:#fff;border-color:var(--accent);box-shadow:0 0 18px rgba(16,185,129,0.3);}
+  .tab-btn:hover:not(.active){background:var(--glass2);color:var(--text);}
+
+  /* PANELS */
+  .panel{display:none;animation:fadeIn .3s ease;}
+  .panel.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* GLASS CARD */
+  .card{
+    background:var(--glass);backdrop-filter:blur(12px);
+    border:1px solid var(--border);border-radius:18px;padding:20px;margin-bottom:16px;
+  }
+  .card-title{font-size:14px;font-weight:600;color:var(--accent3);margin-bottom:14px;text-transform:uppercase;letter-spacing:.8px;}
+
+  /* PRAYER TIMES */
+  .coord-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .coord-input{
+    flex:1;min-width:120px;padding:10px 14px;border-radius:10px;
+    border:1px solid var(--border);background:rgba(0,0,0,0.3);
+    color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;
+  }
+  .coord-input:focus{border-color:var(--accent);}
+  .geo-btn,.calc-btn{
+    padding:10px 18px;border-radius:10px;border:none;cursor:pointer;
+    font-family:'Inter',sans-serif;font-size:13px;font-weight:500;transition:all .2s;
+  }
+  .geo-btn{background:var(--glass2);color:var(--accent3);border:1px solid var(--border);}
+  .geo-btn:hover{background:var(--border);}
+  .calc-btn{background:var(--accent2);color:#fff;}
+  .calc-btn:hover{background:var(--accent);}
+
+  .prayer-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
+  .prayer-card{
+    background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:14px;
+    padding:16px;text-align:center;transition:all .25s;
+  }
+  .prayer-card.current{
+    background:rgba(16,185,129,0.15);border-color:var(--accent);
+    box-shadow:0 0 20px rgba(16,185,129,0.2);
+  }
+  .prayer-card.current .prayer-name{color:var(--accent3);}
+  .prayer-name{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px;}
+  .prayer-time{font-size:22px;font-weight:700;color:var(--text);}
+  .prayer-time small{font-size:12px;font-weight:400;color:var(--text3);}
+
+  .countdown-box{
+    background:rgba(16,185,129,0.1);border:1px solid var(--border2);border-radius:14px;
+    padding:16px;text-align:center;margin-top:16px;
+  }
+  .countdown-label{font-size:12px;color:var(--text2);margin-bottom:6px;}
+  .countdown-timer{font-size:32px;font-weight:700;color:var(--accent3);font-variant-numeric:tabular-nums;}
+  .countdown-next{font-size:13px;color:var(--text2);margin-top:4px;}
+
+  /* QIBLA */
+  .qibla-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;}
+  .compass-outer{
+    width:260px;height:260px;border-radius:50%;
+    border:3px solid var(--border2);background:radial-gradient(circle,rgba(0,0,0,0.5),rgba(5,26,13,0.8));
+    position:relative;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 40px rgba(16,185,129,0.15);
+  }
+  .compass-ring{
+    position:absolute;inset:8px;border-radius:50%;
+    border:1px solid rgba(16,185,129,0.15);
+  }
+  .compass-tick{
+    position:absolute;width:2px;height:12px;background:var(--text3);
+    left:50%;transform-origin:50% 130px;top:4px;
+  }
+  .compass-tick.main{background:var(--accent);height:18px;width:3px;}
+  .compass-label{
+    position:absolute;font-size:11px;font-weight:700;color:var(--accent3);
+  }
+  .compass-n{top:26px;left:50%;transform:translateX(-50%);}
+  .compass-s{bottom:26px;left:50%;transform:translateX(-50%);}
+  .compass-e{right:26px;top:50%;transform:translateY(-50%);}
+  .compass-w{left:26px;top:50%;transform:translateY(-50%);}
+  .qibla-needle{
+    position:absolute;width:4px;height:110px;
+    top:50%;left:50%;transform-origin:50% 100%;
+    transform:translateX(-50%) translateY(-100%) rotate(0deg);
+    background:linear-gradient(to top,transparent,var(--gold));
+    border-radius:4px 4px 0 0;transition:transform 1s ease;
+  }
+  .qibla-needle::after{
+    content:'☪';position:absolute;top:-20px;left:50%;
+    transform:translateX(-50%);font-size:18px;color:var(--gold);
+  }
+  .compass-center{
+    width:16px;height:16px;border-radius:50%;
+    background:var(--accent);z-index:2;
+    box-shadow:0 0 10px rgba(16,185,129,0.6);
+  }
+  .qibla-info{text-align:center;}
+  .qibla-degrees{font-size:42px;font-weight:700;color:var(--gold2);}
+  .qibla-desc{font-size:14px;color:var(--text2);margin-top:6px;}
+
+  /* DHIKR */
+  .dhikr-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .dhikr-tab{
+    padding:8px 16px;border-radius:10px;border:1px solid var(--border);
+    background:var(--glass);color:var(--text2);font-size:13px;cursor:pointer;
+    font-family:'Inter',sans-serif;transition:all .2s;
+  }
+  .dhikr-tab.active{background:var(--glass2);color:var(--accent3);border-color:var(--accent);}
+  .dhikr-counter-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;padding:20px 0;}
+  .dhikr-arabic{font-family:'Amiri',serif;font-size:36px;color:var(--gold2);text-align:center;line-height:1.4;}
+  .dhikr-english{font-size:15px;color:var(--text2);text-align:center;}
+  .dhikr-count{font-size:80px;font-weight:700;color:var(--accent3);line-height:1;font-variant-numeric:tabular-nums;}
+  .dhikr-btn{
+    width:140px;height:140px;border-radius:50%;border:3px solid var(--accent2);
+    background:radial-gradient(circle,rgba(16,185,129,0.2),rgba(16,185,129,0.05));
+    color:var(--accent3);font-size:16px;font-weight:600;cursor:pointer;
+    font-family:'Inter',sans-serif;transition:all .15s;
+    box-shadow:0 0 30px rgba(16,185,129,0.15);
+    display:flex;align-items:center;justify-content:center;
+    user-select:none;-webkit-user-select:none;
+  }
+  .dhikr-btn:active{transform:scale(0.93);box-shadow:0 0 50px rgba(16,185,129,0.35);}
+  .dhikr-btn:hover{background:radial-gradient(circle,rgba(16,185,129,0.3),rgba(16,185,129,0.1));}
+  .dhikr-controls{display:flex;gap:10px;}
+  .dhikr-ctrl-btn{
+    padding:8px 18px;border-radius:10px;border:1px solid var(--border);
+    background:var(--glass);color:var(--text2);font-size:13px;cursor:pointer;
+    font-family:'Inter',sans-serif;transition:all .2s;
+  }
+  .dhikr-ctrl-btn:hover{background:var(--glass2);color:var(--text);}
+  .dhikr-target-row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);}
+  .dhikr-progress{
+    width:100%;max-width:300px;height:6px;background:rgba(16,185,129,0.1);
+    border-radius:3px;overflow:hidden;
+  }
+  .dhikr-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent3));border-radius:3px;transition:width .3s;}
+  .dhikr-sessions{font-size:13px;color:var(--text3);}
+
+  /* HADITH */
+  .hadith-card{
+    background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:16px;
+    padding:24px;position:relative;overflow:hidden;
+  }
+  .hadith-card::before{
+    content:'❝';position:absolute;top:-10px;left:16px;
+    font-size:80px;color:rgba(16,185,129,0.1);line-height:1;
+  }
+  .hadith-text{font-size:16px;line-height:1.8;color:var(--text);margin-bottom:16px;padding-top:20px;}
+  .hadith-source{font-size:13px;color:var(--gold2);font-weight:500;}
+  .hadith-nav{display:flex;gap:10px;margin-top:16px;}
+  .hadith-nav-btn{
+    padding:8px 18px;border-radius:10px;border:1px solid var(--border);
+    background:var(--glass);color:var(--text2);font-size:13px;cursor:pointer;
+    font-family:'Inter',sans-serif;transition:all .2s;
+  }
+  .hadith-nav-btn:hover{background:var(--glass2);}
+  .hadith-index{font-size:12px;color:var(--text3);margin-top:10px;}
+
+  /* STATUS MSG */
+  .status-msg{font-size:13px;color:var(--text3);padding:8px;text-align:center;}
+  .error-msg{color:#f87171;}
+
+  @media(max-width:600px){
+    .prayer-grid{grid-template-columns:repeat(3,1fr);}
+    .compass-outer{width:220px;height:220px;}
+    .qibla-needle{height:90px;}
+    .compass-tick{transform-origin:50%,110px;}
+  }
+</style>
+</head>
+<body>
+<div class="app-wrap">
+  <nav>
+    <a href="../../index.html" class="back-btn">&#8592; Back</a>
+    <div class="nav-title">☪ Islamic Companion</div>
+    <div class="nav-date" id="navDate"></div>
+  </nav>
+
+  <div class="hijri-bar">
+    <div>
+      <div class="hijri-date" id="hijriDateDisplay">Loading Hijri date…</div>
+      <div class="greg-date" id="gregDateDisplay"></div>
+    </div>
+    <div style="font-size:22px;">🕌</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('prayer')">🕐 Prayer Times</button>
+    <button class="tab-btn" onclick="switchTab('qibla')">🧭 Qibla</button>
+    <button class="tab-btn" onclick="switchTab('dhikr')">📿 Dhikr</button>
+    <button class="tab-btn" onclick="switchTab('hadith')">📖 Hadith</button>
+  </div>
+
+  <!-- PRAYER TIMES -->
+  <div class="panel active" id="panel-prayer">
+    <div class="card">
+      <div class="card-title">Enter Coordinates</div>
+      <div class="coord-row">
+        <input class="coord-input" id="latInput" type="number" placeholder="Latitude (e.g. 51.5074)" step="any"/>
+        <input class="coord-input" id="lngInput" type="number" placeholder="Longitude (e.g. -0.1278)" step="any"/>
+        <button class="geo-btn" onclick="useGeolocation()">📍 My Location</button>
+        <button class="calc-btn" onclick="calculatePrayers()">Calculate</button>
+      </div>
+      <div id="prayerStatus" class="status-msg">Enter coordinates or use geolocation to calculate prayer times.</div>
+    </div>
+    <div class="card" id="prayerResultCard" style="display:none;">
+      <div class="card-title">Prayer Times — <span id="prayerDate"></span></div>
+      <div class="prayer-grid" id="prayerGrid"></div>
+      <div class="countdown-box">
+        <div class="countdown-label">Next Prayer</div>
+        <div class="countdown-timer" id="countdownTimer">--:--:--</div>
+        <div class="countdown-next" id="countdownNext">Calculating…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QIBLA -->
+  <div class="panel" id="panel-qibla">
+    <div class="card">
+      <div class="card-title">Qibla Direction</div>
+      <div class="coord-row">
+        <input class="coord-input" id="qLatInput" type="number" placeholder="Latitude" step="any"/>
+        <input class="coord-input" id="qLngInput" type="number" placeholder="Longitude" step="any"/>
+        <button class="geo-btn" onclick="useQiblaGeo()">📍 My Location</button>
+        <button class="calc-btn" onclick="calcQibla()">Find Qibla</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="qibla-wrap">
+        <div class="compass-outer" id="compassOuter">
+          <div class="compass-ring"></div>
+          <!-- Compass ticks -->
+          <div class="compass-label compass-n">N</div>
+          <div class="compass-label compass-s">S</div>
+          <div class="compass-label compass-e">E</div>
+          <div class="compass-label compass-w">W</div>
+          <div class="qibla-needle" id="qiblaNeedle"></div>
+          <div class="compass-center"></div>
+        </div>
+        <div class="qibla-info">
+          <div class="qibla-degrees" id="qiblaDeg">—°</div>
+          <div class="qibla-desc" id="qiblaDesc">Enter your coordinates to find the Qibla direction</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DHIKR -->
+  <div class="panel" id="panel-dhikr">
+    <div class="card">
+      <div class="card-title">Tasbih Counter</div>
+      <div class="dhikr-tabs">
+        <button class="dhikr-tab active" onclick="selectDhikr(0)">SubhanAllah</button>
+        <button class="dhikr-tab" onclick="selectDhikr(1)">Alhamdulillah</button>
+        <button class="dhikr-tab" onclick="selectDhikr(2)">Allahu Akbar</button>
+        <button class="dhikr-tab" onclick="selectDhikr(3)">La ilaha illAllah</button>
+        <button class="dhikr-tab" onclick="selectDhikr(4)">Astaghfirullah</button>
+      </div>
+      <div class="dhikr-counter-wrap">
+        <div class="dhikr-arabic" id="dhikrArabic">سُبْحَانَ اللَّهِ</div>
+        <div class="dhikr-english" id="dhikrEnglish">Glory be to Allah</div>
+        <div class="dhikr-count" id="dhikrCount">0</div>
+        <div class="dhikr-target-row">
+          <span>Target: 33</span>
+          <div class="dhikr-progress"><div class="dhikr-progress-bar" id="dhikrBar" style="width:0%"></div></div>
+          <span id="dhikrPct">0%</span>
+        </div>
+        <button class="dhikr-btn" onclick="tapDhikr()" id="dhikrTapBtn">Tap</button>
+        <div class="dhikr-controls">
+          <button class="dhikr-ctrl-btn" onclick="resetDhikr()">↺ Reset</button>
+          <button class="dhikr-ctrl-btn" onclick="undoDhikr()">↩ Undo</button>
+        </div>
+        <div class="dhikr-sessions" id="dhikrSessions"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HADITH -->
+  <div class="panel" id="panel-hadith">
+    <div class="card">
+      <div class="card-title">Daily Hadith</div>
+      <div class="hadith-card">
+        <div class="hadith-text" id="hadithText"></div>
+        <div class="hadith-source" id="hadithSource"></div>
+      </div>
+      <div class="hadith-nav">
+        <button class="hadith-nav-btn" onclick="prevHadith()">← Previous</button>
+        <button class="hadith-nav-btn" onclick="nextHadith()">Next →</button>
+        <button class="hadith-nav-btn" onclick="randomHadith()">🎲 Random</button>
+      </div>
+      <div class="hadith-index" id="hadithIndex"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== UTILITIES ==========
+const $ = id => document.getElementById(id);
+
+// ========== HIJRI DATE ==========
+function toHijri(date) {
+  const JD = Math.floor((14 + 153 * (date.getMonth() + 1 - (date.getMonth() + 1 > 2 ? 0 : -9)) + 2) / 5)
+    + 365 * date.getFullYear()
+    + Math.floor(date.getFullYear() / 4)
+    - Math.floor(date.getFullYear() / 100)
+    + Math.floor(date.getFullYear() / 400)
+    - 32045
+    + date.getDate()
+    - (date.getMonth() + 1 <= 2 ? 1 : 0);
+
+  const l = JD - 1948440 + 10632;
+  const n = Math.floor((l - 1) / 10631);
+  const ll = l - 10631 * n + 354;
+  const j = Math.floor((10985 - ll) / 5316) * Math.floor((50 * ll) / 17719)
+    + Math.floor(ll / 5670) * Math.floor((43 * ll) / 15238);
+  const ll2 = ll - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50)
+    - Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
+  const m = Math.floor((24 * ll2) / 709);
+  const d = ll2 - Math.floor((709 * m) / 24);
+  const y = 30 * n + j - 30;
+  return { y, m, d };
+}
+
+const hijriMonths = ['Muharram','Safar','Rabi\' al-Awwal','Rabi\' al-Thani','Jumada al-Awwal','Jumada al-Thani','Rajab','Sha\'ban','Ramadan','Shawwal','Dhu al-Qi\'dah','Dhu al-Hijjah'];
+
+function initDates() {
+  const now = new Date();
+  const h = toHijri(now);
+  $('hijriDateDisplay').textContent = `${h.d} ${hijriMonths[h.m - 1]} ${h.y} AH`;
+  const greg = now.toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  $('gregDateDisplay').textContent = greg;
+  $('navDate').textContent = now.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  $('prayerDate').textContent = now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+}
+initDates();
+
+// ========== TABS ==========
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  $('panel-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ========== PRAYER TIMES (Muslim World League method) ==========
+const DEG = Math.PI / 180;
+
+function julianDate(y, m, d) {
+  if (m <= 2) { y--; m += 12; }
+  const A = Math.floor(y / 100);
+  const B = 2 - A + Math.floor(A / 4);
+  return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5;
+}
+
+function sunPosition(jd) {
+  const D = jd - 2451545.0;
+  const g = (357.529 + 0.98560028 * D) % 360;
+  const q = (280.459 + 0.98564736 * D) % 360;
+  const L = (q + 1.915 * Math.sin(g * DEG) + 0.020 * Math.sin(2 * g * DEG)) % 360;
+  const e = 23.439 - 0.00000036 * D;
+  const RA = Math.atan2(Math.cos(e * DEG) * Math.sin(L * DEG), Math.cos(L * DEG)) / DEG;
+  const dec = Math.asin(Math.sin(e * DEG) * Math.sin(L * DEG)) / DEG;
+  const EqT = q / 15 - ((RA < 0 ? RA + 360 : RA) / 15);
+  return { dec, EqT };
+}
+
+function hourAngle(lat, dec, elev) {
+  const cos = (Math.sin(elev * DEG) - Math.sin(lat * DEG) * Math.sin(dec * DEG))
+    / (Math.cos(lat * DEG) * Math.cos(dec * DEG));
+  if (Math.abs(cos) > 1) return null;
+  return Math.acos(cos) / DEG;
+}
+
+function asrAngle(lat, dec, shadow) {
+  const x = Math.atan(1 / (shadow + Math.tan(Math.abs(lat - dec) * DEG))) / DEG;
+  return x;
+}
+
+function calcPrayerTimes(lat, lng, date) {
+  const y = date.getFullYear(), mo = date.getMonth() + 1, d = date.getDate();
+  const jd = julianDate(y, mo, d);
+  const tz = -date.getTimezoneOffset() / 60;
+  const { dec, EqT } = sunPosition(jd);
+
+  const noon = 12 - EqT - lng / 15 + tz;
+  const sunriseAngle = hourAngle(lat, dec, -0.8333);
+  const fajrAngle = hourAngle(lat, dec, -18); // MWL Fajr 18°
+  const ishaAngle = hourAngle(lat, dec, -17); // MWL Isha 17°
+  const asrElevation = asrAngle(lat, dec, 1); // Shafi (shadow factor 1)
+
+  const asrHA = hourAngle(lat, dec, asrElevation);
+
+  const times = {
+    Fajr: fajrAngle ? noon - fajrAngle / 15 : null,
+    Sunrise: sunriseAngle ? noon - sunriseAngle / 15 : null,
+    Dhuhr: noon + 0.02,
+    Asr: asrHA ? noon + asrHA / 15 : null,
+    Maghrib: sunriseAngle ? noon + sunriseAngle / 15 : null,
+    Isha: ishaAngle ? noon + ishaAngle / 15 : null,
+  };
+  return times;
+}
+
+function decimalToTime(h) {
+  if (h === null) return '--:--';
+  let total = (h % 24 + 24) % 24;
+  const hr = Math.floor(total);
+  const min = Math.floor((total - hr) * 60);
+  const period = hr >= 12 ? 'PM' : 'AM';
+  const h12 = hr % 12 || 12;
+  return `${h12}:${String(min).padStart(2,'0')} <small>${period}</small>`;
+}
+
+function decimalToDate(h, baseDate) {
+  if (h === null) return null;
+  let total = (h % 24 + 24) % 24;
+  const hr = Math.floor(total);
+  const min = Math.floor((total - hr) * 60);
+  const d = new Date(baseDate);
+  d.setHours(hr, min, 0, 0);
+  return d;
+}
+
+let prayerTimesData = null;
+let countdownInterval = null;
+
+function useGeolocation() {
+  if (!navigator.geolocation) { $('prayerStatus').textContent = 'Geolocation not supported.'; return; }
+  $('prayerStatus').textContent = '📍 Detecting location…';
+  navigator.geolocation.getCurrentPosition(pos => {
+    $('latInput').value = pos.coords.latitude.toFixed(4);
+    $('lngInput').value = pos.coords.longitude.toFixed(4);
+    calculatePrayers();
+  }, () => { $('prayerStatus').textContent = '⚠️ Could not get location.'; });
+}
+
+function calculatePrayers() {
+  const lat = parseFloat($('latInput').value);
+  const lng = parseFloat($('lngInput').value);
+  if (isNaN(lat) || isNaN(lng)) { $('prayerStatus').textContent = '⚠️ Please enter valid coordinates.'; return; }
+  const now = new Date();
+  const times = calcPrayerTimes(lat, lng, now);
+  prayerTimesData = times;
+  $('prayerResultCard').style.display = 'block';
+  $('prayerStatus').textContent = `✅ Calculated for ${lat.toFixed(3)}°, ${lng.toFixed(3)}°`;
+
+  const names = ['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha'];
+  const nowMs = now.getTime();
+  let currentPrayer = 'Fajr';
+  let nextPrayer = null;
+  let nextTime = null;
+
+  const timeDates = {};
+  names.forEach(n => { timeDates[n] = decimalToDate(times[n], now); });
+
+  // Find current + next
+  for (let i = 0; i < names.length; i++) {
+    const td = timeDates[names[i]];
+    if (td && td.getTime() <= nowMs) currentPrayer = names[i];
+  }
+  for (let i = 0; i < names.length; i++) {
+    const td = timeDates[names[i]];
+    if (td && td.getTime() > nowMs) { nextPrayer = names[i]; nextTime = td; break; }
+  }
+
+  const grid = $('prayerGrid');
+  grid.innerHTML = '';
+  names.forEach(n => {
+    const div = document.createElement('div');
+    div.className = 'prayer-card' + (n === currentPrayer ? ' current' : '');
+    div.innerHTML = `<div class="prayer-name">${n}</div><div class="prayer-time">${decimalToTime(times[n])}</div>`;
+    grid.appendChild(div);
+  });
+
+  if (countdownInterval) clearInterval(countdownInterval);
+  function updateCountdown() {
+    if (!nextTime) { $('countdownTimer').textContent = '--:--:--'; return; }
+    const diff = nextTime - new Date();
+    if (diff <= 0) { calculatePrayers(); return; }
+    const hh = Math.floor(diff / 3600000);
+    const mm = Math.floor((diff % 3600000) / 60000);
+    const ss = Math.floor((diff % 60000) / 1000);
+    $('countdownTimer').textContent = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+    $('countdownNext').textContent = nextPrayer ? `Until ${nextPrayer}` : 'No upcoming prayer today';
+  }
+  updateCountdown();
+  countdownInterval = setInterval(updateCountdown, 1000);
+}
+
+// ========== QIBLA ==========
+const MECCA = { lat: 21.3891, lng: 39.8579 };
+
+function calcQiblaDir(lat, lng) {
+  const dLng = (MECCA.lng - lng) * DEG;
+  const lat1 = lat * DEG, lat2 = MECCA.lat * DEG;
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  let bearing = Math.atan2(y, x) / DEG;
+  return (bearing + 360) % 360;
+}
+
+function useQiblaGeo() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    $('qLatInput').value = pos.coords.latitude.toFixed(4);
+    $('qLngInput').value = pos.coords.longitude.toFixed(4);
+    calcQibla();
+  });
+}
+
+function calcQibla() {
+  const lat = parseFloat($('qLatInput').value);
+  const lng = parseFloat($('qLngInput').value);
+  if (isNaN(lat) || isNaN(lng)) return;
+  const deg = calcQiblaDir(lat, lng);
+  $('qiblaDeg').textContent = deg.toFixed(1) + '°';
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  const dir = dirs[Math.round(deg / 22.5) % 16];
+  $('qiblaDesc').textContent = `Face ${deg.toFixed(1)}° (${dir}) towards the Kaaba in Mecca`;
+  $('qiblaNeedle').style.transform = `translateX(-50%) translateY(-100%) rotate(${deg}deg)`;
+}
+
+// ========== DHIKR ==========
+const dhikrList = [
+  { arabic:'سُبْحَانَ اللَّهِ', english:'Glory be to Allah', key:'subhanallah' },
+  { arabic:'الْحَمْدُ لِلَّهِ', english:'All praise be to Allah', key:'alhamdulillah' },
+  { arabic:'اللَّهُ أَكْبَرُ', english:'Allah is the Greatest', key:'allahuakbar' },
+  { arabic:'لَا إِلَٰهَ إِلَّا اللَّهُ', english:'There is no god but Allah', key:'lailaha' },
+  { arabic:'أَسْتَغْفِرُ اللَّهَ', english:'I seek forgiveness from Allah', key:'astaghfirullah' },
+];
+let currentDhikrIdx = 0;
+const TARGET = 33;
+
+function getDhikrData(key) {
+  return JSON.parse(localStorage.getItem('dhikr_' + key) || '{"count":0,"sessions":0}');
+}
+function saveDhikrData(key, data) {
+  localStorage.setItem('dhikr_' + key, JSON.stringify(data));
+}
+
+function selectDhikr(idx) {
+  currentDhikrIdx = idx;
+  document.querySelectorAll('.dhikr-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  renderDhikr();
+}
+
+function renderDhikr() {
+  const d = dhikrList[currentDhikrIdx];
+  const data = getDhikrData(d.key);
+  $('dhikrArabic').textContent = d.arabic;
+  $('dhikrEnglish').textContent = d.english;
+  $('dhikrCount').textContent = data.count;
+  const pct = Math.min(100, (data.count / TARGET) * 100);
+  $('dhikrBar').style.width = pct + '%';
+  $('dhikrPct').textContent = Math.floor(pct) + '%';
+  $('dhikrSessions').textContent = data.sessions > 0 ? `Completed ${data.sessions} session${data.sessions>1?'s':''} of 33` : '';
+}
+
+function tapDhikr() {
+  const d = dhikrList[currentDhikrIdx];
+  let data = getDhikrData(d.key);
+  data.count++;
+  if (data.count >= TARGET) {
+    data.sessions++;
+    data.count = 0;
+    const btn = $('dhikrTapBtn');
+    btn.style.background = 'radial-gradient(circle,rgba(245,158,11,0.4),rgba(16,185,129,0.1))';
+    setTimeout(() => btn.style.background = '', 600);
+  }
+  saveDhikrData(d.key, data);
+  renderDhikr();
+  // Ripple animation
+  $('dhikrCount').style.transform = 'scale(1.1)';
+  setTimeout(() => $('dhikrCount').style.transform = 'scale(1)', 150);
+}
+
+function resetDhikr() {
+  const d = dhikrList[currentDhikrIdx];
+  saveDhikrData(d.key, { count: 0, sessions: 0 });
+  renderDhikr();
+}
+
+function undoDhikr() {
+  const d = dhikrList[currentDhikrIdx];
+  let data = getDhikrData(d.key);
+  if (data.count > 0) { data.count--; saveDhikrData(d.key, data); renderDhikr(); }
+}
+
+renderDhikr();
+
+// ========== HADITHS ==========
+const hadiths = [
+  { text: "The best of you are those who have the best manners and character.", source: "Sahih al-Bukhari, Book 73, Hadith 56" },
+  { text: "None of you will have faith until he loves for his brother what he loves for himself.", source: "Sahih al-Bukhari, Book 2, Hadith 12" },
+  { text: "The strong man is not the one who can overpower others. Rather, the strong man is the one who controls himself when he gets angry.", source: "Sahih al-Bukhari, Book 78, Hadith 135" },
+  { text: "Verily, with hardship comes ease.", source: "Quran 94:5 — Al-Inshirah" },
+  { text: "Make things easy and do not make them difficult, cheer people up and do not drive them away.", source: "Sahih al-Bukhari, Book 78, Hadith 174" },
+  { text: "A kind word is a form of charity.", source: "Sahih al-Bukhari, Book 24, Hadith 522" },
+  { text: "Whoever believes in Allah and the Last Day, let him speak good or remain silent.", source: "Sahih al-Bukhari, Book 78, Hadith 158" },
+  { text: "The world is a prison for the believer and a paradise for the disbeliever.", source: "Sahih Muslim, Book 55, Hadith 7" },
+  { text: "Take advantage of five matters before five other matters: your youth before you become old; your health before you fall sick; your richness before you become poor; your free time before you become busy; and your life before your death.", source: "Mustadrak al-Hakim, Hadith 7846" },
+  { text: "Be in this world as if you were a stranger or a traveler.", source: "Sahih al-Bukhari, Book 81, Hadith 425" },
+  { text: "The ink of the scholar is holier than the blood of the martyr.", source: "Attributed — Islamic wisdom" },
+  { text: "Allah does not look at your forms and your wealth, but He looks at your hearts and your deeds.", source: "Sahih Muslim, Book 32, Hadith 6221" },
+  { text: "Whoever removes a worldly grief from a believer, Allah will remove from him one of the griefs of the Day of Resurrection.", source: "Sahih Muslim, Book 32, Hadith 6518" },
+  { text: "The most beloved of deeds to Allah are those that are most consistent, even if it is small.", source: "Sahih al-Bukhari, Book 76, Hadith 472" },
+  { text: "Feed the hungry, visit the sick, and free the captive.", source: "Sahih al-Bukhari, Book 70, Hadith 555" },
+  { text: "The best charity is that given when one is self-sufficient; and the upper hand is better than the lower hand.", source: "Sahih al-Bukhari, Book 24, Hadith 507" },
+  { text: "Do not consider any act of kindness insignificant, even meeting your brother with a cheerful face.", source: "Sahih Muslim, Book 32, Hadith 6359" },
+  { text: "Richness is not having many possessions. Rather, true richness is the richness of the soul.", source: "Sahih al-Bukhari, Book 76, Hadith 453" },
+  { text: "He who has in his heart the weight of a mustard seed of pride shall not enter Paradise.", source: "Sahih Muslim, Book 1, Hadith 164" },
+  { text: "Every act of kindness is a charity.", source: "Sahih al-Bukhari, Book 78, Hadith 144" },
+  { text: "Smiling at your brother is a charitable act.", source: "Jami' at-Tirmidhi, Book 27, Hadith 36" },
+  { text: "Whoever shows no mercy to others will be shown no mercy.", source: "Sahih al-Bukhari, Book 78, Hadith 379" },
+  { text: "The best form of worship is supplication (du'a).", source: "Sunan Abi Dawud, Book 8, Hadith 1479" },
+];
+
+let hadithIdx = new Date().getDate() % hadiths.length;
+
+function renderHadith() {
+  $('hadithText').textContent = '"' + hadiths[hadithIdx].text + '"';
+  $('hadithSource').textContent = '— ' + hadiths[hadithIdx].source;
+  $('hadithIndex').textContent = `Hadith ${hadithIdx + 1} of ${hadiths.length}`;
+}
+
+function nextHadith() { hadithIdx = (hadithIdx + 1) % hadiths.length; renderHadith(); }
+function prevHadith() { hadithIdx = (hadithIdx - 1 + hadiths.length) % hadiths.length; renderHadith(); }
+function randomHadith() { hadithIdx = Math.floor(Math.random() * hadiths.length); renderHadith(); }
+renderHadith();
+</script>
+</body>
+</html>
