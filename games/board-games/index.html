@@ -167,8 +167,14 @@ function showGame(n){
     if(p.t==='k'&&!isInCheck(board,p.c)){
       const row=p.c==='w'?7:0;
       const cs=castleState||{};
-      if(!cs[p.c+'k']&&board[row][7]&&board[row][7].t==='r'&&board[row][7].c===p.c&&!board[row][5]&&!board[row][6]&&!isInCheck(board.map((rr,ri)=>rr.map((cc,ci)=>ri===row&&ci===5?{...board[row][4]}:ri===row&&ci===4?null:cc),p.c))){legal.push([row,6]);}
-      if(!cs[p.c+'q']&&board[row][0]&&board[row][0].t==='r'&&board[row][0].c===p.c&&!board[row][1]&&!board[row][2]&&!board[row][3]&&!isInCheck(board.map((rr,ri)=>rr.map((cc,ci)=>ri===row&&ci===3?{...board[row][4]}:ri===row&&ci===4?null:cc)),p.c)){legal.push([row,2]);}
+      if(!cs[p.c+'k']&&board[row][7]&&board[row][7].t==='r'&&board[row][7].c===p.c&&!board[row][5]&&!board[row][6]){
+        const kingSideBoard=board.map((rr,ri)=>rr.map((cc,ci)=>ri===row&&ci===5?{...board[row][4]}:ri===row&&ci===4?null:cc));
+        if(!isInCheck(kingSideBoard,p.c))legal.push([row,6]);
+      }
+      if(!cs[p.c+'q']&&board[row][0]&&board[row][0].t==='r'&&board[row][0].c===p.c&&!board[row][1]&&!board[row][2]&&!board[row][3]){
+        const queenSideBoard=board.map((rr,ri)=>rr.map((cc,ci)=>ri===row&&ci===3?{...board[row][4]}:ri===row&&ci===4?null:cc));
+        if(!isInCheck(queenSideBoard,p.c))legal.push([row,2]);
+      }
     }
     return legal;
   }

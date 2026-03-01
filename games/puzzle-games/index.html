@@ -149,7 +149,6 @@ function showTab(n){
     const g=el();g.innerHTML='';
     grid.forEach((v,i)=>{
       const r=Math.floor(i/9),c=i%9;
-      const isGiven=parseInt(PUZZLES[0][i])>0&&grid[i]>0&&grid[i]===parseInt(PUZZLES[1][i])&&grid[i]===parseInt(PUZZLES[0].replace(/0/g,'x')[i]);
       const given=parseInt(PUZZLES[0][i])>0;
       const inp=document.createElement('input');
       inp.type='text';inp.className='s-cell'+(given?' given':'')+(i===sel?' selected':'');

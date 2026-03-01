@@ -145,9 +145,7 @@ function update(){
   if(canMove(pac.cx,pac.cy,dir.dx,dir.dy,.13)){pac.cx+=dir.dx*.13;pac.cy+=dir.dy*.13;}
   pac.cx=((pac.cx%COLS)+COLS)%COLS;pac.cy=((pac.cy%ROWS)+ROWS)%ROWS;
   // Eat dots
-  const tr=Math.round(pac.cy-.5),tc=Math.round(pac.cx-.5);
   const inR=Math.floor(pac.cy),inC=Math.floor(pac.cx);
-  [inR,inR].forEach(()=>{});
   if(map[inR]&&map[inR][inC]===0){map[inR][inC]=3;score+=10;document.getElementById('pm_sc').textContent=score;}
   if(map[inR]&&map[inR][inC]===2){map[inR][inC]=3;score+=50;document.getElementById('pm_sc').textContent=score;power=true;powerTimer=300;ghosts.forEach(g=>{g.fright=true;g.eaten=false;});}
   if(power){powerTimer--;if(powerTimer<=0){power=false;ghosts.forEach(g=>{g.fright=false;g.eaten=false;});}}
