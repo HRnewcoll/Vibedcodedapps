@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Property Investment Analyser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060412;--accent:#a855f7;--accent2:#9333ea;--accent3:#c084fc;--border:rgba(168,85,247,0.2);--glass:rgba(168,85,247,0.08);--text:#faf5ff;--text2:#d8b4fe;--text3:rgba(250,245,255,0.6)}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#060412,#0d0920,#060412);min-height:100vh;color:var(--text)}
+a{color:var(--accent);text-decoration:none}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useMemo}=React;
+
+const css={
+  navbar:{background:'rgba(6,4,18,.85)',backdropFilter:'blur(12px)',borderBottom:'1px solid rgba(168,85,247,.2)',padding:'0 24px',height:56,display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:100},
+  container:{maxWidth:1000,margin:'0 auto',padding:'24px 16px'},
+  section:{background:'rgba(168,85,247,.06)',border:'1px solid rgba(168,85,247,.2)',borderRadius:16,padding:20,marginBottom:16},
+  h2:{fontSize:'1rem',fontWeight:600,color:'#d8b4fe',marginBottom:14},
+  label:{fontSize:'.8rem',color:'rgba(250,245,255,.6)',marginBottom:4,display:'block'},
+  inp:{width:'100%',background:'rgba(255,255,255,.06)',border:'1px solid rgba(168,85,247,.2)',borderRadius:10,padding:'8px 12px',color:'#faf5ff',fontFamily:'Inter',fontSize:'.85rem',outline:'none'},
+  sel:{width:'100%',background:'rgba(6,4,18,.8)',border:'1px solid rgba(168,85,247,.2)',borderRadius:10,padding:'8px 12px',color:'#faf5ff',fontFamily:'Inter',fontSize:'.85rem',outline:'none',cursor:'pointer'},
+  btn:{padding:'10px 22px',borderRadius:10,border:'none',fontFamily:'Inter',fontSize:'.9rem',fontWeight:500,cursor:'pointer',transition:'all .2s'},
+  btnPrimary:{background:'linear-gradient(135deg,#a855f7,#9333ea)',color:'#fff'},
+  btnOutline:{background:'transparent',border:'1px solid rgba(168,85,247,.3)',color:'#d8b4fe'},
+  tab:{flex:1,padding:'8px',borderRadius:9,border:'none',background:'transparent',color:'rgba(250,245,255,.5)',fontFamily:'Inter',fontSize:'.82rem',cursor:'pointer',transition:'all .2s'},
+  tabActive:{background:'rgba(168,85,247,.2)',color:'#a855f7',fontWeight:500},
+  metricCard:{background:'rgba(168,85,247,.08)',border:'1px solid rgba(168,85,247,.2)',borderRadius:12,padding:16,textAlign:'center'},
+  metricVal:{fontSize:'1.4rem',fontWeight:700,color:'#c084fc'},
+  metricLabel:{fontSize:'.75rem',color:'rgba(250,245,255,.5)',marginTop:4},
+};
+
+function Field({label,children}){
+  return <div style={{marginBottom:12}}><label style={css.label}>{label}</label>{children}</div>;
+}
+
+function calcSDLT(price,type){
+  // UK SDLT 2024
+  const bands=type==='first'?[{t:425000,r:0},{t:625000,r:.05},{t:9999999,r:.05}]:type==='additional'?[{t:250000,r:.03},{t:925000,r:.08},{t:1500000,r:.13},{t:9999999,r:.15}]:[{t:250000,r:0},{t:925000,r:.05},{t:1500000,r:.1},{t:9999999,r:.12}];
+  if(type==='first'&&price>625000)return calcSDLT(price,'main');
+  let tax=0,prev=0;
+  for(const band of bands){const taxable=Math.min(price,band.t)-prev;if(taxable>0)tax+=taxable*band.r;prev=band.t;if(price<=band.t)break}
+  return Math.round(tax);
+}
+
+function MortgageCalc(){
+  const[price,setPrice]=useState(250000);
+  const[deposit,setDeposit]=useState(25);
+  const[rate,setRate]=useState(5.0);
+  const[term,setTerm]=useState(25);
+  const[type,setType]=useState('repayment');
+  const loan=price*(1-deposit/100);
+  const ltv=100-deposit;
+  const monthlyRate=rate/100/12;
+  let monthly=0,totalInt=0;
+  if(type==='repayment'){monthly=loan*(monthlyRate*Math.pow(1+monthlyRate,term*12))/(Math.pow(1+monthlyRate,term*12)-1);totalInt=monthly*term*12-loan}
+  else{monthly=loan*monthlyRate;totalInt=monthly*term*12;}
+  const fmt=n=>n!=null?'£'+Math.round(n).toLocaleString():'—';
+  const amort=[];
+  let balance=loan;
+  for(let y=1;y<=Math.min(term,30);y++){
+    const yearInt=balance*rate/100;
+    const yearPrin=type==='repayment'?(monthly*12-yearInt):0;
+    balance=Math.max(0,balance-yearPrin);
+    amort.push({y,interest:Math.round(yearInt),principal:Math.round(yearPrin),balance:Math.round(balance)});
+  }
+  return(
+    <div style={css.section}>
+      <div style={css.h2}>🏦 Mortgage Calculator</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))',gap:12,marginBottom:16}}>
+        <Field label="Property Price"><input style={css.inp} type="number" value={price} onChange={e=>setPrice(+e.target.value)}/></Field>
+        <Field label={`Deposit: ${deposit}%`}><input style={css.inp} type="range" min="5" max="90" value={deposit} onChange={e=>setDeposit(+e.target.value)}/></Field>
+        <Field label={`Rate: ${rate}%`}><input style={css.inp} type="range" min="1" max="12" step="0.1" value={rate} onChange={e=>setRate(+e.target.value)}/></Field>
+        <Field label="Term (years)"><input style={css.inp} type="number" min="5" max="35" value={term} onChange={e=>setTerm(+e.target.value)}/></Field>
+        <Field label="Repayment Type"><select style={css.sel} value={type} onChange={e=>setType(e.target.value)}><option value="repayment">Repayment</option><option value="interest">Interest Only</option></select></Field>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:10,marginBottom:16}}>
+        {[['Monthly Payment',fmt(monthly)],['Loan Amount',fmt(loan)],['LTV',ltv+'%'],['Total Interest',fmt(totalInt)],['Total Repaid',fmt(monthly*term*12)]].map(([l,v])=>(
+          <div key={l} style={css.metricCard}><div style={css.metricVal}>{v}</div><div style={css.metricLabel}>{l}</div></div>
+        ))}
+      </div>
+      <details><summary style={{cursor:'pointer',fontSize:'.85rem',color:'#d8b4fe',marginBottom:8}}>📊 Amortisation Table</summary>
+      <div style={{overflowX:'auto'}}>
+      <table style={{width:'100%',borderCollapse:'collapse',fontSize:'.78rem'}}>
+        <thead><tr>{['Year','Interest','Principal','Balance'].map(h=><th key={h} style={{textAlign:'left',color:'rgba(250,245,255,.5)',padding:'5px 8px',borderBottom:'1px solid rgba(168,85,247,.2)'}}>{h}</th>)}</tr></thead>
+        <tbody>{amort.map(r=><tr key={r.y}>{[r.y,'£'+r.interest.toLocaleString(),'£'+r.principal.toLocaleString(),'£'+r.balance.toLocaleString()].map((c,i)=><td key={i} style={{padding:'5px 8px',borderBottom:'1px solid rgba(168,85,247,.06)',color:i===0?'#d8b4fe':'#faf5ff'}}>{c}</td>)}</tr>)}</tbody>
+      </table></div></details>
+    </div>
+  );
+}
+
+function SDLTCalc(){
+  const[price,setPrice]=useState(300000);
+  const[buyerType,setBuyerType]=useState('main');
+  const tax=calcSDLT(price,buyerType);
+  const effective=(tax/price*100).toFixed(2);
+  return(
+    <div style={css.section}>
+      <div style={css.h2}>🏷️ UK Stamp Duty (SDLT) Calculator</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:12,marginBottom:16}}>
+        <Field label="Property Price (£)"><input style={css.inp} type="number" value={price} onChange={e=>setPrice(+e.target.value)}/></Field>
+        <Field label="Buyer Type"><select style={css.sel} value={buyerType} onChange={e=>setBuyerType(e.target.value)}>
+          <option value="main">Main Residence</option><option value="additional">Additional Property (+3%)</option><option value="first">First-Time Buyer</option>
+        </select></Field>
+      </div>
+      <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+        <div style={css.metricCard}><div style={css.metricVal}>£{tax.toLocaleString()}</div><div style={css.metricLabel}>SDLT Due</div></div>
+        <div style={css.metricCard}><div style={css.metricVal}>{effective}%</div><div style={css.metricLabel}>Effective Rate</div></div>
+        <div style={css.metricCard}><div style={css.metricVal}>£{(price+tax).toLocaleString()}</div><div style={css.metricLabel}>Total Cost</div></div>
+      </div>
+    </div>
+  );
+}
+
+function Affordability(){
+  const[income,setIncome]=useState(50000);
+  const[deposit,setDeposit]=useState(30000);
+  const[rate,setRate]=useState(5.5);
+  const maxBorrowing=income*4.5;
+  const maxPrice=maxBorrowing+deposit;
+  const stressRate=rate+3;
+  const stressBorrow=income*4;
+  const stressMax=stressBorrow+deposit;
+  const fmt=n=>'£'+Math.round(n).toLocaleString();
+  return(
+    <div style={css.section}>
+      <div style={css.h2}>💼 Affordability Check</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))',gap:12,marginBottom:16}}>
+        <Field label="Annual Income (£)"><input style={css.inp} type="number" value={income} onChange={e=>setIncome(+e.target.value)}/></Field>
+        <Field label="Available Deposit (£)"><input style={css.inp} type="number" value={deposit} onChange={e=>setDeposit(+e.target.value)}/></Field>
+        <Field label={`Mortgage Rate: ${rate}%`}><input style={css.inp} type="range" min="2" max="10" step="0.1" value={rate} onChange={e=>setRate(+e.target.value)}/></Field>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',gap:10}}>
+        {[[`Max Price (4.5× income)`,fmt(maxPrice)],[`Stress Test (${stressRate}%)`,fmt(stressMax)],['Max Borrowing',fmt(maxBorrowing)],['Monthly @ rate',fmt(maxBorrowing*(rate/100/12))]].map(([l,v])=>(
+          <div key={l} style={css.metricCard}><div style={css.metricVal}>{v}</div><div style={css.metricLabel}>{l}</div></div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PropertyForm({onAnalyse}){
+  const[form,setForm]=useState({price:250000,location:'',type:'Flat',beds:2,baths:1,rent:1200,legal:2000,survey:500,reno:5000,mortgage:900,service:100,groundRent:200,mgmtPct:10,maint:500,insurance:300,voidMonths:1,buyerType:'main'});
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const sdlt=calcSDLT(form.price,form.buyerType);
+  const inp=(label,key,type='number',opts={})=>(
+    <Field key={key} label={label}>
+      {type==='select'?<select style={css.sel} value={form[key]} onChange={e=>set(key,e.target.value)}>{opts.options.map(o=><option key={o}>{o}</option>)}</select>:<input style={css.inp} type={type} value={form[key]} onChange={e=>set(key,type==='number'?+e.target.value:e.target.value)} placeholder={opts.placeholder||''}/>}
+    </Field>
+  );
+  return(
+    <div style={css.section}>
+      <div style={css.h2}>🏠 Property Details</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))',gap:12}}>
+        {inp('Property Price (£)','price')}
+        {inp('Location','location','text',{placeholder:'e.g. Manchester'})}
+        {inp('Type','type','select',{options:['Flat','House','HMO','Commercial']})}
+        {inp('Bedrooms','beds')}
+        {inp('Bathrooms','baths')}
+        {inp('Monthly Rent (£)','rent')}
+        {inp('Legal Fees (£)','legal')}
+        {inp('Survey (£)','survey')}
+        {inp('Renovation (£)','reno')}
+        {inp('Monthly Mortgage (£)','mortgage')}
+        {inp('Service Charge/mo (£)','service')}
+        {inp('Ground Rent/yr (£)','groundRent')}
+        {inp('Management Fee (%)','mgmtPct')}
+        {inp('Maintenance/yr (£)','maint')}
+        {inp('Insurance/yr (£)','insurance')}
+        {inp('Void Months/yr','voidMonths')}
+        {inp('Buyer Type','buyerType','select',{options:['main','additional','first']})}
+      </div>
+      <div style={{margin:'8px 0 16px',fontSize:'.82rem',color:'#d8b4fe'}}>SDLT: <strong>£{sdlt.toLocaleString()}</strong></div>
+      <button style={{...css.btn,...css.btnPrimary}} onClick={()=>onAnalyse({...form,sdlt})}>Analyse Property</button>
+    </div>
+  );
+}
+
+function ROIResults({data,onSave}){
+  const annualRent=data.rent*12;
+  const annualMortgage=data.mortgage*12;
+  const mgmtFee=annualRent*(data.mgmtPct/100);
+  const voidCost=data.rent*data.voidMonths;
+  const annualCosts=annualMortgage+data.service*12+data.groundRent+mgmtFee+data.maint+data.insurance+voidCost;
+  const purchaseCosts=data.sdlt+data.legal+data.survey+data.reno;
+  const totalCashIn=data.price*(0.25)+purchaseCosts;
+  const grossYield=(annualRent/data.price*100).toFixed(2);
+  const netYield=((annualRent-annualCosts)/(data.price+purchaseCosts)*100).toFixed(2);
+  const cashflow=annualRent-annualCosts;
+  const roi=(cashflow/totalCashIn*100).toFixed(2);
+  const breakEven=cashflow>0?(totalCashIn/cashflow).toFixed(1):'N/A';
+  const fmt=n=>'£'+Math.round(n).toLocaleString();
+  const fmtCf=n=>(n>=0?'+':'')+fmt(n);
+  const projection=Array.from({length:10},(_,i)=>{
+    const y=i+1;
+    const val=data.price*Math.pow(1.05,y);
+    const cumRent=annualRent*y;
+    const equity=val*(0.25)+purchaseCosts;
+    const totalReturn=equity+cumRent-totalCashIn;
+    return{y,val:Math.round(val),cumRent:Math.round(cumRent),equity:Math.round(equity),totalReturn:Math.round(totalReturn)};
+  });
+  const yieldColor=n=>n>=6?'#4ade80':n>=4?'#fbbf24':'#f87171';
+  return(
+    <div>
+      <div style={css.section}>
+        <div style={css.h2}>📊 ROI Results — {data.location||'Property'}</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:10,marginBottom:16}}>
+          {[['Gross Yield',grossYield+'%',yieldColor(grossYield)],['Net Yield',netYield+'%',yieldColor(netYield)],['Annual Cash Flow',fmtCf(cashflow),cashflow>=0?'#4ade80':'#f87171'],['ROI',roi+'%',roi>=8?'#4ade80':roi>=5?'#fbbf24':'#f87171'],['Break Even',breakEven+' yrs','#c084fc'],['Purchase Costs',fmt(purchaseCosts),'#d8b4fe']].map(([l,v,c])=>(
+            <div key={l} style={css.metricCard}><div style={{...css.metricVal,color:c||'#c084fc'}}>{v}</div><div style={css.metricLabel}>{l}</div></div>
+          ))}
+        </div>
+        <div style={{fontSize:'.82rem',color:'rgba(250,245,255,.5)',lineHeight:2,background:'rgba(168,85,247,.05)',borderRadius:10,padding:12}}>
+          Annual Rent: {fmt(annualRent)} · Annual Costs: {fmt(annualCosts)} · Cash Invested: {fmt(totalCashIn)}
+        </div>
+        <button style={{...css.btn,...css.btnOutline,marginTop:12}} onClick={onSave}>💾 Save Property</button>
+      </div>
+      <div style={css.section}>
+        <div style={css.h2}>📈 10-Year Projection (5% p.a. growth)</div>
+        <div style={{overflowX:'auto'}}>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:'.78rem'}}>
+          <thead><tr>{['Year','Value','Cumul. Rent','Equity (est.)','Total Return'].map(h=><th key={h} style={{textAlign:'left',color:'rgba(250,245,255,.5)',padding:'6px 8px',borderBottom:'1px solid rgba(168,85,247,.2)'}}>{h}</th>)}</tr></thead>
+          <tbody>{projection.map(r=><tr key={r.y}>{[r.y,'£'+r.val.toLocaleString(),'£'+r.cumRent.toLocaleString(),'£'+r.equity.toLocaleString(),(r.totalReturn>=0?'+':'')+fmt(r.totalReturn)].map((c,i)=><td key={i} style={{padding:'6px 8px',borderBottom:'1px solid rgba(168,85,247,.06)',color:i===4?(r.totalReturn>=0?'#4ade80':'#f87171'):i===0?'#d8b4fe':'#faf5ff'}}>{c}</td>)}</tr>)}</tbody>
+        </table></div>
+      </div>
+    </div>
+  );
+}
+
+function ComparePanel({saved,onRemove}){
+  if(!saved.length)return null;
+  const keys=[['Price','price',v=>'£'+v.toLocaleString()],['Monthly Rent','rent',v=>'£'+v],['Gross Yield','grossYield',v=>v+'%'],['Net Yield','netYield',v=>v+'%'],['Cash Flow/yr','cashflow',v=>'£'+v.toLocaleString()]];
+  const enriched=saved.map(d=>{
+    const ar=d.rent*12;const ac=d.mortgage*12+d.service*12+d.groundRent+ar*(d.mgmtPct/100)+d.maint+d.insurance+d.rent*d.voidMonths;
+    return{...d,grossYield:(ar/d.price*100).toFixed(2),netYield:((ar-ac)/(d.price+(d.sdlt||0)+d.legal+d.survey+d.reno)*100).toFixed(2),cashflow:Math.round(ar-ac)};
+  });
+  return(
+    <div style={css.section}>
+      <div style={css.h2}>⚖️ Property Comparison</div>
+      <div style={{overflowX:'auto'}}>
+      <table style={{width:'100%',borderCollapse:'collapse',fontSize:'.82rem'}}>
+        <thead><tr><th style={{textAlign:'left',color:'rgba(250,245,255,.5)',padding:'6px 8px',borderBottom:'1px solid rgba(168,85,247,.2)'}}>Metric</th>{enriched.map((p,i)=><th key={i} style={{textAlign:'left',padding:'6px 8px',borderBottom:'1px solid rgba(168,85,247,.2)'}}><span style={{color:'#d8b4fe'}}>{p.location||'Property '+(i+1)}</span><button onClick={()=>onRemove(i)} style={{background:'none',border:'none',color:'rgba(250,245,255,.4)',cursor:'pointer',marginLeft:6}}>✕</button></th>)}</tr></thead>
+        <tbody>{keys.map(([label,key,fmt])=><tr key={key}><td style={{padding:'6px 8px',color:'rgba(250,245,255,.5)',borderBottom:'1px solid rgba(168,85,247,.06)'}}>{label}</td>{enriched.map((p,i)=><td key={i} style={{padding:'6px 8px',color:'#faf5ff',borderBottom:'1px solid rgba(168,85,247,.06)'}}>{fmt(p[key])}</td>)}</tr>)}</tbody>
+      </table></div>
+    </div>
+  );
+}
+
+function RentalYieldCalc(){
+  const[annRent,setAnnRent]=useState(14400);
+  const[propVal,setPropVal]=useState(250000);
+  const yield_=(annRent/propVal*100).toFixed(2);
+  const qual=yield_>=6?{l:'Excellent',c:'#4ade80'}:yield_>=4?{l:'Good',c:'#fbbf24'}:{l:'Poor',c:'#f87171'};
+  return(
+    <div style={css.section}>
+      <div style={css.h2}>📐 Quick Yield Calculator</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+        <Field label="Annual Rent (£)"><input style={css.inp} type="number" value={annRent} onChange={e=>setAnnRent(+e.target.value)}/></Field>
+        <Field label="Property Value (£)"><input style={css.inp} type="number" value={propVal} onChange={e=>setPropVal(+e.target.value)}/></Field>
+      </div>
+      <div style={{display:'flex',gap:10}}>
+        <div style={css.metricCard}><div style={{...css.metricVal,color:qual.c}}>{yield_}%</div><div style={css.metricLabel}>Rental Yield</div></div>
+        <div style={css.metricCard}><div style={{...css.metricVal,color:qual.c}}>{qual.l}</div><div style={css.metricLabel}>Rating</div></div>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const[tab,setTab]=useState('analyse');
+  const[result,setResult]=useState(null);
+  const[saved,setSaved]=useState(()=>JSON.parse(localStorage.getItem('savedProperties')||'[]'));
+  const saveProp=()=>{if(!result)return;const next=[...saved,result];setSaved(next);localStorage.setItem('savedProperties',JSON.stringify(next))};
+  const removeComp=i=>{const next=saved.filter((_,j)=>j!==i);setSaved(next);localStorage.setItem('savedProperties',JSON.stringify(next))};
+  const tabs=[['analyse','🏠 Analyse'],['mortgage','🏦 Mortgage'],['yield','📐 Yield'],['sdlt','🏷️ SDLT'],['afford','💼 Affordability'],['compare','⚖️ Compare']];
+  return(
+    <>
+      <nav style={css.navbar}>
+        <a href="../../index.html" style={{color:'rgba(250,245,255,.6)',fontSize:'.85rem',textDecoration:'none'}}>← Back</a>
+        <h1 style={{fontSize:'1.1rem',fontWeight:600,color:'#faf5ff'}}>🏠 Property Analyser</h1>
+        <div style={{width:60}}/>
+      </nav>
+      <div style={css.container}>
+        <div style={{display:'flex',gap:4,marginBottom:20,background:'rgba(255,255,255,.04)',borderRadius:12,padding:4,flexWrap:'wrap'}}>
+          {tabs.map(([k,l])=><button key={k} style={{...css.tab,...(tab===k?css.tabActive:{})}} onClick={()=>setTab(k)}>{l}</button>)}
+        </div>
+        {tab==='analyse'&&<><PropertyForm onAnalyse={setResult}/>{result&&<ROIResults data={result} onSave={saveProp}/>}</>}
+        {tab==='mortgage'&&<MortgageCalc/>}
+        {tab==='yield'&&<RentalYieldCalc/>}
+        {tab==='sdlt'&&<SDLTCalc/>}
+        {tab==='afford'&&<Affordability/>}
+        {tab==='compare'&&<ComparePanel saved={saved} onRemove={removeComp}/>}
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

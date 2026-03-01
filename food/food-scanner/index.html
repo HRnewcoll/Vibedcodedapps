@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Food Barcode Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d0800;--accent:#f97316;--accent2:#ea580c;--accent3:#fb923c;--border:rgba(249,115,22,0.2);--glass:rgba(249,115,22,0.08);--text:#fff7ed;--text2:#fdba74;--text3:rgba(255,247,237,0.6)}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0d0800,#1c0e00,#2d1600);min-height:100vh;color:var(--text)}
+a{color:var(--accent);text-decoration:none}
+.navbar{background:rgba(13,8,0,0.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.navbar h1{font-size:1.1rem;font-weight:600;color:var(--text)}
+.back-btn{color:var(--text3);font-size:.85rem;display:flex;align-items:center;gap:6px}
+.back-btn:hover{color:var(--accent)}
+.container{max-width:800px;margin:0 auto;padding:24px 16px}
+.section{background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px}
+.section h2{font-size:1rem;font-weight:600;color:var(--text2);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.cam-wrap{position:relative;width:100%;max-width:480px;margin:0 auto;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:4/3}
+#videoEl{width:100%;height:100%;object-fit:cover;display:block}
+.cam-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scan-box{width:200px;height:140px;border:2px solid var(--accent);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,0.4)}
+.scan-line{position:absolute;width:180px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scanLine 2s linear infinite}
+@keyframes scanLine{0%{top:calc(50% - 65px)}100%{top:calc(50% + 65px)}}
+.btn{padding:10px 20px;border-radius:10px;border:none;font-family:'Inter',sans-serif;font-size:.9rem;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#f87171}
+.btn-danger:hover{background:rgba(239,68,68,.25)}
+.btn-sm{padding:6px 12px;font-size:.8rem}
+.input-row{display:flex;gap:8px;margin-top:12px}
+.input-row input{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:.9rem;outline:none}
+.input-row input:focus{border-color:var(--accent)}
+.input-row input::placeholder{color:var(--text3)}
+.cam-status{text-align:center;margin-top:8px;font-size:.85rem;color:var(--text3)}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-wrap{text-align:center;padding:32px;display:none}
+.loading-wrap.active{display:block}
+.product-card{display:none}
+.product-card.active{display:block}
+.product-header{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
+.product-img{width:90px;height:90px;object-fit:contain;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid var(--border)}
+.product-info h3{font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.product-info .brand{font-size:.85rem;color:var(--text3);margin-bottom:8px}
+.nutri-badge{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.75rem;font-weight:700;color:#fff;letter-spacing:.5px}
+.nutri-a{background:#038141}.nutri-b{background:#85bb2f}.nutri-c{background:#fecb02;color:#000}.nutri-d{background:#ee8100}.nutri-e{background:#e63312}
+.traffic-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.traffic-pill{padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:500}
+.tl-green{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+.tl-amber{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+.tl-red{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+.nutrition-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.nutrition-table th{text-align:left;color:var(--text3);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--border)}
+.nutrition-table td{padding:6px 8px;border-bottom:1px solid rgba(249,115,22,.08)}
+.nutrition-table tr:last-child td{border-bottom:none}
+.nutrition-table td:last-child{text-align:right;color:var(--text2)}
+.allergen-wrap{margin-top:12px;font-size:.85rem}
+.allergen-wrap h4{color:var(--text3);font-size:.8rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.allergen-tag{display:inline-block;background:rgba(251,146,60,.15);border:1px solid rgba(251,146,60,.3);color:var(--accent3);border-radius:6px;padding:3px 8px;font-size:.75rem;margin:2px}
+.action-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.error-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;border-radius:10px;padding:12px 16px;font-size:.9rem;display:none}
+.error-msg.active{display:block}
+.history-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.history-item:last-child{border-bottom:none}
+.history-left h4{font-size:.9rem;font-weight:500;color:var(--text)}
+.history-left span{font-size:.75rem;color:var(--text3)}
+.empty-state{text-align:center;color:var(--text3);font-size:.9rem;padding:24px}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="back-btn" href="../../index.html">← Back</a>
+  <h1>🔍 Food Barcode Scanner</h1>
+  <div style="width:60px"></div>
+</nav>
+<div class="container">
+  <div class="section">
+    <h2>📷 Scanner</h2>
+    <div class="cam-wrap">
+      <video id="videoEl" autoplay muted playsinline></video>
+      <div class="cam-overlay"><div class="scan-box"><div class="scan-line"></div></div></div>
+    </div>
+    <p class="cam-status" id="camStatus">Click "Start Camera" to begin scanning</p>
+    <div style="text-align:center;margin-top:12px;display:flex;gap:8px;justify-content:center">
+      <button class="btn btn-primary" id="startCamBtn">Start Camera</button>
+      <button class="btn btn-outline" id="stopCamBtn" style="display:none">Stop Camera</button>
+    </div>
+    <div style="margin-top:16px;text-align:center;color:var(--text3);font-size:.85rem">— or enter barcode manually —</div>
+    <div class="input-row">
+      <input type="text" id="barcodeInput" placeholder="Enter EAN-13 or UPC-A barcode..." maxlength="20"/>
+      <button class="btn btn-primary" id="lookupBtn">Lookup</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📦 Product Info</h2>
+    <div class="loading-wrap" id="loadingWrap"><div class="spinner"></div><p style="margin-top:8px;color:var(--text3)">Looking up product...</p></div>
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="product-card" id="productCard">
+      <div class="product-header">
+        <img id="productImg" class="product-img" src="" alt="Product"/>
+        <div class="product-info">
+          <h3 id="productName"></h3>
+          <div class="brand" id="productBrand"></div>
+          <span class="nutri-badge" id="nutriBadge"></span>
+        </div>
+      </div>
+      <div class="traffic-row" id="trafficRow"></div>
+      <table class="nutrition-table" id="nutritionTable">
+        <thead><tr><th>Nutrient</th><th>Per 100g</th></tr></thead>
+        <tbody id="nutritionBody"></tbody>
+      </table>
+      <div class="allergen-wrap" id="allergenWrap"></div>
+      <div class="action-row">
+        <button class="btn btn-primary btn-sm" id="addLogBtn">+ Add to Log</button>
+        <button class="btn btn-outline btn-sm" id="shareBtn">Share</button>
+      </div>
+    </div>
+    <div id="noProduct" style="color:var(--text3);font-size:.9rem;text-align:center;padding:16px">Scan or enter a barcode to see product information</div>
+  </div>
+
+  <div class="section">
+    <h2>📋 Scan History</h2>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<script>
+let codeReader = null;
+let stream = null;
+let currentProduct = null;
+let currentBarcode = null;
+const log = JSON.parse(localStorage.getItem('foodScanLog') || '[]');
+
+const camStatus = document.getElementById('camStatus');
+const startBtn = document.getElementById('startCamBtn');
+const stopBtn = document.getElementById('stopCamBtn');
+const barcodeInput = document.getElementById('barcodeInput');
+const lookupBtn = document.getElementById('lookupBtn');
+const loadingWrap = document.getElementById('loadingWrap');
+const errorMsg = document.getElementById('errorMsg');
+const productCard = document.getElementById('productCard');
+const noProduct = document.getElementById('noProduct');
+
+function showLoading(){loadingWrap.classList.add('active');errorMsg.classList.remove('active');productCard.classList.remove('active');noProduct.style.display='none'}
+function hideLoading(){loadingWrap.classList.remove('active')}
+function showError(msg){errorMsg.textContent=msg;errorMsg.classList.add('active');hideLoading();noProduct.style.display='none'}
+
+async function lookupBarcode(barcode){
+  if(!barcode.trim())return;
+  currentBarcode=barcode.trim();
+  showLoading();
+  try{
+    const r=await fetch(`https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json`);
+    const d=await r.json();
+    hideLoading();
+    if(d.status===0||!d.product){showError('Product not found. Try another barcode.');return}
+    renderProduct(d.product);
+  }catch(e){showError('Failed to fetch product. Check your connection.')}
+}
+
+function trafficLight(key,val){
+  const thresholds={fat:[3,17.5],saturatedFat:[1.5,5],sugars:[5,22.5],salt:[0.3,1.5],sodium:[0.1,0.6]};
+  const t=thresholds[key];
+  if(!t||val===undefined)return'';
+  if(val<=t[0])return'tl-green';
+  if(val<=t[1])return'tl-amber';
+  return'tl-red';
+}
+
+function renderProduct(p){
+  currentProduct=p;
+  document.getElementById('productImg').src=p.image_url||'https://via.placeholder.com/90?text=No+Image';
+  document.getElementById('productName').textContent=p.product_name||'Unknown Product';
+  document.getElementById('productBrand').textContent=p.brands||'';
+  const nb=document.getElementById('nutriBadge');
+  const ns=p.nutrition_grades||p.nutriscore_grade||'';
+  if(ns){nb.textContent='Nutri-Score '+ns.toUpperCase();nb.className='nutri-badge nutri-'+ns.toLowerCase()}else{nb.textContent='';nb.className='nutri-badge'}
+  const n=p.nutriments||{};
+  const rows=[
+    {key:'energy-kcal_100g',label:'Energy',unit:'kcal'},
+    {key:'fat_100g',label:'Fat',unit:'g',tl:'fat'},
+    {key:'saturated-fat_100g',label:'Saturated Fat',unit:'g',tl:'saturatedFat'},
+    {key:'carbohydrates_100g',label:'Carbohydrates',unit:'g'},
+    {key:'sugars_100g',label:'Sugars',unit:'g',tl:'sugars'},
+    {key:'fiber_100g',label:'Fibre',unit:'g'},
+    {key:'proteins_100g',label:'Protein',unit:'g'},
+    {key:'salt_100g',label:'Salt',unit:'g',tl:'salt'}
+  ];
+  const tbody=document.getElementById('nutritionBody');
+  tbody.innerHTML=rows.map(r=>{
+    const val=n[r.key];
+    const display=val!==undefined?`${parseFloat(val).toFixed(1)}${r.unit}`:'—';
+    return`<tr><td>${r.label}</td><td>${display}</td></tr>`;
+  }).join('');
+  const traffic=document.getElementById('trafficRow');
+  const tlItems=[{k:'fat',l:'Fat',v:n['fat_100g']},{k:'saturatedFat',l:'Sat Fat',v:n['saturated-fat_100g']},{k:'sugars',l:'Sugars',v:n['sugars_100g']},{k:'salt',l:'Salt',v:n['salt_100g']}];
+  traffic.innerHTML=tlItems.filter(x=>x.v!==undefined).map(x=>`<span class="traffic-pill ${trafficLight(x.k,x.v)}">${x.l}: ${parseFloat(x.v).toFixed(1)}g</span>`).join('');
+  const aw=document.getElementById('allergenWrap');
+  const allergens=p.allergens_tags||[];
+  if(allergens.length){aw.innerHTML=`<h4>⚠️ Allergens</h4>`+allergens.map(a=>`<span class="allergen-tag">${a.replace('en:','')}</span>`).join('')}
+  else{aw.innerHTML=''}
+  productCard.classList.add('active');
+  noProduct.style.display='none';
+}
+
+document.getElementById('addLogBtn').addEventListener('click',()=>{
+  if(!currentProduct)return;
+  const entry={barcode:currentBarcode,name:currentProduct.product_name||'Unknown',brand:currentProduct.brands||'',nutriscore:currentProduct.nutrition_grades||'',date:new Date().toLocaleString()};
+  log.unshift(entry);
+  if(log.length>10)log.pop();
+  localStorage.setItem('foodScanLog',JSON.stringify(log));
+  renderHistory();
+  document.getElementById('addLogBtn').textContent='✓ Added';
+  setTimeout(()=>{document.getElementById('addLogBtn').textContent='+ Add to Log'},2000);
+});
+
+document.getElementById('shareBtn').addEventListener('click',async()=>{
+  if(!currentProduct)return;
+  if(navigator.share){
+    try{await navigator.share({title:currentProduct.product_name||'Food Product',text:`Check out: ${currentProduct.product_name}`,url:location.href})}
+    catch(e){}
+  }else{
+    navigator.clipboard.writeText(location.href);
+    document.getElementById('shareBtn').textContent='Copied!';
+    setTimeout(()=>{document.getElementById('shareBtn').textContent='Share'},2000);
+  }
+});
+
+lookupBtn.addEventListener('click',()=>lookupBarcode(barcodeInput.value));
+barcodeInput.addEventListener('keydown',e=>{if(e.key==='Enter')lookupBarcode(barcodeInput.value)});
+
+startBtn.addEventListener('click',async()=>{
+  if(typeof ZXing==='undefined'){camStatus.textContent='ZXing library failed to load. Use manual input.';return}
+  try{
+    const hints=new Map();
+    codeReader=new ZXing.BrowserMultiFormatReader(hints);
+    const devices=await ZXing.BrowserCodeReader.listVideoInputDevices();
+    const deviceId=devices.length>0?devices[devices.length-1].deviceId:undefined;
+    camStatus.textContent='Camera starting...';
+    await codeReader.decodeFromVideoDevice(deviceId,'videoEl',async(result,err)=>{
+      if(result){
+        const code=result.getText();
+        camStatus.textContent=`Scanned: ${code}`;
+        barcodeInput.value=code;
+        await lookupBarcode(code);
+      }
+    });
+    camStatus.textContent='Scanning... point camera at barcode';
+    startBtn.style.display='none';
+    stopBtn.style.display='inline-flex';
+  }catch(e){
+    camStatus.textContent='Camera unavailable: '+e.message+'. Use manual input below.';
+  }
+});
+
+stopBtn.addEventListener('click',()=>{
+  if(codeReader){codeReader.reset();codeReader=null}
+  camStatus.textContent='Camera stopped';
+  startBtn.style.display='inline-flex';
+  stopBtn.style.display='none';
+});
+
+function renderHistory(){
+  const el=document.getElementById('historyList');
+  const saved=JSON.parse(localStorage.getItem('foodScanLog')||'[]');
+  if(!saved.length){el.innerHTML='<div class="empty-state">No scans yet</div>';return}
+  el.innerHTML=saved.map((item,i)=>`
+    <div class="history-item">
+      <div class="history-left">
+        <h4>${item.name||'Unknown'}</h4>
+        <span>${item.brand?item.brand+' · ':''} ${item.date}${item.nutriscore?' · Nutri-Score '+item.nutriscore.toUpperCase():''}</span>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteHistory(${i})">✕</button>
+    </div>`).join('');
+}
+
+function deleteHistory(i){
+  const saved=JSON.parse(localStorage.getItem('foodScanLog')||'[]');
+  saved.splice(i,1);
+  localStorage.setItem('foodScanLog',JSON.stringify(saved));
+  renderHistory();
+}
+
+renderHistory();
+</script>
+</body>
+</html>

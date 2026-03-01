@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Cheap Food Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d0800;--accent:#f97316;--accent2:#ea580c;--accent3:#fb923c;--border:rgba(249,115,22,0.2);--glass:rgba(249,115,22,0.08);--text:#fff7ed;--text2:#fdba74;--text3:rgba(255,247,237,0.6)}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0d0800,#1c0e00,#2d1600);min-height:100vh;color:var(--text)}
+a{color:var(--accent);text-decoration:none}
+.navbar{background:rgba(13,8,0,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.navbar h1{font-size:1.1rem;font-weight:600}
+.back-btn{color:var(--text3);font-size:.85rem}
+.back-btn:hover{color:var(--accent)}
+.container{max-width:960px;margin:0 auto;padding:24px 16px}
+.section{background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px}
+.section h2{font-size:1rem;font-weight:600;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.tabs{display:flex;gap:4px;margin-bottom:20px;background:rgba(255,255,255,.04);border-radius:12px;padding:4px}
+.tab{flex:1;padding:8px;border-radius:9px;border:none;background:transparent;color:var(--text3);font-family:'Inter',sans-serif;font-size:.82rem;cursor:pointer;transition:all .2s;white-space:nowrap}
+.tab.active{background:rgba(249,115,22,.2);color:var(--accent);font-weight:500}
+.btn{padding:8px 16px;border-radius:10px;border:none;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.btn-primary:hover{opacity:.9}
+.btn-sm{padding:5px 10px;font-size:.75rem}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171}
+.btn-danger:hover{background:rgba(239,68,68,.2)}
+.input-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:12px}
+.inp{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:10px;padding:8px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;width:100%}
+.inp:focus{border-color:var(--accent)}
+.inp::placeholder{color:var(--text3)}
+select.inp{cursor:pointer}
+.recipe-card{background:rgba(13,8,0,.5);border:1px solid var(--border);border-radius:14px;padding:16px;transition:all .2s;cursor:pointer}
+.recipe-card:hover{border-color:rgba(249,115,22,.4);background:rgba(249,115,22,.05)}
+.recipe-card h3{font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px}
+.recipe-meta{display:flex;gap:10px;font-size:.75rem;color:var(--text3);flex-wrap:wrap;margin-bottom:8px}
+.cost-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:600}
+.cost-green{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+.cost-amber{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+.cost-unknown{background:rgba(255,255,255,.08);color:var(--text3);border:1px solid var(--border)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdropFilter:blur(6px);z-index:2000;overflow-y:auto;display:flex;justify-content:center;padding:24px 16px}
+.modal-box{background:linear-gradient(135deg,#1c0e00,#2d1600);border:1px solid rgba(249,115,22,.3);border-radius:20px;width:100%;max-width:600px;height:fit-content;padding:28px}
+.modal-box h2{font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:12px}
+.ing-list li{font-size:.85rem;color:var(--text3);line-height:1.7;padding:3px 0}
+.ing-missing{color:#f87171!important}
+.steps-text{font-size:.85rem;line-height:1.7;color:rgba(255,247,237,.8);white-space:pre-line}
+.pantry-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(249,115,22,.08)}
+.pantry-item:last-child{border-bottom:none}
+.pantry-name{font-size:.875rem;color:var(--text)}
+.pantry-price{font-size:.8rem;color:var(--text2)}
+.day-plan{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.day-card{background:rgba(13,8,0,.5);border:1px solid var(--border);border-radius:12px;padding:14px}
+.day-card h4{font-size:.8rem;color:var(--accent3);margin-bottom:6px}
+.day-meal{font-size:.8rem;color:var(--text);margin-bottom:3px}
+.day-cost{font-size:.75rem;color:var(--text3)}
+.deal-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(249,115,22,.08)}
+.deal-item:last-child{border-bottom:none}
+.saving-badge{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3);padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:600}
+.empty{text-align:center;color:var(--text3);font-size:.875rem;padding:24px}
+.sort-btns{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.sort-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text3);font-family:'Inter',font-size:.78rem;cursor:pointer;transition:all .15s}
+.sort-btn.active{background:rgba(249,115,22,.2);border-color:var(--accent);color:var(--accent)}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="back-btn" href="../../index.html">← Back</a>
+  <h1>💰 Cheap Food Finder</h1>
+  <div style="width:60px"></div>
+</nav>
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('recipes')">🍽 Recipes</button>
+    <button class="tab" onclick="showTab('pantry')">🛒 My Prices</button>
+    <button class="tab" onclick="showTab('planner')">📅 Meal Plan</button>
+    <button class="tab" onclick="showTab('deals')">🏷 Deals</button>
+  </div>
+
+  <!-- RECIPES -->
+  <div id="view-recipes">
+    <div style="margin-bottom:12px">
+      <div class="sort-btns">
+        <span style="font-size:.8rem;color:var(--text3);padding:5px 0">Sort:</span>
+        <button class="sort-btn active" onclick="sortRecipes('cost')">💷 Cheapest</button>
+        <button class="sort-btn" onclick="sortRecipes('value')">📊 Best Value</button>
+        <button class="sort-btn" onclick="sortRecipes('time')">⏱ Quickest</button>
+      </div>
+    </div>
+    <div id="recipeGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px"></div>
+  </div>
+
+  <!-- PANTRY PRICES -->
+  <div id="view-pantry" style="display:none">
+    <div class="section">
+      <h2>➕ Add Price</h2>
+      <div class="input-grid">
+        <input class="inp" id="pItem" placeholder="Item name"/>
+        <input class="inp" id="pPrice" type="number" step="0.01" min="0" placeholder="Price £"/>
+        <input class="inp" id="pWeight" type="number" step="1" min="1" placeholder="Weight/Volume"/>
+        <select class="inp" id="pUnit"><option>g</option><option>ml</option><option>each</option><option>kg</option><option>L</option></select>
+      </div>
+      <button class="btn btn-primary" onclick="addPantryItem()">Add Item</button>
+    </div>
+    <div class="section">
+      <h2>🛒 My Price List</h2>
+      <div id="pantryList"></div>
+    </div>
+  </div>
+
+  <!-- MEAL PLANNER -->
+  <div id="view-planner" style="display:none">
+    <div class="section">
+      <h2>📅 Weekly Meal Plan</h2>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <label style="font-size:.875rem;color:var(--text3)">Budget:</label>
+        <select class="inp" id="budgetSel" style="width:120px">
+          <option value="5">£5/week</option>
+          <option value="10" selected>£10/week</option>
+          <option value="15">£15/week</option>
+          <option value="20">£20/week</option>
+        </select>
+        <button class="btn btn-primary" onclick="generatePlan()">Generate Plan</button>
+      </div>
+      <div id="planGrid"></div>
+    </div>
+  </div>
+
+  <!-- DEALS -->
+  <div id="view-deals" style="display:none">
+    <div class="section">
+      <h2>➕ Add Deal</h2>
+      <div class="input-grid">
+        <input class="inp" id="dItem" placeholder="Item name"/>
+        <input class="inp" id="dOrig" type="number" step="0.01" placeholder="Original £"/>
+        <input class="inp" id="dSale" type="number" step="0.01" placeholder="Sale £"/>
+        <input class="inp" id="dStore" placeholder="Store name"/>
+        <input class="inp" id="dExpiry" type="date"/>
+      </div>
+      <button class="btn btn-primary" onclick="addDeal()">Add Deal</button>
+    </div>
+    <div class="section">
+      <h2>🏷 Active Deals</h2>
+      <div id="dealsList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RECIPE MODAL -->
+<div id="recipeModal" style="display:none" class="modal-overlay" onclick="closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+      <h2 id="modalTitle"></h2>
+      <button onclick="closeModal()" style="background:rgba(255,255,255,.08);border:none;color:var(--text3);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:.85rem">✕</button>
+    </div>
+    <div id="modalMeta" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;font-size:.8rem;color:var(--text3)"></div>
+    <h3 style="font-size:.85rem;color:var(--text2);margin-bottom:8px">Ingredients</h3>
+    <ul id="modalIngredients" style="list-style:none;margin-bottom:16px;padding-left:8px"></ul>
+    <h3 style="font-size:.85rem;color:var(--text2);margin-bottom:8px">Instructions</h3>
+    <div id="modalSteps" class="steps-text"></div>
+  </div>
+</div>
+
+<script>
+const RECIPES = [
+  {id:1,name:'Pasta Bolognese',ings:[{n:'pasta',q:200,u:'g'},{n:'minced beef',q:150,u:'g'},{n:'tomato',q:200,u:'g'},{n:'onion',q:100,u:'g'},{n:'garlic',q:10,u:'g'}],cal:480,protein:28,time:30,steps:'1. Boil pasta until al dente.\n2. Fry onion and garlic in oil.\n3. Add mince, brown well.\n4. Add tomatoes, simmer 15 min.\n5. Serve sauce over pasta.'},
+  {id:2,name:'Egg Fried Rice',ings:[{n:'rice',q:200,u:'g'},{n:'eggs',q:2,u:'each'},{n:'soy sauce',q:20,u:'ml'},{n:'peas',q:80,u:'g'},{n:'carrot',q:50,u:'g'}],cal:380,protein:14,time:20,steps:'1. Cook rice and cool.\n2. Scramble eggs in wok.\n3. Add veg and rice.\n4. Add soy sauce, stir fry 3 min.'},
+  {id:3,name:'Bean Chilli',ings:[{n:'kidney beans',q:400,u:'g'},{n:'tomato',q:400,u:'g'},{n:'onion',q:150,u:'g'},{n:'pepper',q:100,u:'g'},{n:'chilli powder',q:5,u:'g'}],cal:320,protein:16,time:35,steps:'1. Fry onion and pepper.\n2. Add spices, stir 1 min.\n3. Add beans and tomatoes.\n4. Simmer 20 min. Serve with rice.'},
+  {id:4,name:'Omelette',ings:[{n:'eggs',q:3,u:'each'},{n:'butter',q:10,u:'g'},{n:'milk',q:30,u:'ml'}],cal:280,protein:20,time:8,steps:'1. Beat eggs with milk and seasoning.\n2. Melt butter in pan.\n3. Pour in eggs, fold when set.'},
+  {id:5,name:'Toast with Beans',ings:[{n:'bread',q:80,u:'g'},{n:'baked beans',q:200,u:'g'},{n:'butter',q:10,u:'g'}],cal:340,protein:14,time:5,steps:'1. Toast bread.\n2. Heat beans in pan or microwave.\n3. Serve beans over toast.'},
+  {id:6,name:'Potato Soup',ings:[{n:'potato',q:500,u:'g'},{n:'onion',q:100,u:'g'},{n:'vegetable stock',q:500,u:'ml'},{n:'butter',q:20,u:'g'},{n:'milk',q:100,u:'ml'}],cal:250,protein:6,time:30,steps:'1. Fry onion in butter.\n2. Add cubed potato and stock.\n3. Simmer 20 min until soft.\n4. Blend, add milk, season.'},
+  {id:7,name:'Stir Fry Noodles',ings:[{n:'noodles',q:200,u:'g'},{n:'soy sauce',q:30,u:'ml'},{n:'cabbage',q:150,u:'g'},{n:'carrot',q:100,u:'g'},{n:'garlic',q:10,u:'g'}],cal:360,protein:10,time:15,steps:'1. Cook noodles.\n2. Stir fry veg in hot oil.\n3. Add noodles and soy sauce.\n4. Toss and serve.'},
+  {id:8,name:'Lentil Dal',ings:[{n:'red lentils',q:200,u:'g'},{n:'onion',q:100,u:'g'},{n:'tomato',q:200,u:'g'},{n:'garlic',q:10,u:'g'},{n:'cumin',q:5,u:'g'},{n:'turmeric',q:3,u:'g'}],cal:300,protein:18,time:25,steps:'1. Fry onion, garlic and spices.\n2. Add tomatoes, cook 5 min.\n3. Add lentils and water.\n4. Simmer 20 min until soft.'},
+  {id:9,name:'Scrambled Eggs on Toast',ings:[{n:'eggs',q:3,u:'each'},{n:'bread',q:80,u:'g'},{n:'butter',q:15,u:'g'},{n:'milk',q:30,u:'ml'}],cal:320,protein:22,time:8,steps:'1. Beat eggs with milk.\n2. Cook slowly in buttered pan, stirring.\n3. Serve on toasted bread.'},
+  {id:10,name:'Tuna Pasta',ings:[{n:'pasta',q:200,u:'g'},{n:'tuna',q:145,u:'g'},{n:'mayonnaise',q:30,u:'g'},{n:'sweetcorn',q:80,u:'g'}],cal:420,protein:30,time:15,steps:'1. Cook pasta, drain.\n2. Mix tuna, mayo and sweetcorn.\n3. Combine with pasta. Serve.'},
+  {id:11,name:'Veggie Curry',ings:[{n:'potato',q:300,u:'g'},{n:'chickpeas',q:400,u:'g'},{n:'tomato',q:400,u:'g'},{n:'onion',q:150,u:'g'},{n:'curry powder',q:10,u:'g'}],cal:340,protein:14,time:35,steps:'1. Fry onion until golden.\n2. Add curry powder, 1 min.\n3. Add potatoes, tomatoes, chickpeas.\n4. Simmer 25 min. Serve with rice.'},
+  {id:12,name:'Jacket Potato',ings:[{n:'potato',q:300,u:'g'},{n:'butter',q:20,u:'g'},{n:'baked beans',q:200,u:'g'}],cal:380,protein:12,time:60,steps:'1. Pierce potato, microwave 8 min or bake 60 min at 200°C.\n2. Split open, add butter.\n3. Top with hot beans.'},
+  {id:13,name:'Mac & Cheese',ings:[{n:'pasta',q:200,u:'g'},{n:'milk',q:300,u:'ml'},{n:'cheddar cheese',q:80,u:'g'},{n:'butter',q:20,u:'g'},{n:'flour',q:20,u:'g'}],cal:460,protein:18,time:25,steps:'1. Cook pasta.\n2. Melt butter, add flour, cook 1 min.\n3. Add milk slowly, stirring. Add cheese.\n4. Combine with pasta.'},
+  {id:14,name:'Porridge',ings:[{n:'oats',q:80,u:'g'},{n:'milk',q:250,u:'ml'},{n:'banana',q:1,u:'each'}],cal:360,protein:12,time:8,steps:'1. Mix oats and milk in pan.\n2. Cook on medium heat, stirring, 5 min.\n3. Slice banana on top. Serve.'},
+  {id:15,name:'Bean Burgers',ings:[{n:'kidney beans',q:400,u:'g'},{n:'bread',q:60,u:'g'},{n:'onion',q:100,u:'g'},{n:'eggs',q:1,u:'each'},{n:'flour',q:30,u:'g'}],cal:350,protein:15,time:25,steps:'1. Mash beans, mix with breadcrumbs, onion and egg.\n2. Form into patties, dust with flour.\n3. Fry 4 min each side until golden.'},
+  {id:16,name:'Fried Rice',ings:[{n:'rice',q:200,u:'g'},{n:'eggs',q:2,u:'each'},{n:'soy sauce',q:20,u:'ml'},{n:'onion',q:80,u:'g'}],cal:360,protein:12,time:18,steps:'1. Cook and cool rice.\n2. Fry onion, add rice.\n3. Push aside, scramble eggs in.\n4. Mix, add soy sauce.'},
+  {id:17,name:'Minestrone Soup',ings:[{n:'pasta',q:80,u:'g'},{n:'kidney beans',q:200,u:'g'},{n:'tomato',q:400,u:'g'},{n:'carrot',q:100,u:'g'},{n:'celery',q:100,u:'g'},{n:'onion',q:100,u:'g'}],cal:280,protein:12,time:40,steps:'1. Fry onion, carrot and celery.\n2. Add tomatoes, beans and 1L water.\n3. Simmer 20 min.\n4. Add pasta, cook further 10 min.'},
+  {id:18,name:'Cheese Sandwich',ings:[{n:'bread',q:80,u:'g'},{n:'cheddar cheese',q:50,u:'g'},{n:'butter',q:10,u:'g'}],cal:360,protein:16,time:3,steps:'1. Butter the bread.\n2. Add sliced cheese.\n3. Press together and serve.'},
+  {id:19,name:'Greek Salad',ings:[{n:'tomato',q:200,u:'g'},{n:'cucumber',q:200,u:'g'},{n:'feta cheese',q:100,u:'g'},{n:'olives',q:50,u:'g'},{n:'onion',q:50,u:'g'}],cal:260,protein:10,time:10,steps:'1. Chop tomatoes, cucumber and onion.\n2. Add olives and crumbled feta.\n3. Drizzle with olive oil. Season.'},
+  {id:20,name:'Banana Pancakes',ings:[{n:'banana',q:2,u:'each'},{n:'eggs',q:2,u:'each'},{n:'flour',q:80,u:'g'},{n:'milk',q:100,u:'ml'},{n:'butter',q:10,u:'g'}],cal:380,protein:14,time:15,steps:'1. Mash banana with eggs.\n2. Mix in flour and milk.\n3. Fry spoonfuls in buttered pan.\n4. Cook 2 min each side.'}
+];
+
+let pantry = JSON.parse(localStorage.getItem('pantryPrices')||'[]');
+let deals = JSON.parse(localStorage.getItem('pantryDeals')||'[]');
+let sortMode = 'cost';
+
+function showTab(t) {
+  ['recipes','pantry','planner','deals'].forEach(x=>{
+    document.getElementById('view-'+x).style.display=x===t?'block':'none';
+    document.querySelectorAll('.tab').forEach((b,i)=>{
+      b.classList.toggle('active',['recipes','pantry','planner','deals'][i]===t);
+    });
+  });
+  if(t==='pantry')renderPantry();
+  if(t==='deals')renderDeals();
+}
+
+function getPricePerG(itemName) {
+  const item = pantry.find(p=>p.name.toLowerCase().includes(itemName.toLowerCase())||itemName.toLowerCase().includes(p.name.toLowerCase()));
+  if(!item)return null;
+  let weightG = item.weight;
+  if(item.unit==='kg')weightG=item.weight*1000;
+  if(item.unit==='L')weightG=item.weight*1000;
+  if(item.unit==='each')weightG=1;
+  return item.price/weightG;
+}
+
+function calcRecipeCost(recipe) {
+  let total=0;
+  let missing=[];
+  recipe.ings.forEach(ing=>{
+    const ppg=getPricePerG(ing.n);
+    if(ppg===null){missing.push(ing.n);return}
+    if(ing.u==='each')total+=ppg*ing.q;
+    else total+=ppg*ing.q;
+  });
+  if(missing.length>0&&missing.length===recipe.ings.length)return{cost:null,missing};
+  return{cost:parseFloat(total.toFixed(2)),missing};
+}
+
+function sortRecipes(mode) {
+  sortMode=mode;
+  document.querySelectorAll('.sort-btn').forEach((b,i)=>b.classList.toggle('active',['cost','value','time'][i]===mode));
+  renderRecipes();
+}
+
+function renderRecipes() {
+  const sorted=[...RECIPES].sort((a,b)=>{
+    if(sortMode==='cost'){
+      const ca=calcRecipeCost(a).cost;const cb=calcRecipeCost(b).cost;
+      if(ca===null&&cb===null)return 0;if(ca===null)return 1;if(cb===null)return-1;return ca-cb;
+    }
+    if(sortMode==='value'){
+      const ca=calcRecipeCost(a).cost||0.01;const cb=calcRecipeCost(b).cost||0.01;
+      return(cb/b.cal)-(ca/a.cal);
+    }
+    return a.time-b.time;
+  });
+  const grid=document.getElementById('recipeGrid');
+  grid.innerHTML=sorted.map(r=>{
+    const {cost,missing}=calcRecipeCost(r);
+    let badge='';
+    if(cost===null)badge=`<span class="cost-badge cost-unknown">Price unknown</span>`;
+    else if(cost<1.5)badge=`<span class="cost-badge cost-green">£${cost.toFixed(2)}/serving</span>`;
+    else badge=`<span class="cost-badge cost-amber">£${cost.toFixed(2)}/serving</span>`;
+    return`<div class="recipe-card" onclick="openRecipe(${r.id})">
+      <h3>${r.name}</h3>
+      <div class="recipe-meta"><span>⏱ ${r.time}min</span><span>🔥 ${r.cal} kcal</span><span>💪 ${r.protein}g protein</span></div>
+      ${badge}
+      ${missing.length?`<div style="font-size:.72rem;color:#f87171;margin-top:5px">Missing prices: ${missing.slice(0,3).join(', ')}${missing.length>3?'...':''}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openRecipe(id){
+  const r=RECIPES.find(x=>x.id===id);
+  if(!r)return;
+  document.getElementById('modalTitle').textContent=r.name;
+  const {cost,missing}=calcRecipeCost(r);
+  document.getElementById('modalMeta').innerHTML=`<span>⏱ ${r.time} min</span><span>🔥 ${r.cal} kcal</span><span>💪 ${r.protein}g protein</span>${cost!==null?`<span>💷 £${cost.toFixed(2)}/serving</span>`:''}`;
+  document.getElementById('modalIngredients').innerHTML=r.ings.map(ing=>{
+    const ppg=getPricePerG(ing.n);
+    const isMissing=ppg===null;
+    const cost=ppg!==null?` — £${(ppg*(ing.u==='each'?1:ing.q)).toFixed(2)}`:'';
+    return`<li class="ing-list ${isMissing?'ing-missing':''}" style="${isMissing?'color:#f87171':'color:rgba(255,247,237,.7)'}">• ${ing.q}${ing.u} ${ing.n}${cost}${isMissing?' ⚠️ Add price':''}</li>`;
+  }).join('');
+  document.getElementById('modalSteps').textContent=r.steps;
+  document.getElementById('recipeModal').style.display='flex';
+}
+function closeModal(){document.getElementById('recipeModal').style.display='none'}
+
+function addPantryItem(){
+  const name=document.getElementById('pItem').value.trim();
+  const price=parseFloat(document.getElementById('pPrice').value);
+  const weight=parseFloat(document.getElementById('pWeight').value);
+  const unit=document.getElementById('pUnit').value;
+  if(!name||isNaN(price)||isNaN(weight))return;
+  pantry=pantry.filter(p=>p.name.toLowerCase()!==name.toLowerCase());
+  pantry.push({name,price,weight,unit});
+  localStorage.setItem('pantryPrices',JSON.stringify(pantry));
+  document.getElementById('pItem').value='';document.getElementById('pPrice').value='';document.getElementById('pWeight').value='';
+  renderPantry();renderRecipes();
+}
+
+function renderPantry(){
+  const el=document.getElementById('pantryList');
+  if(!pantry.length){el.innerHTML='<div class="empty">No prices added yet</div>';return}
+  el.innerHTML=pantry.map((p,i)=>`<div class="pantry-item"><div><div class="pantry-name">${p.name}</div><div class="pantry-price">£${p.price.toFixed(2)} / ${p.weight}${p.unit}</div></div><button onclick="removePantry(${i})" class="btn btn-danger btn-sm">✕</button></div>`).join('');
+}
+
+function removePantry(i){pantry.splice(i,1);localStorage.setItem('pantryPrices',JSON.stringify(pantry));renderPantry();renderRecipes()}
+
+function generatePlan(){
+  const budget=parseFloat(document.getElementById('budgetSel').value);
+  const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const dayBudget=budget/7;
+  const affordable=RECIPES.map(r=>({...r,...calcRecipeCost(r)})).filter(r=>r.cost!==null&&r.cost<=dayBudget*1.5).sort((a,b)=>a.cost-b.cost);
+  const plan=days.map((day,i)=>{
+    const meal=affordable[i%affordable.length]||RECIPES[i%RECIPES.length];
+    const cost=affordable[i%affordable.length]?.cost;
+    return{day,meal:meal.name,cost};
+  });
+  const total=plan.reduce((s,d)=>s+(d.cost||0),0);
+  document.getElementById('planGrid').innerHTML=`<p style="font-size:.8rem;color:var(--text3);margin-bottom:12px">Estimated weekly cost: <strong style="color:var(--accent)">£${total.toFixed(2)}</strong> / £${budget}</p><div class="day-plan">${plan.map(d=>`<div class="day-card"><h4>${d.day}</h4><div class="day-meal">${d.meal}</div><div class="day-cost">${d.cost?'£'+d.cost.toFixed(2):'Price unknown'}</div></div>`).join('')}</div>`;
+}
+
+function addDeal(){
+  const item=document.getElementById('dItem').value.trim();
+  const orig=parseFloat(document.getElementById('dOrig').value);
+  const sale=parseFloat(document.getElementById('dSale').value);
+  const store=document.getElementById('dStore').value.trim();
+  const expiry=document.getElementById('dExpiry').value;
+  if(!item||isNaN(orig)||isNaN(sale))return;
+  deals.push({item,orig,sale,store,expiry,added:new Date().toLocaleDateString()});
+  deals.sort((a,b)=>((b.orig-b.sale)/b.orig)-((a.orig-a.sale)/a.orig));
+  localStorage.setItem('pantryDeals',JSON.stringify(deals));
+  document.getElementById('dItem').value='';document.getElementById('dOrig').value='';document.getElementById('dSale').value='';document.getElementById('dStore').value='';document.getElementById('dExpiry').value='';
+  renderDeals();
+}
+
+function renderDeals(){
+  const el=document.getElementById('dealsList');
+  const today=new Date().toISOString().slice(0,10);
+  const active=deals.filter(d=>!d.expiry||d.expiry>=today);
+  if(!active.length){el.innerHTML='<div class="empty">No active deals</div>';return}
+  el.innerHTML=active.map((d,i)=>{
+    const saving=((d.orig-d.sale)/d.orig*100).toFixed(0);
+    return`<div class="deal-item"><div><div style="font-size:.875rem;font-weight:500;color:var(--text)">${d.item}</div><div style="font-size:.75rem;color:var(--text3)">${d.store?d.store+' · ':''}Was £${d.orig.toFixed(2)} → £${d.sale.toFixed(2)}${d.expiry?' · Expires '+d.expiry:''}</div></div><div style="display:flex;align-items:center;gap:8px"><span class="saving-badge">-${saving}%</span><button onclick="removeDeal(${i})" class="btn btn-danger btn-sm">✕</button></div></div>`;
+  }).join('');
+}
+
+function removeDeal(i){deals.splice(i,1);localStorage.setItem('pantryDeals',JSON.stringify(deals));renderDeals()}
+
+renderRecipes();
+</script>
+</body>
+</html>

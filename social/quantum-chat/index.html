@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Quantum Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d0308;--accent:#f43f5e;--accent2:#e11d48;--accent3:#fb7185;--border:rgba(244,63,94,0.2);--glass:rgba(244,63,94,0.08);--text:#fff1f2;--text2:#fda4af;--text3:rgba(255,241,242,0.6)}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0d0308,#1a0510,#0d0308);min-height:100vh;color:var(--text);overflow:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback}=React;
+
+const ROOMS=['General','Tech Talk','Gaming','Music','Off-Topic'];
+const EMOJI_LIST=['😀','😂','❤️','👍','🔥','🎉','😮','😢','👀','🚀','✨','💯','🎮','🎵','☕'];
+const REACT_EMOJIS=['❤️','😂','👍','🔥','😮'];
+
+function hslColor(str){
+  let h=0;for(let i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))%360;
+  return `hsl(${h},70%,60%)`;
+}
+
+function Avatar({name,size=32,status}){
+  const c=hslColor(name||'?');
+  return(
+    <div style={{position:'relative',flexShrink:0}}>
+      <div style={{width:size,height:size,borderRadius:'50%',background:c,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:size*0.4,color:'#fff',userSelect:'none'}}>{(name||'?')[0].toUpperCase()}</div>
+      {status&&<div style={{position:'absolute',bottom:0,right:0,width:size*0.3,height:size*0.3,borderRadius:'50%',background:status==='online'?'#4ade80':'#6b7280',border:'2px solid #1a0510'}}/>}
+    </div>
+  );
+}
+
+function linkify(text){
+  const parts=text.split(/(https?:\/\/[^\s]+)/g);
+  return parts.map((p,i)=>p.startsWith('http')?<a key={i} href={p} target="_blank" rel="noreferrer" style={{color:'#fb7185',textDecoration:'underline'}}>{p}</a>:p);
+}
+
+function UserSetup({onDone}){
+  const[name,setName]=useState('');
+  const[status,setStatus]=useState('Hello from Quantum Chat!');
+  return(
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',backdropFilter:'blur(8px)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+      <div style={{background:'linear-gradient(135deg,#1a0510,#2d0a1e)',border:'1px solid rgba(244,63,94,.3)',borderRadius:20,padding:32,width:'100%',maxWidth:400}}>
+        <div style={{textAlign:'center',marginBottom:24}}>
+          <div style={{fontSize:'2rem',marginBottom:8}}>💬</div>
+          <h2 style={{fontSize:'1.3rem',fontWeight:700,color:'#fff1f2'}}>Welcome to Quantum Chat</h2>
+          <p style={{fontSize:'.875rem',color:'rgba(255,241,242,.5)',marginTop:4}}>Set up your profile to get started</p>
+        </div>
+        {name&&<div style={{display:'flex',justifyContent:'center',marginBottom:16}}><Avatar name={name} size={60}/></div>}
+        <div style={{marginBottom:12}}>
+          <label style={{fontSize:'.8rem',color:'rgba(255,241,242,.6)',marginBottom:4,display:'block'}}>Username</label>
+          <input value={name} onChange={e=>setName(e.target.value)} placeholder="Choose a username..." maxLength={20} style={{width:'100%',background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,63,94,.2)',borderRadius:10,padding:'10px 14px',color:'#fff1f2',fontFamily:'Inter',fontSize:'.9rem',outline:'none'}} onKeyDown={e=>e.key==='Enter'&&name.trim()&&onDone(name.trim(),status)}/>
+        </div>
+        <div style={{marginBottom:20}}>
+          <label style={{fontSize:'.8rem',color:'rgba(255,241,242,.6)',marginBottom:4,display:'block'}}>Status</label>
+          <input value={status} onChange={e=>setStatus(e.target.value)} placeholder="What's on your mind?" maxLength={50} style={{width:'100%',background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,63,94,.2)',borderRadius:10,padding:'10px 14px',color:'#fff1f2',fontFamily:'Inter',fontSize:'.9rem',outline:'none'}}/>
+        </div>
+        <button disabled={!name.trim()} onClick={()=>onDone(name.trim(),status)} style={{width:'100%',padding:'12px',background:'linear-gradient(135deg,#f43f5e,#e11d48)',border:'none',borderRadius:12,color:'#fff',fontFamily:'Inter',fontSize:'.95rem',fontWeight:600,cursor:name.trim()?'pointer':'not-allowed',opacity:name.trim()?1:.5}}>Enter Chat →</button>
+      </div>
+    </div>
+  );
+}
+
+function EmojiPicker({onPick,onClose}){
+  return(
+    <div style={{position:'absolute',bottom:'100%',right:0,background:'rgba(13,3,8,.95)',border:'1px solid rgba(244,63,94,.2)',borderRadius:12,padding:10,display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:4,zIndex:100,marginBottom:6}}>
+      {EMOJI_LIST.map(e=><button key={e} onClick={()=>{onPick(e);onClose()}} style={{background:'none',border:'none',fontSize:'1.3rem',cursor:'pointer',borderRadius:6,padding:4,transition:'background .15s'}} onMouseEnter={x=>x.target.style.background='rgba(244,63,94,.2)'} onMouseLeave={x=>x.target.style.background='none'}>{e}</button>)}
+    </div>
+  );
+}
+
+function Message({msg,isOwn,username,onReact,onReply,onPin}){
+  const[showReact,setShowReact]=useState(false);
+  const[hovered,setHovered]=useState(false);
+  if(msg.system){return<div style={{textAlign:'center',color:'rgba(255,241,242,.4)',fontSize:'.78rem',fontStyle:'italic',margin:'6px 0'}}>{msg.text}</div>}
+  return(
+    <div onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>{setHovered(false);setShowReact(false)}} style={{display:'flex',gap:10,marginBottom:12,flexDirection:isOwn?'row-reverse':'row',alignItems:'flex-start',position:'relative'}}>
+      <Avatar name={msg.username} size={32}/>
+      <div style={{maxWidth:'70%'}}>
+        {msg.replyTo&&<div style={{background:'rgba(244,63,94,.08)',borderLeft:'2px solid #f43f5e',padding:'4px 8px',borderRadius:'0 6px 6px 0',fontSize:'.75rem',color:'rgba(255,241,242,.5)',marginBottom:4}}>↩ {msg.replyTo}</div>}
+        <div style={{display:'flex',alignItems:'baseline',gap:6,marginBottom:3,flexDirection:isOwn?'row-reverse':'row'}}>
+          <span style={{fontWeight:600,fontSize:'.82rem',color:hslColor(msg.username)}}>{msg.username}</span>
+          <span style={{fontSize:'.7rem',color:'rgba(255,241,242,.35)'}}>{msg.time}</span>
+          {msg.pinned&&<span style={{fontSize:'.65rem',color:'#f43f5e'}}>📌</span>}
+        </div>
+        <div style={{background:isOwn?'rgba(244,63,94,.2)':'rgba(255,255,255,.06)',border:`1px solid ${isOwn?'rgba(244,63,94,.3)':'rgba(255,255,255,.08)'}`,borderRadius:isOwn?'12px 4px 12px 12px':'4px 12px 12px 12px',padding:'8px 12px',fontSize:'.875rem',lineHeight:1.5,color:'#fff1f2',wordBreak:'break-word'}}>
+          {linkify(msg.text)}
+        </div>
+        {msg.reactions&&Object.keys(msg.reactions).filter(e=>msg.reactions[e]>0).length>0&&(
+          <div style={{display:'flex',gap:4,marginTop:4,flexWrap:'wrap',flexDirection:isOwn?'row-reverse':'row'}}>
+            {Object.entries(msg.reactions).filter(([,c])=>c>0).map(([e,c])=>(
+              <button key={e} onClick={()=>onReact(msg.id,e)} style={{background:'rgba(255,255,255,.08)',border:'1px solid rgba(244,63,94,.2)',borderRadius:20,padding:'2px 7px',fontSize:'.75rem',cursor:'pointer',color:'#fff1f2',fontFamily:'Inter'}}>{e} {c}</button>
+            ))}
+          </div>
+        )}
+      </div>
+      {hovered&&<div style={{display:'flex',gap:4,alignSelf:'center',flexShrink:0}}>
+        <div style={{position:'relative'}}>
+          <button onClick={()=>setShowReact(!showReact)} style={{background:'rgba(255,255,255,.08)',border:'1px solid rgba(244,63,94,.15)',borderRadius:8,padding:'4px 8px',cursor:'pointer',fontSize:'.8rem',color:'rgba(255,241,242,.7)',fontFamily:'Inter'}}>😀</button>
+          {showReact&&<div style={{position:'absolute',bottom:'100%',[isOwn?'right':'left']:0,background:'rgba(13,3,8,.95)',border:'1px solid rgba(244,63,94,.2)',borderRadius:10,padding:8,display:'flex',gap:4,zIndex:100,marginBottom:4}}>
+            {REACT_EMOJIS.map(e=><button key={e} onClick={()=>{onReact(msg.id,e);setShowReact(false)}} style={{background:'none',border:'none',fontSize:'1.1rem',cursor:'pointer',padding:2}}>{e}</button>)}
+          </div>}
+        </div>
+        <button onClick={()=>onReply(msg)} style={{background:'rgba(255,255,255,.08)',border:'1px solid rgba(244,63,94,.15)',borderRadius:8,padding:'4px 8px',cursor:'pointer',fontSize:'.8rem',color:'rgba(255,241,242,.7)',fontFamily:'Inter'}}>↩</button>
+        <button onClick={()=>onPin(msg.id)} style={{background:'rgba(255,255,255,.08)',border:'1px solid rgba(244,63,94,.15)',borderRadius:8,padding:'4px 8px',cursor:'pointer',fontSize:'.8rem',color:'rgba(255,241,242,.7)',fontFamily:'Inter'}}>📌</button>
+      </div>}
+    </div>
+  );
+}
+
+function App(){
+  const[username,setUsername]=useState(()=>localStorage.getItem('qcUsername')||'');
+  const[userStatus,setUserStatus]=useState(()=>localStorage.getItem('qcStatus')||'');
+  const[room,setRoom]=useState('General');
+  const[messages,setMessages]=useState(()=>JSON.parse(localStorage.getItem('qcMsg_General')||'[]'));
+  const[input,setInput]=useState('');
+  const[replyTo,setReplyTo]=useState(null);
+  const[showEmoji,setShowEmoji]=useState(false);
+  const[typing,setTyping]=useState([]);
+  const[search,setSearch]=useState('');
+  const[onlineCount,setOnlineCount]=useState(1);
+  const[customRoom,setCustomRoom]=useState('');
+  const[rooms,setRooms]=useState(ROOMS);
+  const channelRef=useRef(null);
+  const typingRef=useRef(null);
+  const bottomRef=useRef(null);
+
+  useEffect(()=>{
+    if(!username)return;
+    const ch=new BroadcastChannel('quantum-chat-'+room);
+    channelRef.current=ch;
+    const saved=JSON.parse(localStorage.getItem('qcMsg_'+room)||'[]');
+    setMessages(saved);
+    ch.postMessage({type:'join',username,status:userStatus});
+    ch.onmessage=ev=>{
+      const d=ev.data;
+      if(d.type==='message'){
+        setMessages(prev=>{
+          const next=[...prev,d.msg];
+          const trimmed=next.slice(-200);
+          localStorage.setItem('qcMsg_'+room,JSON.stringify(trimmed));
+          return trimmed;
+        });
+      }else if(d.type==='react'){
+        setMessages(prev=>prev.map(m=>m.id===d.id?{...m,reactions:{...m.reactions,[d.emoji]:(m.reactions?.[d.emoji]||0)+1}}:m));
+      }else if(d.type==='pin'){
+        setMessages(prev=>prev.map(m=>m.id===d.id?{...m,pinned:!m.pinned}:m));
+      }else if(d.type==='typing'){
+        setTyping(t=>{const next=t.filter(u=>u!==d.username);return d.isTyping?[...next,d.username]:next});
+        clearTimeout(typingRef.current);
+        typingRef.current=setTimeout(()=>setTyping([]),3000);
+      }else if(d.type==='join'){
+        setOnlineCount(n=>n+1);
+        setMessages(prev=>{const sys={id:Date.now(),system:true,text:`${d.username} joined the room`,time:''};const next=[...prev,sys];localStorage.setItem('qcMsg_'+room,JSON.stringify(next.slice(-200)));return next.slice(-200)});
+      }else if(d.type==='presence'){
+        setOnlineCount(d.count||1);
+      }
+    };
+    return()=>{ch.postMessage({type:'join',username:username+'(left)',status:''});ch.close()};
+  },[username,room]);
+
+  useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:'smooth'})},[messages]);
+
+  const sendMsg=()=>{
+    if(!input.trim())return;
+    const msg={id:Date.now(),username,text:input.trim(),time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),replyTo:replyTo?replyTo.username+': '+replyTo.text.slice(0,50):null,reactions:{}};
+    const next=[...messages,msg].slice(-200);
+    setMessages(next);
+    localStorage.setItem('qcMsg_'+room,JSON.stringify(next));
+    channelRef.current?.postMessage({type:'message',msg});
+    setInput('');setReplyTo(null);
+  };
+
+  const handleTyping=e=>{
+    setInput(e.target.value);
+    channelRef.current?.postMessage({type:'typing',username,isTyping:true});
+    clearTimeout(typingRef.current);
+    typingRef.current=setTimeout(()=>channelRef.current?.postMessage({type:'typing',username,isTyping:false}),1500);
+  };
+
+  const handleReact=(id,emoji)=>{
+    setMessages(prev=>prev.map(m=>m.id===id?{...m,reactions:{...m.reactions,[emoji]:(m.reactions?.[emoji]||0)+1}}:m));
+    channelRef.current?.postMessage({type:'react',id,emoji});
+  };
+
+  const handlePin=(id)=>{
+    setMessages(prev=>prev.map(m=>m.id===id?{...m,pinned:!m.pinned}:m));
+    channelRef.current?.postMessage({type:'pin',id});
+  };
+
+  const addRoom=()=>{
+    if(customRoom.trim()&&!rooms.includes(customRoom.trim())){setRooms(r=>[...r,customRoom.trim()]);setCustomRoom('')}
+  };
+
+  const filtered=search?messages.filter(m=>m.text?.toLowerCase().includes(search.toLowerCase())):messages;
+
+  if(!username){
+    return<UserSetup onDone={(n,s)=>{setUsername(n);setUserStatus(s);localStorage.setItem('qcUsername',n);localStorage.setItem('qcStatus',s)}}/>;
+  }
+
+  return(
+    <div style={{display:'flex',height:'100vh',overflow:'hidden'}}>
+      {/* Sidebar */}
+      <div style={{width:220,background:'rgba(13,3,8,.95)',borderRight:'1px solid rgba(244,63,94,.15)',display:'flex',flexDirection:'column',flexShrink:0}}>
+        <div style={{padding:16,borderBottom:'1px solid rgba(244,63,94,.15)'}}>
+          <div style={{display:'flex',gap:10,alignItems:'center'}}>
+            <Avatar name={username} size={36} status="online"/>
+            <div style={{minWidth:0}}>
+              <div style={{fontWeight:600,fontSize:'.875rem',color:'#fff1f2',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{username}</div>
+              <div style={{fontSize:'.72rem',color:'rgba(255,241,242,.5)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{userStatus}</div>
+            </div>
+          </div>
+        </div>
+        <div style={{padding:'12px 12px 4px',fontSize:'.72rem',fontWeight:600,color:'rgba(255,241,242,.4)',letterSpacing:'.8px',textTransform:'uppercase'}}>Rooms ({onlineCount} online)</div>
+        <div style={{flex:1,overflow:'auto',padding:'0 8px 8px'}}>
+          {rooms.map(r=>(
+            <button key={r} onClick={()=>setRoom(r)} style={{width:'100%',textAlign:'left',padding:'8px 12px',borderRadius:9,border:'none',background:room===r?'rgba(244,63,94,.2)':'transparent',color:room===r?'#f43f5e':'rgba(255,241,242,.7)',fontFamily:'Inter',fontSize:'.85rem',cursor:'pointer',marginBottom:2,transition:'all .15s'}}>
+              # {r}
+            </button>
+          ))}
+          <div style={{display:'flex',gap:4,marginTop:8}}>
+            <input value={customRoom} onChange={e=>setCustomRoom(e.target.value)} placeholder="New room" onKeyDown={e=>e.key==='Enter'&&addRoom()} style={{flex:1,background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,63,94,.15)',borderRadius:8,padding:'6px 8px',color:'#fff1f2',fontFamily:'Inter',fontSize:'.75rem',outline:'none'}}/>
+            <button onClick={addRoom} style={{background:'rgba(244,63,94,.2)',border:'none',borderRadius:8,padding:'6px 8px',color:'#f43f5e',cursor:'pointer',fontSize:'.8rem'}}>+</button>
+          </div>
+        </div>
+        <div style={{padding:12,borderTop:'1px solid rgba(244,63,94,.15)'}}>
+          <a href="../../index.html" style={{fontSize:'.78rem',color:'rgba(255,241,242,.4)',textDecoration:'none'}}>← Back</a>
+        </div>
+      </div>
+      {/* Main */}
+      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+        {/* Header */}
+        <div style={{padding:'0 20px',height:56,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(244,63,94,.15)',background:'rgba(13,3,8,.8)',flexShrink:0}}>
+          <div style={{fontWeight:600,color:'#fff1f2'}}>#{room}</div>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search messages..." style={{background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,63,94,.15)',borderRadius:20,padding:'5px 14px',color:'#fff1f2',fontFamily:'Inter',fontSize:'.8rem',outline:'none',width:200}}/>
+        </div>
+        {/* Messages */}
+        <div style={{flex:1,overflow:'auto',padding:'16px 20px'}}>
+          {filtered.length===0&&<div style={{textAlign:'center',color:'rgba(255,241,242,.4)',fontSize:'.9rem',marginTop:40}}>No messages yet. Say hello! 👋</div>}
+          {filtered.map(msg=>(
+            <Message key={msg.id} msg={msg} isOwn={msg.username===username} username={username} onReact={handleReact} onReply={setReplyTo} onPin={handlePin}/>
+          ))}
+          {typing.filter(u=>u!==username).length>0&&<div style={{fontSize:'.78rem',color:'rgba(255,241,242,.4)',fontStyle:'italic',marginBottom:8}}>{typing.filter(u=>u!==username).join(', ')} {typing.filter(u=>u!==username).length===1?'is':'are'} typing...</div>}
+          <div ref={bottomRef}/>
+        </div>
+        {/* Input */}
+        <div style={{padding:16,borderTop:'1px solid rgba(244,63,94,.15)',background:'rgba(13,3,8,.8)',flexShrink:0}}>
+          {replyTo&&<div style={{display:'flex',alignItems:'center',gap:8,background:'rgba(244,63,94,.08)',border:'1px solid rgba(244,63,94,.15)',borderRadius:8,padding:'6px 12px',marginBottom:8,fontSize:'.8rem'}}>
+            <span style={{color:'rgba(255,241,242,.5)'}}>↩ Replying to <strong style={{color:'#fb7185'}}>{replyTo.username}</strong>: {replyTo.text.slice(0,50)}</span>
+            <button onClick={()=>setReplyTo(null)} style={{background:'none',border:'none',color:'rgba(255,241,242,.4)',cursor:'pointer',marginLeft:'auto'}}>✕</button>
+          </div>}
+          <div style={{display:'flex',gap:8,position:'relative'}}>
+            <div style={{flex:1,background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,63,94,.2)',borderRadius:12,display:'flex',alignItems:'flex-end',gap:4,padding:'6px 12px',position:'relative'}}>
+              {showEmoji&&<EmojiPicker onPick={e=>setInput(i=>i+e)} onClose={()=>setShowEmoji(false)}/>}
+              <button onClick={()=>setShowEmoji(!showEmoji)} style={{background:'none',border:'none',fontSize:'1.2rem',cursor:'pointer',padding:2,color:'rgba(255,241,242,.5)',flexShrink:0}}>😀</button>
+              <textarea value={input} onChange={handleTyping} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()}}} placeholder={`Message #${room}...`} rows={1} style={{flex:1,background:'none',border:'none',color:'#fff1f2',fontFamily:'Inter',fontSize:'.9rem',outline:'none',resize:'none',lineHeight:1.5,paddingTop:2}}/>
+            </div>
+            <button onClick={sendMsg} disabled={!input.trim()} style={{padding:'0 18px',background:'linear-gradient(135deg,#f43f5e,#e11d48)',border:'none',borderRadius:12,color:'#fff',cursor:input.trim()?'pointer':'not-allowed',opacity:input.trim()?1:.5,fontSize:'1.1rem'}}>➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

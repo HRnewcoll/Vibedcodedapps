@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Discord App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d0308;--accent:#f43f5e;--accent2:#e11d48;--accent3:#fb7185;--border:rgba(244,63,94,0.2);--glass:rgba(244,63,94,0.08);--text:#fff1f2;--text2:#fda4af;--text3:rgba(255,241,242,0.6)}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0d0308,#1a0510,#0d0308);min-height:100vh;color:var(--text);overflow:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(244,63,94,.2);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback}=React;
+
+const SERVERS=[
+  {id:'vc',abbr:'VC',name:'VibedCommunity',color:'#f43f5e'},
+  {id:'gs',abbr:'GS',name:'Gaming Space',color:'#8b5cf6'},
+  {id:'mh',abbr:'MH',name:'Music Hub',color:'#06b6d4'},
+  {id:'tc',abbr:'TC',name:'Tech Central',color:'#10b981'},
+  {id:'of',abbr:'OF',name:'Off-Topic',color:'#f59e0b'},
+];
+
+const CHANNELS={
+  text:['general','announcements','random','gaming','music'],
+  voice:['General','Gaming','Study'],
+};
+
+const SEED_MESSAGES={
+  general:[
+    {id:1,u:'Alice',t:'Hey everyone! Welcome to the server 🎉',ts:'9:00 AM',r:{'❤️':3,'🎉':2}},
+    {id:2,u:'Bob',t:'Thanks! Great to be here',ts:'9:01 AM',r:{}},
+    {id:3,u:'Charlie',t:'This place looks awesome 🔥',ts:'9:02 AM',r:{'🔥':5}},
+    {id:4,u:'Diana',t:'Can\'t wait to explore all the channels',ts:'9:03 AM',r:{}},
+    {id:5,u:'Eve',t:'Hey Diana! I heard there\'s a gaming section?',ts:'9:05 AM',r:{'👍':1}},
+    {id:6,u:'Alice',t:'Yes check out #gaming for game nights',ts:'9:06 AM',r:{}},
+    {id:7,u:'Frank',t:'Just joined. Hello all!',ts:'9:15 AM',r:{'👋':4}},
+    {id:8,u:'Bob',t:'Welcome @Frank! 👋',ts:'9:16 AM',r:{}},
+    {id:9,u:'Charlie',t:'Anyone up for a movie night this weekend?',ts:'10:00 AM',r:{'👍':2,'❤️':1}},
+    {id:10,u:'Diana',t:'I\'m in! 🍿',ts:'10:01 AM',r:{}},
+    {id:11,u:'Eve',t:'Same! What are we watching?',ts:'10:02 AM',r:{}},
+  ],
+  announcements:[
+    {id:1,u:'Alice',t:'📢 Server rules have been updated. Please read #rules.',ts:'Yesterday',r:{'👍':8}},
+    {id:2,u:'Alice',t:'📢 Game night every Friday at 8pm! Join 🔊 Gaming voice channel.',ts:'Yesterday',r:{'🎮':5,'❤️':3}},
+    {id:3,u:'Alice',t:'📢 Welcome our 50th member! Growing fast 🚀',ts:'Today',r:{'🎉':10}},
+  ],
+  random:[
+    {id:1,u:'Frank',t:'Anyone tried that new coffee place downtown?',ts:'8:30 AM',r:{}},
+    {id:2,u:'Charlie',t:'Not yet but I\'ve heard good things',ts:'8:32 AM',r:{}},
+    {id:3,u:'Bob',t:'Their lattes are incredible ☕',ts:'8:45 AM',r:{'❤️':2}},
+    {id:4,u:'Diana',t:'Adding it to my list!',ts:'8:46 AM',r:{}},
+    {id:5,u:'Eve',t:'Hot take: pineapple belongs on pizza 🍍',ts:'9:00 AM',r:{'😮':3,'👍':1}},
+    {id:6,u:'Frank',t:'Bold stance. I respect it.',ts:'9:01 AM',r:{'😂':2}},
+  ],
+  gaming:[
+    {id:1,u:'Charlie',t:'Who\'s playing tonight?',ts:'7:00 PM',r:{}},
+    {id:2,u:'Bob',t:'I\'m down! What game?',ts:'7:01 PM',r:{}},
+    {id:3,u:'Frank',t:'Let\'s do some Among Us 🎮',ts:'7:02 PM',r:{'🎮':4}},
+    {id:4,u:'Diana',t:'I\'m always the impostor somehow 😂',ts:'7:03 PM',r:{'😂':5}},
+    {id:5,u:'Charlie',t:'That\'s because you\'re sus Diana 👀',ts:'7:04 PM',r:{'😂':3,'👀':2}},
+  ],
+  music:[
+    {id:1,u:'Eve',t:'Currently vibing to Tame Impala 🎵',ts:'2:00 PM',r:{'❤️':2}},
+    {id:2,u:'Alice',t:'Good taste! Have you heard their new stuff?',ts:'2:01 PM',r:{}},
+    {id:3,u:'Bob',t:'More of a jazz person myself',ts:'2:05 PM',r:{}},
+    {id:4,u:'Frank',t:'Drop some recommendations!',ts:'2:06 PM',r:{}},
+    {id:5,u:'Eve',t:'Miles Davis Kind of Blue 🎷',ts:'2:07 PM',r:{'❤️':3,'🎵':1}},
+  ],
+};
+
+const MEMBERS_ONLINE=[
+  {name:'Alice',roles:['Admin'],status:'online'},
+  {name:'Bob',roles:['Member'],status:'online'},
+  {name:'Charlie',roles:['Member'],status:'online'},
+  {name:'Diana',roles:['Member'],status:'online'},
+  {name:'Eve',roles:['Moderator'],status:'online'},
+];
+const MEMBERS_OFFLINE=[
+  {name:'Grace',roles:['Member'],status:'offline'},
+  {name:'Henry',roles:['Member'],status:'offline'},
+  {name:'Ivy',roles:['Member'],status:'offline'},
+];
+
+const REACT_EMOJIS=['❤️','👍','😂','🔥','😮','🎉','👀','🎮'];
+
+function hslColor(str){let h=0;for(let i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))%360;return`hsl(${h},65%,60%)`}
+
+function Avatar({name,size=32,status}){
+  const c=hslColor(name||'?');
+  return(
+    <div style={{position:'relative',flexShrink:0}}>
+      <div style={{width:size,height:size,borderRadius:'50%',background:c,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:size*.4,color:'#fff',userSelect:'none'}}>{(name||'?')[0].toUpperCase()}</div>
+      {status&&<div style={{position:'absolute',bottom:-1,right:-1,width:size*.3+2,height:size*.3+2,borderRadius:'50%',background:status==='online'?'#4ade80':'#6b7280',border:'2px solid #1a0510'}}/>}
+    </div>
+  );
+}
+
+function formatMsg(text){
+  return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((p,i)=>{
+    if(p.startsWith('**')&&p.endsWith('**'))return<strong key={i}>{p.slice(2,-2)}</strong>;
+    if(p.startsWith('*')&&p.endsWith('*'))return<em key={i}>{p.slice(1,-1)}</em>;
+    if(p.startsWith('http'))return<a key={i} href={p} target="_blank" rel="noreferrer" style={{color:'#fb7185',textDecoration:'underline'}}>{p}</a>;
+    return p;
+  });
+}
+
+function ContextMenu({x,y,msg,onClose,onReact,onPin,onReply}){
+  useEffect(()=>{const h=()=>onClose();document.addEventListener('click',h);return()=>document.removeEventListener('click',h)},[onClose]);
+  return(
+    <div onClick={e=>e.stopPropagation()} style={{position:'fixed',top:y,left:Math.min(x,window.innerWidth-180),background:'rgba(13,3,8,.97)',border:'1px solid rgba(244,63,94,.2)',borderRadius:10,padding:6,zIndex:9999,minWidth:160,boxShadow:'0 8px 32px rgba(0,0,0,.5)'}}>
+      <div style={{padding:'2px 0 6px 8px',fontSize:'.7rem',color:'rgba(255,241,242,.4)',borderBottom:'1px solid rgba(244,63,94,.1)',marginBottom:4}}>React</div>
+      <div style={{display:'flex',gap:2,padding:'0 4px',marginBottom:6,flexWrap:'wrap'}}>
+        {REACT_EMOJIS.map(e=><button key={e} onClick={()=>{onReact(msg.id,e);onClose()}} style={{background:'none',border:'none',fontSize:'1rem',cursor:'pointer',padding:3,borderRadius:4}} onMouseEnter={x=>x.target.style.background='rgba(244,63,94,.15)'} onMouseLeave={x=>x.target.style.background='none'}>{e}</button>)}
+      </div>
+      {[['↩ Reply',()=>{onReply(msg);onClose()}],['📌 Pin',()=>{onPin(msg.id);onClose()}],['📋 Copy',()=>{navigator.clipboard.writeText(msg.t);onClose()}]].map(([l,fn])=>(
+        <button key={l} onClick={fn} style={{display:'block',width:'100%',textAlign:'left',padding:'7px 12px',background:'none',border:'none',color:'rgba(255,241,242,.8)',fontFamily:'Inter',fontSize:'.82rem',cursor:'pointer',borderRadius:6}} onMouseEnter={x=>x.target.style.background='rgba(244,63,94,.1)'} onMouseLeave={x=>x.target.style.background='none'}>{l}</button>
+      ))}
+    </div>
+  );
+}
+
+function MemberPopout({member,x,y,onClose}){
+  useEffect(()=>{const h=()=>onClose();document.addEventListener('click',h);return()=>document.removeEventListener('click',h)},[onClose]);
+  return(
+    <div onClick={e=>e.stopPropagation()} style={{position:'fixed',top:Math.min(y,window.innerHeight-200),left:Math.max(x-220,10),background:'rgba(13,3,8,.97)',border:'1px solid rgba(244,63,94,.2)',borderRadius:14,padding:16,zIndex:9999,width:210,boxShadow:'0 8px 32px rgba(0,0,0,.5)'}}>
+      <div style={{display:'flex',gap:10,alignItems:'center',marginBottom:10}}>
+        <Avatar name={member.name} size={40} status={member.status}/>
+        <div><div style={{fontWeight:600,fontSize:'.9rem',color:'#fff1f2'}}>{member.name}</div><div style={{fontSize:'.72rem',color:'rgba(255,241,242,.5)'}}>{member.status}</div></div>
+      </div>
+      <div style={{marginBottom:10,display:'flex',flexWrap:'wrap',gap:4}}>
+        {member.roles.map(r=><span key={r} style={{padding:'2px 8px',background:'rgba(244,63,94,.15)',border:'1px solid rgba(244,63,94,.25)',borderRadius:12,fontSize:'.7rem',color:'#fb7185'}}>{r}</span>)}
+      </div>
+      <button style={{width:'100%',padding:'7px',background:'rgba(244,63,94,.15)',border:'1px solid rgba(244,63,94,.25)',borderRadius:8,color:'#f43f5e',fontFamily:'Inter',fontSize:'.82rem',cursor:'pointer'}}>💬 Send Message</button>
+    </div>
+  );
+}
+
+function App(){
+  const[activeServer,setActiveServer]=useState('vc');
+  const[activeChannel,setActiveChannel]=useState('general');
+  const[messages,setMessages]=useState(()=>{
+    const stored=localStorage.getItem('dc_msg_general');
+    return stored?JSON.parse(stored):SEED_MESSAGES.general;
+  });
+  const[input,setInput]=useState('');
+  const[replyTo,setReplyTo]=useState(null);
+  const[ctxMenu,setCtxMenu]=useState(null);
+  const[memberPopout,setMemberPopout]=useState(null);
+  const[typing,setTyping]=useState([]);
+  const[showMembers,setShowMembers]=useState(true);
+  const[username]=useState(()=>localStorage.getItem('dc_username')||'You');
+  const[showNameSetup,setShowNameSetup]=useState(!localStorage.getItem('dc_username'));
+  const[nameInput,setNameInput]=useState('');
+  const[unread,setUnread]=useState({announcements:2,random:1});
+  const bottomRef=useRef(null);
+  const channelRef=useRef(null);
+  const typingRef=useRef(null);
+
+  useEffect(()=>{
+    if(!username||showNameSetup)return;
+    const ch=new BroadcastChannel('dc_'+activeChannel);
+    channelRef.current=ch;
+    const stored=localStorage.getItem('dc_msg_'+activeChannel);
+    setMessages(stored?JSON.parse(stored):SEED_MESSAGES[activeChannel]||[]);
+    ch.onmessage=ev=>{
+      const d=ev.data;
+      if(d.type==='message'){
+        setMessages(prev=>{const next=[...prev,d.msg].slice(-200);localStorage.setItem('dc_msg_'+activeChannel,JSON.stringify(next));return next});
+      }else if(d.type==='react'){
+        setMessages(prev=>prev.map(m=>m.id===d.id?{...m,r:{...m.r,[d.emoji]:(m.r?.[d.emoji]||0)+1}}:m));
+      }else if(d.type==='pin'){
+        setMessages(prev=>prev.map(m=>m.id===d.id?{...m,pinned:!m.pinned}:m));
+      }else if(d.type==='typing'){
+        setTyping(t=>{const n=t.filter(u=>u!==d.u);return d.on?[...n,d.u]:n});
+        clearTimeout(typingRef.current);typingRef.current=setTimeout(()=>setTyping([]),3000);
+      }
+    };
+    return()=>ch.close();
+  },[activeChannel,username,showNameSetup]);
+
+  useEffect(()=>bottomRef.current?.scrollIntoView({behavior:'smooth'}),[messages]);
+
+  const switchChannel=ch=>{
+    setActiveChannel(ch);
+    setUnread(u=>({...u,[ch]:0}));
+  };
+
+  const sendMsg=()=>{
+    if(!input.trim())return;
+    const msg={id:Date.now(),u:username,t:input.trim(),ts:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),r:{},pinned:false,replyTo:replyTo?`@${replyTo.u}: ${replyTo.t.slice(0,40)}`:null};
+    const next=[...messages,msg].slice(-200);
+    setMessages(next);
+    localStorage.setItem('dc_msg_'+activeChannel,JSON.stringify(next));
+    channelRef.current?.postMessage({type:'message',msg});
+    setInput('');setReplyTo(null);
+  };
+
+  const handleReact=(id,emoji)=>{
+    setMessages(prev=>prev.map(m=>m.id===id?{...m,r:{...m.r,[emoji]:(m.r?.[emoji]||0)+1}}:m));
+    channelRef.current?.postMessage({type:'react',id,emoji});
+  };
+
+  const handlePin=id=>{
+    setMessages(prev=>prev.map(m=>m.id===id?{...m,pinned:!m.pinned}:m));
+    channelRef.current?.postMessage({type:'pin',id});
+  };
+
+  if(showNameSetup){return(
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:9999}}>
+      <div style={{background:'linear-gradient(135deg,#1a0510,#2d0a1e)',border:'1px solid rgba(244,63,94,.3)',borderRadius:20,padding:32,width:'100%',maxWidth:360}}>
+        <h2 style={{fontSize:'1.2rem',fontWeight:700,color:'#fff1f2',marginBottom:6,textAlign:'center'}}>💬 Join Discord App</h2>
+        <p style={{fontSize:'.85rem',color:'rgba(255,241,242,.5)',marginBottom:20,textAlign:'center'}}>Choose your display name</p>
+        <input value={nameInput} onChange={e=>setNameInput(e.target.value)} placeholder="Username" onKeyDown={e=>e.key==='Enter'&&nameInput.trim()&&(localStorage.setItem('dc_username',nameInput.trim()),setShowNameSetup(false))} style={{width:'100%',background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,63,94,.2)',borderRadius:10,padding:'10px 14px',color:'#fff1f2',fontFamily:'Inter',fontSize:'.9rem',outline:'none',marginBottom:14}}/>
+        <button onClick={()=>nameInput.trim()&&(localStorage.setItem('dc_username',nameInput.trim()),setShowNameSetup(false))} style={{width:'100%',padding:12,background:'linear-gradient(135deg,#f43f5e,#e11d48)',border:'none',borderRadius:12,color:'#fff',fontFamily:'Inter',fontWeight:600,cursor:'pointer'}}>Enter Server →</button>
+      </div>
+    </div>
+  )}
+
+  const srv=SERVERS.find(s=>s.id===activeServer);
+
+  return(
+    <div style={{display:'flex',height:'100vh',overflow:'hidden'}}>
+      {ctxMenu&&<ContextMenu {...ctxMenu} onClose={()=>setCtxMenu(null)} onReact={handleReact} onPin={handlePin} onReply={m=>{setReplyTo(m);setCtxMenu(null)}}/>}
+      {memberPopout&&<MemberPopout {...memberPopout} onClose={()=>setMemberPopout(null)}/>}
+
+      {/* Server List */}
+      <div style={{width:72,background:'rgba(8,2,6,.95)',display:'flex',flexDirection:'column',alignItems:'center',padding:'10px 0',gap:4,flexShrink:0,borderRight:'1px solid rgba(244,63,94,.1)'}}>
+        <a href="../../index.html" title="Back" style={{width:48,height:48,borderRadius:16,background:'rgba(244,63,94,.15)',display:'flex',alignItems:'center',justifyContent:'center',textDecoration:'none',fontSize:'1rem',marginBottom:8,color:'#f43f5e'}}>←</a>
+        <div style={{width:36,height:1,background:'rgba(244,63,94,.2)',margin:'4px 0'}}/>
+        {SERVERS.map(s=>(
+          <div key={s.id} onClick={()=>setActiveServer(s.id)} title={s.name} style={{position:'relative',cursor:'pointer'}}>
+            {activeServer===s.id&&<div style={{position:'absolute',left:-4,top:'50%',transform:'translateY(-50%)',width:4,height:24,background:'#fff',borderRadius:'0 4px 4px 0'}}/>}
+            <div style={{width:48,height:48,borderRadius:activeServer===s.id?12:24,background:s.color,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:'.8rem',color:'#fff',transition:'border-radius .2s',userSelect:'none'}}>{s.abbr}</div>
+            {Object.values(unread).some(v=>v>0)&&s.id==='vc'&&<div style={{position:'absolute',bottom:0,right:0,width:16,height:16,borderRadius:'50%',background:'#f43f5e',border:'2px solid #080206',fontSize:'.65rem',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}}>!</div>}
+          </div>
+        ))}
+        <div style={{width:36,height:1,background:'rgba(244,63,94,.2)',margin:'4px 0'}}/>
+        <div style={{width:48,height:48,borderRadius:24,background:'rgba(244,63,94,.1)',border:'2px dashed rgba(244,63,94,.3)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:'1.3rem',color:'rgba(244,63,94,.6)'}} title="Add Server">+</div>
+      </div>
+
+      {/* Channel List */}
+      <div style={{width:240,background:'rgba(10,2,7,.9)',display:'flex',flexDirection:'column',flexShrink:0,borderRight:'1px solid rgba(244,63,94,.12)'}}>
+        <div style={{padding:'16px 12px 8px',borderBottom:'1px solid rgba(244,63,94,.12)'}}>
+          <div style={{fontWeight:700,fontSize:'.95rem',color:'#fff1f2'}}>{srv?.name}</div>
+        </div>
+        <div style={{flex:1,overflow:'auto',padding:'8px 0'}}>
+          <div style={{padding:'8px 12px 4px',fontSize:'.68rem',fontWeight:700,color:'rgba(255,241,242,.35)',letterSpacing:'.8px',textTransform:'uppercase',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            Text Channels <span style={{cursor:'pointer',fontSize:'1rem',opacity:.5}}>+</span>
+          </div>
+          {CHANNELS.text.map(ch=>(
+            <div key={ch} onClick={()=>switchChannel(ch)} style={{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'1px 6px',padding:'5px 8px',borderRadius:6,cursor:'pointer',background:activeChannel===ch?'rgba(244,63,94,.2)':'transparent',transition:'background .1s'}} onMouseEnter={e=>e.currentTarget.style.background=activeChannel===ch?'rgba(244,63,94,.2)':'rgba(255,255,255,.05)'} onMouseLeave={e=>e.currentTarget.style.background=activeChannel===ch?'rgba(244,63,94,.2)':'transparent'}>
+              <span style={{fontSize:'.875rem',color:activeChannel===ch?'#fff1f2':'rgba(255,241,242,.55)'}}># {ch}</span>
+              {unread[ch]>0&&<span style={{background:'#f43f5e',borderRadius:10,padding:'1px 6px',fontSize:'.65rem',color:'#fff',fontWeight:700}}>{unread[ch]}</span>}
+            </div>
+          ))}
+          <div style={{padding:'12px 12px 4px',fontSize:'.68rem',fontWeight:700,color:'rgba(255,241,242,.35)',letterSpacing:'.8px',textTransform:'uppercase'}}>Voice Channels</div>
+          {CHANNELS.voice.map(ch=>(
+            <div key={ch} style={{margin:'1px 6px',padding:'5px 8px',borderRadius:6,cursor:'pointer',color:'rgba(255,241,242,.45)',fontSize:'.875rem'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.05)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>🔊 {ch}</div>
+          ))}
+        </div>
+        <div style={{padding:12,borderTop:'1px solid rgba(244,63,94,.12)',display:'flex',alignItems:'center',gap:8}}>
+          <Avatar name={username} size={32} status="online"/>
+          <div style={{minWidth:0}}><div style={{fontSize:'.82rem',fontWeight:600,color:'#fff1f2',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{username}</div><div style={{fontSize:'.7rem',color:'rgba(255,241,242,.4)'}}>Online</div></div>
+        </div>
+      </div>
+
+      {/* Chat Area */}
+      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+        <div style={{padding:'0 16px',height:48,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(244,63,94,.12)',background:'rgba(10,2,7,.8)',flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            <span style={{fontWeight:700,color:'#fff1f2'}}>#{activeChannel}</span>
+            <span style={{fontSize:'.78rem',color:'rgba(255,241,242,.4)',borderLeft:'1px solid rgba(244,63,94,.2)',paddingLeft:8}}>Chat channel · {MEMBERS_ONLINE.length} members</span>
+          </div>
+          <button onClick={()=>setShowMembers(!showMembers)} style={{background:'rgba(244,63,94,.1)',border:'none',borderRadius:6,padding:'4px 10px',color:'rgba(255,241,242,.6)',cursor:'pointer',fontSize:'.78rem',fontFamily:'Inter'}}>👥 Members</button>
+        </div>
+        <div style={{flex:1,overflow:'auto',padding:'16px'}} onClick={()=>{setCtxMenu(null);setMemberPopout(null)}}>
+          {messages.map(msg=>(
+            <div key={msg.id} style={{display:'flex',gap:10,marginBottom:14,alignItems:'flex-start',position:'relative'}} onContextMenu={e=>{e.preventDefault();setCtxMenu({x:e.clientX,y:e.clientY,msg})}}>
+              <Avatar name={msg.u} size={36}/>
+              <div style={{flex:1,minWidth:0}}>
+                {msg.replyTo&&<div style={{borderLeft:'2px solid rgba(244,63,94,.4)',paddingLeft:8,marginBottom:4,fontSize:'.75rem',color:'rgba(255,241,242,.4)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>↩ {msg.replyTo}</div>}
+                <div style={{display:'flex',alignItems:'baseline',gap:8,marginBottom:2}}>
+                  <span style={{fontWeight:600,fontSize:'.875rem',color:hslColor(msg.u)}}>{msg.u}</span>
+                  <span style={{fontSize:'.7rem',color:'rgba(255,241,242,.3)'}}>{msg.ts}</span>
+                  {msg.pinned&&<span style={{fontSize:'.65rem',color:'#fb7185'}}>📌</span>}
+                </div>
+                <div style={{fontSize:'.875rem',lineHeight:1.5,color:'#fff1f2',wordBreak:'break-word'}}>{formatMsg(msg.t)}</div>
+                {msg.r&&Object.entries(msg.r).filter(([,c])=>c>0).length>0&&(
+                  <div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
+                    {Object.entries(msg.r).filter(([,c])=>c>0).map(([e,c])=>(
+                      <button key={e} onClick={()=>handleReact(msg.id,e)} style={{background:'rgba(244,63,94,.1)',border:'1px solid rgba(244,63,94,.2)',borderRadius:12,padding:'2px 8px',fontSize:'.78rem',cursor:'pointer',color:'#fff1f2',fontFamily:'Inter'}}>{e} {c}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+          {typing.filter(u=>u!==username).length>0&&<div style={{fontSize:'.78rem',color:'rgba(255,241,242,.4)',fontStyle:'italic'}}>{typing.filter(u=>u!==username).join(', ')} is typing...</div>}
+          <div ref={bottomRef}/>
+        </div>
+        <div style={{padding:'8px 16px 12px',borderTop:'1px solid rgba(244,63,94,.12)',flexShrink:0}}>
+          {replyTo&&<div style={{display:'flex',alignItems:'center',gap:8,background:'rgba(244,63,94,.08)',borderRadius:8,padding:'5px 10px',marginBottom:6,fontSize:'.78rem'}}>
+            <span style={{color:'rgba(255,241,242,.5)'}}>↩ Replying to <strong style={{color:'#fb7185'}}>{replyTo.u}</strong></span>
+            <button onClick={()=>setReplyTo(null)} style={{background:'none',border:'none',color:'rgba(255,241,242,.4)',cursor:'pointer',marginLeft:'auto'}}>✕</button>
+          </div>}
+          <div style={{display:'flex',gap:8,alignItems:'center',background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,63,94,.2)',borderRadius:12,padding:'6px 12px'}}>
+            <input value={input} onChange={e=>{setInput(e.target.value);channelRef.current?.postMessage({type:'typing',u:username,on:true});clearTimeout(typingRef.current);typingRef.current=setTimeout(()=>channelRef.current?.postMessage({type:'typing',u:username,on:false}),1500)}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()}}} placeholder={`Message #${activeChannel}...`} style={{flex:1,background:'none',border:'none',color:'#fff1f2',fontFamily:'Inter',fontSize:'.875rem',outline:'none'}}/>
+            <button onClick={sendMsg} style={{background:'none',border:'none',color:'rgba(244,63,94,.7)',cursor:'pointer',fontSize:'1.1rem',padding:2}}>➤</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Member List */}
+      {showMembers&&<div style={{width:240,background:'rgba(10,2,7,.9)',borderLeft:'1px solid rgba(244,63,94,.12)',overflow:'auto',flexShrink:0}}>
+        <div style={{padding:'16px 12px 8px',fontSize:'.72rem',fontWeight:700,color:'rgba(255,241,242,.4)',textTransform:'uppercase',letterSpacing:'.8px'}}>Online — {MEMBERS_ONLINE.length}</div>
+        {MEMBERS_ONLINE.map(m=>(
+          <div key={m.name} onClick={e=>setMemberPopout({x:e.clientX,y:e.clientY,member:m})} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 12px',cursor:'pointer',borderRadius:6,margin:'1px 6px',transition:'background .1s'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.05)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+            <Avatar name={m.name} size={32} status={m.status}/>
+            <div><div style={{fontSize:'.85rem',fontWeight:500,color:'rgba(255,241,242,.85)'}}>{m.name}</div><div style={{fontSize:'.7rem',color:'rgba(255,241,242,.35)'}}>{m.roles[0]}</div></div>
+          </div>
+        ))}
+        <div style={{padding:'12px 12px 6px',fontSize:'.72rem',fontWeight:700,color:'rgba(255,241,242,.25)',textTransform:'uppercase',letterSpacing:'.8px'}}>Offline — {MEMBERS_OFFLINE.length}</div>
+        {MEMBERS_OFFLINE.map(m=>(
+          <div key={m.name} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 12px',cursor:'pointer',borderRadius:6,margin:'1px 6px',opacity:.5}} onMouseEnter={e=>e.currentTarget.style.opacity='.75'} onMouseLeave={e=>e.currentTarget.style.opacity='.5'}>
+            <Avatar name={m.name} size={32} status="offline"/>
+            <div style={{fontSize:'.85rem',color:'rgba(255,241,242,.6)'}}>{m.name}</div>
+          </div>
+        ))}
+      </div>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
