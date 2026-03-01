@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Medication Tracker — VibedApps</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --bg:#051a0f; --accent:#10b981; --accent2:#059669; --accent3:#34d399;
+      --border:rgba(16,185,129,0.2); --glass:rgba(16,185,129,0.08);
+      --text:#e2fdf3; --text2:#6ee7b7; --text3:rgba(226,253,243,0.6);
+      --red:#ef4444; --yellow:#f59e0b; --blue:#3b82f6;
+    }
+    body { font-family:'Inter',sans-serif; background:linear-gradient(135deg,#051a0f,#0a2818,#071a10); min-height:100vh; color:var(--text); }
+    nav { position:sticky; top:0; z-index:100; background:rgba(5,26,15,0.92); backdrop-filter:blur(14px); border-bottom:1px solid var(--border); padding:0 20px; display:flex; align-items:center; gap:12px; height:60px; }
+    nav h1 { font-size:1.1rem; font-weight:700; color:var(--accent); margin-right:auto; }
+    .tab-btn { background:none; border:none; color:var(--text3); font-size:.82rem; font-weight:600; padding:6px 12px; border-radius:8px; cursor:pointer; font-family:'Inter',sans-serif; transition:all .2s; }
+    .tab-btn.active { background:var(--glass); color:var(--accent); border:1px solid var(--border); }
+    .container { max-width:960px; margin:0 auto; padding:24px 20px; }
+    .card { background:var(--glass); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:20px; }
+    .card h2 { font-size:.9rem; font-weight:700; color:var(--accent); margin-bottom:14px; letter-spacing:.05em; text-transform:uppercase; }
+    label { display:block; font-size:.78rem; color:var(--text2); margin-bottom:3px; font-weight:500; }
+    input, select, textarea { width:100%; background:rgba(16,185,129,0.08); border:1px solid var(--border); border-radius:8px; padding:8px 10px; color:var(--text); font-size:.85rem; font-family:'Inter',sans-serif; outline:none; transition:border .2s; }
+    input:focus, select:focus, textarea:focus { border-color:var(--accent); }
+    select option { background:#0a2818; }
+    textarea { resize:vertical; min-height:60px; }
+    .form-group { margin-bottom:10px; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .form-row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+    .btn { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; border-radius:9px; padding:9px 16px; font-size:.85rem; font-weight:600; cursor:pointer; transition:opacity .2s; }
+    .btn:hover { opacity:.85; }
+    .btn-sm { padding:4px 10px; font-size:.75rem; border-radius:6px; }
+    .btn-danger { background:linear-gradient(135deg,#ef4444,#b91c1c); }
+    .btn-outline { background:none; border:1px solid var(--border); color:var(--text2); border-radius:7px; cursor:pointer; font-family:'Inter',sans-serif; }
+    .btn-yellow { background:linear-gradient(135deg,#f59e0b,#d97706); }
+    .med-item { background:rgba(16,185,129,0.05); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; }
+    .med-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .med-name { font-weight:700; font-size:.95rem; }
+    .med-badge { font-size:.72rem; padding:3px 9px; border-radius:99px; font-weight:600; }
+    .badge-active { background:rgba(16,185,129,0.2); color:var(--accent); border:1px solid var(--border); }
+    .badge-paused { background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); }
+    .med-meta { font-size:.78rem; color:var(--text3); display:flex; gap:14px; flex-wrap:wrap; }
+    .med-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .schedule-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+    .schedule-item:last-child { border:none; }
+    .schedule-time { font-weight:700; color:var(--accent); min-width:52px; font-size:.9rem; }
+    .schedule-info { flex:1; }
+    .schedule-name { font-weight:600; font-size:.88rem; }
+    .schedule-dose { font-size:.75rem; color:var(--text3); }
+    .checkbox-wrap { display:flex; align-items:center; gap:6px; }
+    .checkbox-wrap input[type=checkbox] { width:18px; height:18px; accent-color:var(--accent); cursor:pointer; }
+    .progress-bar-bg { background:rgba(16,185,129,0.15); border-radius:99px; height:10px; overflow:hidden; margin:8px 0; }
+    .progress-bar-fg { background:linear-gradient(90deg,var(--accent3),var(--accent2)); height:100%; border-radius:99px; transition:width .4s; }
+    .hist-table { width:100%; border-collapse:collapse; font-size:.8rem; }
+    .hist-table th { color:var(--text2); font-weight:600; padding:7px 8px; text-align:left; border-bottom:1px solid var(--border); }
+    .hist-table td { padding:6px 8px; border-bottom:1px solid rgba(16,185,129,0.08); }
+    .taken-yes { color:var(--accent); font-weight:600; }
+    .taken-no  { color:var(--red); font-weight:600; }
+    .note-item { background:rgba(16,185,129,0.05); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:10px; }
+    .note-title { font-weight:700; font-size:.9rem; margin-bottom:4px; }
+    .note-date  { font-size:.72rem; color:var(--text3); margin-bottom:6px; }
+    .note-body  { font-size:.82rem; color:var(--text2); white-space:pre-wrap; }
+    .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:10px; }
+    .cal-day { background:rgba(16,185,129,0.06); border:1px solid var(--border); border-radius:8px; padding:6px 4px; text-align:center; min-height:60px; }
+    .cal-day-label { font-size:.68rem; color:var(--text3); font-weight:600; margin-bottom:4px; }
+    .cal-dot { font-size:.62rem; background:rgba(16,185,129,0.2); border:1px solid var(--border); border-radius:4px; padding:1px 3px; margin-bottom:2px; color:var(--accent3); display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .empty { text-align:center; color:var(--text3); padding:24px; font-size:.85rem; }
+    .search-input { margin-bottom:14px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo } = React;
+
+    const FREQS = ['Daily','Twice Daily','Three Times Daily','Weekly','As Needed'];
+    function timesForFreq(freq) {
+      if(freq==='Daily') return 1;
+      if(freq==='Twice Daily') return 2;
+      if(freq==='Three Times Daily') return 3;
+      if(freq==='Weekly') return 1;
+      return 1;
+    }
+    function today() { return new Date().toISOString().split('T')[0]; }
+    function nowTime() { const d=new Date(); return d.toTimeString().slice(0,5); }
+    function dateLabel(ds) { return new Date(ds+'T12:00:00').toLocaleDateString('en',{month:'short',day:'numeric'}); }
+
+    // Compute next dose for a medication from now
+    function nextDoseLabel(med) {
+      if(!med.active) return 'Paused';
+      if(med.freq==='As Needed') return 'As needed';
+      const now=new Date();
+      const times=med.times||[];
+      const today=now.toISOString().split('T')[0];
+      const upcoming=times.map(t=>{const dt=new Date(`${today}T${t}`); if(dt<now) dt.setDate(dt.getDate()+1); return dt;}).sort((a,b)=>a-b);
+      if(!upcoming.length) return '—';
+      const d=upcoming[0];
+      const diff=Math.round((d-now)/60000);
+      if(diff<60) return `in ${diff}m`;
+      if(diff<1440) return `in ${Math.round(diff/60)}h`;
+      return dateLabel(d.toISOString().split('T')[0]);
+    }
+
+    function Navbar({ tab, setTab }) {
+      const tabs = ['Medications','Schedule','History','Notes'];
+      return (
+        <nav>
+          <a href="../../index.html" style={{color:'var(--accent)',textDecoration:'none',fontWeight:600}}>← Back</a>
+          <h1>💊 Med Tracker</h1>
+          {tabs.map(t=>(
+            <button key={t} className={`tab-btn${tab===t?' active':''}`} onClick={()=>setTab(t)}>{t}</button>
+          ))}
+        </nav>
+      );
+    }
+
+    function MedicationsTab({ meds, setMeds }) {
+      const empty = {name:'',dosage:'',freq:'Daily',times:['08:00'],startDate:today(),notes:''};
+      const [form, setForm] = useState(empty);
+      const set = (k,v) => setForm(p=>({...p,[k]:v}));
+
+      const freqCount = timesForFreq(form.freq);
+      const timesArr = useMemo(()=>{
+        const t=[...form.times];
+        while(t.length<freqCount) t.push('12:00');
+        return t.slice(0,freqCount);
+      },[form.times,freqCount]);
+
+      const setTime = (i,v) => {
+        const t=[...timesArr]; t[i]=v;
+        set('times',t);
+      };
+
+      const addMed = (e) => {
+        e.preventDefault();
+        if(!form.name||!form.dosage) return;
+        setMeds(p=>[...p,{id:Date.now(),...form,times:timesArr,active:true}]);
+        setForm(empty);
+      };
+
+      const toggle = (id) => setMeds(p=>p.map(m=>m.id===id?{...m,active:!m.active}:m));
+      const remove = (id) => setMeds(p=>p.filter(m=>m.id!==id));
+
+      // 7-day calendar
+      const calDays = useMemo(()=>Array.from({length:7},(_,i)=>{
+        const d=new Date(); d.setDate(d.getDate()+i);
+        const ds=d.toISOString().split('T')[0];
+        const label=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+        const due=meds.filter(m=>{
+          if(!m.active) return false;
+          if(m.freq==='As Needed') return false;
+          if(m.freq==='Weekly') return new Date(m.startDate).getDay()===d.getDay();
+          return true;
+        });
+        return {ds,label,due};
+      }),[meds]);
+
+      return (
+        <div>
+          <div className="card">
+            <h2>Add Medication</h2>
+            <form onSubmit={addMed}>
+              <div className="form-row">
+                <div className="form-group"><label>Name</label><input value={form.name} onChange={e=>set('name',e.target.value)} placeholder="e.g. Metformin" required/></div>
+                <div className="form-group"><label>Dosage</label><input value={form.dosage} onChange={e=>set('dosage',e.target.value)} placeholder="e.g. 500mg" required/></div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Frequency</label>
+                  <select value={form.freq} onChange={e=>set('freq',e.target.value)}>
+                    {FREQS.map(f=><option key={f} value={f}>{f}</option>)}
+                  </select>
+                </div>
+                <div className="form-group"><label>Start Date</label><input type="date" value={form.startDate} onChange={e=>set('startDate',e.target.value)}/></div>
+              </div>
+              {form.freq!=='As Needed' && (
+                <div className="form-row3">
+                  {Array.from({length:freqCount},(_,i)=>(
+                    <div key={i} className="form-group">
+                      <label>Time {freqCount>1?i+1:''}</label>
+                      <input type="time" value={timesArr[i]||'08:00'} onChange={e=>setTime(i,e.target.value)}/>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="form-group"><label>Notes</label><textarea value={form.notes} onChange={e=>set('notes',e.target.value)} placeholder="Optional notes"/></div>
+              <button className="btn" type="submit">Add Medication</button>
+            </form>
+          </div>
+
+          {meds.length===0 && <div className="card"><div className="empty">No medications added yet.</div></div>}
+          {meds.map(m=>(
+            <div key={m.id} className="med-item">
+              <div className="med-header">
+                <span className="med-name">💊 {m.name}</span>
+                <span className={`med-badge ${m.active?'badge-active':'badge-paused'}`}>{m.active?'Active':'Paused'}</span>
+              </div>
+              <div className="med-meta">
+                <span>📋 {m.dosage}</span>
+                <span>🔁 {m.freq}</span>
+                {m.times&&m.times.length>0&&<span>⏰ {m.times.join(' / ')}</span>}
+                <span>📅 Next: {nextDoseLabel(m)}</span>
+                {m.notes&&<span>📝 {m.notes}</span>}
+              </div>
+              <div className="med-actions">
+                <button className="btn btn-sm btn-yellow" onClick={()=>toggle(m.id)}>{m.active?'Pause':'Resume'}</button>
+                <button className="btn btn-sm btn-danger" onClick={()=>remove(m.id)}>Delete</button>
+              </div>
+            </div>
+          ))}
+
+          <div className="card" style={{marginTop:20}}>
+            <h2>7-Day Preview</h2>
+            <div className="cal-grid">
+              {calDays.map(day=>(
+                <div key={day.ds} className="cal-day">
+                  <div className="cal-day-label">{day.label}<br/>{day.ds.slice(5)}</div>
+                  {day.due.map(m=><span key={m.id} className="cal-dot">{m.name}</span>)}
+                  {day.due.length===0&&<span style={{fontSize:'.62rem',color:'var(--text3)'}}>—</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ScheduleTab({ meds, history, setHistory }) {
+      const todayStr = today();
+      const nowStr = nowTime();
+
+      const doses = useMemo(()=>{
+        const list=[];
+        meds.filter(m=>m.active&&m.freq!=='As Needed').forEach(m=>{
+          (m.times||[]).forEach(t=>{
+            const key=`${m.id}_${todayStr}_${t}`;
+            const taken=history.find(h=>h.key===key&&h.taken);
+            list.push({key,med:m,time:t,taken:!!taken,passed:t<nowStr});
+          });
+        });
+        return list.sort((a,b)=>a.time.localeCompare(b.time));
+      },[meds,history,todayStr,nowStr]);
+
+      const takenCount=doses.filter(d=>d.taken).length;
+
+      const toggleDose = (key,med,time,taken) => {
+        if(taken){
+          setHistory(p=>p.filter(h=>h.key!==key));
+        } else {
+          setHistory(p=>[...p,{key,medId:med.id,medName:med.name,dosage:med.dosage,date:todayStr,time,taken:true}]);
+        }
+      };
+
+      return (
+        <div className="card">
+          <h2>Today's Schedule</h2>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:'.85rem',color:'var(--text3)',marginBottom:6}}>
+            <span>{takenCount} of {doses.length} doses taken</span>
+          </div>
+          <div className="progress-bar-bg">
+            <div className="progress-bar-fg" style={{width:doses.length?`${(takenCount/doses.length)*100}%`:'0%'}}/>
+          </div>
+          {doses.length===0 && <div className="empty">No scheduled doses today.</div>}
+          {doses.map(d=>(
+            <div key={d.key} className="schedule-item">
+              <span className="schedule-time">{d.time}</span>
+              <div className="schedule-info">
+                <div className="schedule-name">{d.med.name}</div>
+                <div className="schedule-dose">{d.med.dosage} · {d.med.freq}</div>
+              </div>
+              <div className="checkbox-wrap">
+                <label style={{margin:0,color:d.taken?'var(--accent)':d.passed?'var(--red)':'var(--text3)',fontSize:'.75rem',fontWeight:600}}>
+                  {d.taken?'✓ Taken':d.passed?'Missed':'Upcoming'}
+                </label>
+                <input type="checkbox" checked={d.taken} onChange={()=>toggleDose(d.key,d.med,d.time,d.taken)}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function HistoryTab({ meds, history, setHistory }) {
+      const [filter, setFilter] = useState('');
+
+      const entries = useMemo(()=>{
+        const list=[...history];
+        // add missed: active meds with passed times today not in history
+        const todayStr=today();
+        const nowStr=nowTime();
+        meds.filter(m=>m.active&&m.freq!=='As Needed').forEach(m=>{
+          (m.times||[]).forEach(t=>{
+            if(t<nowStr){
+              const key=`${m.id}_${todayStr}_${t}`;
+              if(!history.find(h=>h.key===key)){
+                list.push({key,medId:m.id,medName:m.name,dosage:m.dosage,date:todayStr,time:t,taken:false});
+              }
+            }
+          });
+        });
+        return list.filter(h=>!filter||h.medName===filter).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time));
+      },[history,meds,filter]);
+
+      return (
+        <div className="card">
+          <h2>Dose History</h2>
+          <div className="form-group search-input">
+            <label>Filter by Medication</label>
+            <select value={filter} onChange={e=>setFilter(e.target.value)}>
+              <option value="">All</option>
+              {meds.map(m=><option key={m.id} value={m.name}>{m.name}</option>)}
+            </select>
+          </div>
+          {entries.length===0 && <div className="empty">No history yet.</div>}
+          {entries.length>0 && (
+            <table className="hist-table">
+              <thead>
+                <tr><th>Date</th><th>Time</th><th>Medication</th><th>Dosage</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {entries.slice(0,100).map((h,i)=>(
+                  <tr key={i}>
+                    <td>{dateLabel(h.date)}</td>
+                    <td>{h.time}</td>
+                    <td>{h.medName}</td>
+                    <td>{h.dosage}</td>
+                    <td className={h.taken?'taken-yes':'taken-no'}>{h.taken?'✓ Taken':'✗ Missed'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      );
+    }
+
+    function NotesTab({ notes, setNotes }) {
+      const [title, setTitle]   = useState('');
+      const [content,setContent]= useState('');
+      const [noteDate,setNoteDate]=useState(today());
+      const [search, setSearch] = useState('');
+      const [editing, setEditing]= useState(null);
+
+      const add = (e) => {
+        e.preventDefault();
+        if(!title||!content) return;
+        if(editing!=null){
+          setNotes(p=>p.map(n=>n.id===editing?{...n,title,content,date:noteDate}:n));
+          setEditing(null);
+        } else {
+          setNotes(p=>[{id:Date.now(),date:noteDate,title,content},...p]);
+        }
+        setTitle(''); setContent(''); setNoteDate(today());
+      };
+
+      const startEdit = (n) => { setEditing(n.id); setTitle(n.title); setContent(n.content); setNoteDate(n.date); };
+      const remove = (id) => setNotes(p=>p.filter(n=>n.id!==id));
+
+      const filtered = notes.filter(n=>!search||(n.title+n.content).toLowerCase().includes(search.toLowerCase()));
+
+      return (
+        <div>
+          <div className="card">
+            <h2>{editing!=null?'Edit Note':'Add Note'}</h2>
+            <form onSubmit={add}>
+              <div className="form-row">
+                <div className="form-group"><label>Title</label><input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Note title" required/></div>
+                <div className="form-group"><label>Date</label><input type="date" value={noteDate} onChange={e=>setNoteDate(e.target.value)}/></div>
+              </div>
+              <div className="form-group"><label>Content</label><textarea value={content} onChange={e=>setContent(e.target.value)} placeholder="Write your health note…" required style={{minHeight:90}}/></div>
+              <div style={{display:'flex',gap:8}}>
+                <button className="btn" type="submit">{editing!=null?'Save Edit':'Add Note'}</button>
+                {editing!=null && <button className="btn btn-sm btn-outline" type="button" onClick={()=>{setEditing(null);setTitle('');setContent('');setNoteDate(today());}}>Cancel</button>}
+              </div>
+            </form>
+          </div>
+          <div className="card">
+            <h2>Notes</h2>
+            <input className="search-input" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search notes…" style={{marginBottom:14}}/>
+            {filtered.length===0 && <div className="empty">No notes found.</div>}
+            {filtered.map(n=>(
+              <div key={n.id} className="note-item">
+                <div className="note-title">{n.title}</div>
+                <div className="note-date">{dateLabel(n.date)}</div>
+                <div className="note-body">{n.content}</div>
+                <div style={{display:'flex',gap:8,marginTop:10}}>
+                  <button className="btn btn-sm" onClick={()=>startEdit(n)}>Edit</button>
+                  <button className="btn btn-sm btn-danger" onClick={()=>remove(n.id)}>Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [tab,     setTab]     = useState('Medications');
+      const [meds,    setMeds]    = useState(()=>{ try{return JSON.parse(localStorage.getItem('medList')||'[]');}catch{return [];} });
+      const [history, setHistory] = useState(()=>{ try{return JSON.parse(localStorage.getItem('doseHistory')||'[]');}catch{return [];} });
+      const [notes,   setNotes]   = useState(()=>{ try{return JSON.parse(localStorage.getItem('healthNotes')||'[]');}catch{return [];} });
+
+      useEffect(()=>localStorage.setItem('medList',    JSON.stringify(meds)),   [meds]);
+      useEffect(()=>localStorage.setItem('doseHistory',JSON.stringify(history)),[history]);
+      useEffect(()=>localStorage.setItem('healthNotes',JSON.stringify(notes)),  [notes]);
+
+      return (
+        <>
+          <Navbar tab={tab} setTab={setTab}/>
+          <div className="container">
+            {tab==='Medications' && <MedicationsTab meds={meds} setMeds={setMeds}/>}
+            {tab==='Schedule'    && <ScheduleTab    meds={meds} history={history} setHistory={setHistory}/>}
+            {tab==='History'     && <HistoryTab     meds={meds} history={history} setHistory={setHistory}/>}
+            {tab==='Notes'       && <NotesTab       notes={notes} setNotes={setNotes}/>}
+          </div>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

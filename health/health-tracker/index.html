@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Daily Health Tracker — VibedApps</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --bg:#051a0f; --accent:#10b981; --accent2:#059669; --accent3:#34d399;
+      --border:rgba(16,185,129,0.2); --glass:rgba(16,185,129,0.08);
+      --text:#e2fdf3; --text2:#6ee7b7; --text3:rgba(226,253,243,0.6);
+      --red:#ef4444; --yellow:#f59e0b; --blue:#3b82f6;
+    }
+    body { font-family:'Inter',sans-serif; background:linear-gradient(135deg,#051a0f,#0a2818,#071a10); min-height:100vh; color:var(--text); }
+    nav { position:sticky; top:0; z-index:100; background:rgba(5,26,15,0.92); backdrop-filter:blur(14px); border-bottom:1px solid var(--border); padding:0 20px; display:flex; align-items:center; gap:16px; height:60px; }
+    nav h1 { font-size:1.1rem; font-weight:700; color:var(--accent); margin-right:auto; }
+    .tab-btn { background:none; border:none; color:var(--text3); font-size:.85rem; font-weight:600; padding:6px 14px; border-radius:8px; cursor:pointer; font-family:'Inter',sans-serif; transition:all .2s; }
+    .tab-btn.active { background:var(--glass); color:var(--accent); border:1px solid var(--border); }
+    .container { max-width:900px; margin:0 auto; padding:28px 20px; }
+    .card { background:var(--glass); border:1px solid var(--border); border-radius:16px; padding:22px; margin-bottom:22px; }
+    .card h2 { font-size:.95rem; font-weight:700; color:var(--accent); margin-bottom:16px; letter-spacing:.05em; text-transform:uppercase; }
+    label { display:block; font-size:.8rem; color:var(--text2); margin-bottom:4px; font-weight:500; }
+    input, select { width:100%; background:rgba(16,185,129,0.08); border:1px solid var(--border); border-radius:8px; padding:9px 12px; color:var(--text); font-size:.9rem; font-family:'Inter',sans-serif; outline:none; transition:border .2s; }
+    input:focus, select:focus { border-color:var(--accent); }
+    select option { background:#0a2818; }
+    .form-group { margin-bottom:14px; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .btn { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; border-radius:10px; padding:11px 20px; font-size:.9rem; font-weight:600; cursor:pointer; transition:opacity .2s,transform .1s; }
+    .btn:hover { opacity:.88; transform:translateY(-1px); }
+    .btn-sm { padding:5px 12px; font-size:.8rem; border-radius:7px; }
+    .btn-outline { background:none; border:1px solid var(--accent); color:var(--accent); }
+    .metrics-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-top:14px; }
+    .metric-card { background:rgba(16,185,129,0.12); border:1px solid var(--border); border-radius:12px; padding:14px; text-align:center; }
+    .metric-val { font-size:1.6rem; font-weight:800; color:var(--accent); }
+    .metric-label { font-size:.72rem; color:var(--text3); margin-top:2px; }
+    .mood-row { display:flex; gap:10px; margin-top:8px; }
+    .mood-btn { flex:1; background:rgba(16,185,129,0.08); border:1px solid var(--border); border-radius:10px; padding:8px 4px; font-size:1.4rem; cursor:pointer; transition:all .2s; text-align:center; }
+    .mood-btn.selected { border-color:var(--accent); background:rgba(16,185,129,0.22); transform:scale(1.1); }
+    .water-row { display:flex; align-items:center; gap:12px; }
+    .water-btn { background:var(--glass); border:1px solid var(--border); border-radius:8px; padding:7px 14px; color:var(--accent); font-size:1.1rem; cursor:pointer; font-weight:700; }
+    .range-wrap { display:flex; align-items:center; gap:10px; }
+    input[type=range] { padding:0; height:6px; accent-color:var(--accent); }
+    .range-val { color:var(--accent); font-weight:700; font-size:.9rem; min-width:36px; }
+    canvas { display:block; max-width:100%; }
+    .chart-label { font-size:.82rem; color:var(--text3); margin-bottom:8px; }
+    .stats-2col { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .stat-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:.88rem; }
+    .stat-row:last-child { border:none; }
+    .bmi-display { text-align:center; padding:20px 0; }
+    .bmi-num { font-size:4rem; font-weight:800; color:var(--accent); line-height:1; }
+    .bmi-cat { font-size:1.2rem; font-weight:600; margin-top:6px; }
+    .bmi-scale { position:relative; height:20px; border-radius:99px; background:linear-gradient(90deg,#3b82f6 0%,#10b981 25%,#f59e0b 50%,#ef4444 75%,#7c3aed 100%); margin:20px 0; }
+    .bmi-marker { position:absolute; top:-4px; width:4px; height:28px; background:#fff; border-radius:2px; transform:translateX(-50%); transition:left .5s; }
+    .bmi-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+    .bmi-table th { color:var(--text2); font-weight:600; padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); }
+    .bmi-table td { padding:7px 10px; border-bottom:1px solid rgba(16,185,129,0.1); }
+    .empty { text-align:center; color:var(--text3); padding:32px; font-size:.9rem; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+    const MOODS = ['😴','😞','😐','🙂','😁'];
+    function today() { return new Date().toISOString().split('T')[0]; }
+    function getLast(n, fn) { return Array.from({length:n},(_,i)=>{ const d=new Date(); d.setDate(d.getDate()-(n-1-i)); return fn(d); }); }
+    function dateLabel(ds) { return new Date(ds+'T12:00:00').toLocaleDateString('en',{month:'short',day:'numeric'}); }
+
+    function Navbar({ tab, setTab }) {
+      const tabs = ['Today','Charts','Stats','BMI'];
+      return (
+        <nav>
+          <a href="../../index.html" style={{color:'var(--accent)',textDecoration:'none',fontWeight:600}}>← Back</a>
+          <h1>🩺 Health Tracker</h1>
+          {tabs.map(t=>(
+            <button key={t} className={`tab-btn${tab===t?' active':''}`} onClick={()=>setTab(t)}>{t}</button>
+          ))}
+        </nav>
+      );
+    }
+
+    function TodayTab({ healthData, setHealthData }) {
+      const [selDate, setSelDate] = useState(today());
+      const existing = healthData[selDate] || {};
+      const [weight, setWeight] = useState(existing.weight||'');
+      const [sleep,  setSleep]  = useState(existing.sleep !=null?existing.sleep:7);
+      const [water,  setWater]  = useState(existing.water !=null?existing.water:0);
+      const [steps,  setSteps]  = useState(existing.steps ||'');
+      const [mood,   setMood]   = useState(existing.mood  !=null?existing.mood:2);
+
+      useEffect(()=>{
+        const e = healthData[selDate]||{};
+        setWeight(e.weight||'');
+        setSleep(e.sleep!=null?e.sleep:7);
+        setWater(e.water!=null?e.water:0);
+        setSteps(e.steps||'');
+        setMood(e.mood!=null?e.mood:2);
+      },[selDate,healthData]);
+
+      const save = () => {
+        setHealthData(prev => ({...prev, [selDate]:{
+          weight:weight===''?null:Number(weight),
+          sleep:Number(sleep), water:Number(water),
+          steps:steps===''?null:Number(steps), mood
+        }}));
+      };
+
+      const saved = healthData[selDate];
+
+      return (
+        <div>
+          <div className="card">
+            <h2>Log for Date</h2>
+            <div className="form-group">
+              <label>Date</label>
+              <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)} style={{width:'auto'}}/>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Weight (kg)</label>
+                <input type="number" step="0.1" min="20" max="300" value={weight} onChange={e=>setWeight(e.target.value)} placeholder="e.g. 70.5"/>
+              </div>
+              <div className="form-group">
+                <label>Steps</label>
+                <input type="number" min="0" max="100000" value={steps} onChange={e=>setSteps(e.target.value)} placeholder="e.g. 8000"/>
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Sleep — <span style={{color:'var(--accent)',fontWeight:700}}>{sleep}h</span></label>
+              <div className="range-wrap">
+                <span style={{fontSize:'.78rem',color:'var(--text3)'}}>0h</span>
+                <input type="range" min="0" max="12" step="0.5" value={sleep} onChange={e=>setSleep(e.target.value)} style={{flex:1}}/>
+                <span style={{fontSize:'.78rem',color:'var(--text3)'}}>12h</span>
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Water (glasses)</label>
+              <div className="water-row">
+                <button className="water-btn" onClick={()=>setWater(w=>Math.max(0,w-1))}>−</button>
+                <span style={{fontSize:'1.3rem',fontWeight:800,color:'var(--accent)',minWidth:32,textAlign:'center'}}>{water}</span>
+                <button className="water-btn" onClick={()=>setWater(w=>Math.min(20,w+1))}>+</button>
+                <span style={{fontSize:'.82rem',color:'var(--text3)'}}>💧 glasses</span>
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Mood</label>
+              <div className="mood-row">
+                {MOODS.map((m,i)=>(
+                  <button key={i} className={`mood-btn${mood===i?' selected':''}`} onClick={()=>setMood(i)}>{m}</button>
+                ))}
+              </div>
+            </div>
+            <button className="btn" style={{marginTop:6}} onClick={save}>Save Today's Log</button>
+          </div>
+          {saved && (
+            <div className="card">
+              <h2>Saved Metrics — {dateLabel(selDate)}</h2>
+              <div className="metrics-grid">
+                {saved.weight!=null && <div className="metric-card"><div className="metric-val">{saved.weight}</div><div className="metric-label">kg Weight</div></div>}
+                <div className="metric-card"><div className="metric-val">{saved.sleep}h</div><div className="metric-label">Sleep</div></div>
+                <div className="metric-card"><div className="metric-val">{saved.water}💧</div><div className="metric-label">Water</div></div>
+                {saved.steps!=null && <div className="metric-card"><div className="metric-val">{saved.steps.toLocaleString()}</div><div className="metric-label">Steps</div></div>}
+                <div className="metric-card"><div className="metric-val">{MOODS[saved.mood]}</div><div className="metric-label">Mood</div></div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function ChartsTab({ healthData }) {
+      const weightRef = useRef(null);
+      const sleepRef  = useRef(null);
+
+      const last14 = useMemo(() => getLast(14, d => d.toISOString().split('T')[0]), []);
+      const last7  = useMemo(() => getLast(7,  d => d.toISOString().split('T')[0]), []);
+
+      useEffect(() => {
+        const canvas = weightRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.offsetWidth || 560;
+        canvas.width = W; canvas.height = 200;
+        const pts = last14.map(d => healthData[d]?.weight ?? null);
+        const valid = pts.filter(v=>v!=null);
+        if (valid.length < 2) { ctx.fillStyle='rgba(226,253,243,0.4)'; ctx.font='14px Inter'; ctx.fillText('Not enough data yet',W/2-70,100); return; }
+        const minV = Math.min(...valid)-1, maxV = Math.max(...valid)+1;
+        const pad = {l:40,r:10,t:20,b:30};
+        const cw = W-pad.l-pad.r, ch = 200-pad.t-pad.b;
+        ctx.clearRect(0,0,W,200);
+        // grid
+        for(let i=0;i<=4;i++){
+          const y=pad.t+i*(ch/4);
+          ctx.strokeStyle='rgba(16,185,129,0.12)'; ctx.lineWidth=1;
+          ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+          const val=(maxV-(i*(maxV-minV)/4)).toFixed(1);
+          ctx.fillStyle='rgba(226,253,243,0.45)'; ctx.font='10px Inter'; ctx.fillText(val,2,y+4);
+        }
+        // line
+        ctx.beginPath(); ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2.5;
+        let first=true;
+        last14.forEach((d,i)=>{
+          const v=healthData[d]?.weight;
+          if(v==null) return;
+          const x=pad.l+i*(cw/(last14.length-1));
+          const y=pad.t+((maxV-v)/(maxV-minV))*ch;
+          if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);
+        });
+        ctx.stroke();
+        // dots
+        last14.forEach((d,i)=>{
+          const v=healthData[d]?.weight;
+          if(v==null) return;
+          const x=pad.l+i*(cw/(last14.length-1));
+          const y=pad.t+((maxV-v)/(maxV-minV))*ch;
+          ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2);
+          ctx.fillStyle='#f59e0b'; ctx.fill();
+        });
+        // x labels
+        [0,3,6,9,13].forEach(i=>{
+          const x=pad.l+i*(cw/(last14.length-1));
+          ctx.fillStyle='rgba(226,253,243,0.45)'; ctx.font='9px Inter'; ctx.fillText(last14[i].slice(5),x-12,195);
+        });
+      },[healthData, last14]);
+
+      useEffect(() => {
+        const canvas = sleepRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.offsetWidth || 560;
+        canvas.width = W; canvas.height = 160;
+        ctx.clearRect(0,0,W,160);
+        const pad={l:36,r:10,t:16,b:28};
+        const cw=W-pad.l-pad.r, ch=160-pad.t-pad.b;
+        const maxSleep=12;
+        const bw=Math.max(20,(cw/last7.length)-8);
+        last7.forEach((d,i)=>{
+          const v=healthData[d]?.sleep;
+          if(v==null)return;
+          const x=pad.l+i*(cw/last7.length)+(cw/last7.length-bw)/2;
+          const bh=(v/maxSleep)*ch;
+          const y=pad.t+ch-bh;
+          ctx.fillStyle=v<6?'#ef4444':v<8?'#f59e0b':'#10b981';
+          ctx.beginPath(); ctx.roundRect(x,y,bw,bh,4); ctx.fill();
+          ctx.fillStyle='rgba(226,253,243,0.6)'; ctx.font='9px Inter'; ctx.fillText(last7[i].slice(5),x+(bw/2)-14,155);
+          if(v>0){ ctx.fillStyle='#fff'; ctx.font='10px Inter'; ctx.fillText(v+'h',x+(bw/2)-8,Math.max(y-4,pad.t+4)); }
+        });
+        // grid
+        [3,6,9,12].forEach(v=>{
+          const y=pad.t+ch-(v/maxSleep)*ch;
+          ctx.strokeStyle='rgba(16,185,129,0.12)'; ctx.lineWidth=1;
+          ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+          ctx.fillStyle='rgba(226,253,243,0.45)'; ctx.font='9px Inter'; ctx.fillText(v+'h',2,y+3);
+        });
+      },[healthData, last7]);
+
+      return (
+        <div>
+          <div className="card">
+            <h2>Weight — Last 14 Days</h2>
+            <p className="chart-label">Amber line, dots per entry</p>
+            <canvas ref={weightRef} style={{width:'100%'}}/>
+          </div>
+          <div className="card">
+            <h2>Sleep — Last 7 Days</h2>
+            <p className="chart-label">🟢 ≥8h &nbsp;🟡 6–7.9h &nbsp;🔴 &lt;6h</p>
+            <canvas ref={sleepRef} style={{width:'100%'}}/>
+          </div>
+        </div>
+      );
+    }
+
+    function StatsTab({ healthData }) {
+      const last7Keys = useMemo(() => getLast(7, d => d.toISOString().split('T')[0]), []);
+      const allKeys   = Object.keys(healthData).sort();
+
+      const avg = (arr) => { const v=arr.filter(x=>x!=null&&!isNaN(x)); return v.length?+(v.reduce((s,x)=>s+x,0)/v.length).toFixed(1):null; };
+
+      const sleepAvg  = avg(last7Keys.map(k=>healthData[k]?.sleep));
+      const weightAvg = avg(last7Keys.map(k=>healthData[k]?.weight));
+      const waterAvg  = avg(last7Keys.map(k=>healthData[k]?.water));
+      const stepsAvg  = avg(last7Keys.map(k=>healthData[k]?.steps));
+
+      const bestSleepKey = allKeys.reduce((best,k)=>{
+        const v=healthData[k]?.sleep; if(v==null)return best;
+        return (!best||v>healthData[best]?.sleep)?k:best;
+      },null);
+      const mostActiveKey = allKeys.reduce((best,k)=>{
+        const v=healthData[k]?.steps; if(v==null)return best;
+        return (!best||v>healthData[best]?.steps)?k:best;
+      },null);
+
+      // streak of consecutive days with data
+      let streak=0,cur=new Date();
+      while(healthData[cur.toISOString().split('T')[0]]){ streak++; cur.setDate(cur.getDate()-1); }
+
+      const rows = [
+        ['Avg Sleep (7d)', sleepAvg!=null?`${sleepAvg}h`:'—'],
+        ['Avg Weight (7d)', weightAvg!=null?`${weightAvg} kg`:'—'],
+        ['Avg Water (7d)', waterAvg!=null?`${waterAvg} glasses`:'—'],
+        ['Avg Steps (7d)', stepsAvg!=null?stepsAvg.toLocaleString():'—'],
+        ['Best Sleep Night', bestSleepKey?`${dateLabel(bestSleepKey)} (${healthData[bestSleepKey].sleep}h)`:'—'],
+        ['Most Active Day', mostActiveKey?`${dateLabel(mostActiveKey)} (${healthData[mostActiveKey].steps?.toLocaleString()} steps)`:'—'],
+        ['Logging Streak', `${streak} day${streak!==1?'s':''}`],
+        ['Total Days Logged', allKeys.length],
+      ];
+
+      return (
+        <div className="card">
+          <h2>7-Day Stats</h2>
+          {rows.map(([k,v])=>(
+            <div key={k} className="stat-row">
+              <span style={{color:'var(--text3)'}}>{k}</span>
+              <span style={{fontWeight:600,color:'var(--accent)'}}>{v}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function BMITab({ healthData }) {
+      const [height, setHeight] = useState(() => localStorage.getItem('bmiHeight')||'');
+      const todayData = healthData[today()];
+      const weight = todayData?.weight;
+
+      useEffect(() => { if(height) localStorage.setItem('bmiHeight', height); },[height]);
+
+      const bmi = useMemo(()=>{
+        if(!height||!weight) return null;
+        return +(weight/Math.pow(Number(height)/100,2)).toFixed(1);
+      },[height,weight]);
+
+      const category = (b) => {
+        if(b<18.5) return {label:'Underweight',color:'#3b82f6'};
+        if(b<25)   return {label:'Normal',color:'#10b981'};
+        if(b<30)   return {label:'Overweight',color:'#f59e0b'};
+        return {label:'Obese',color:'#ef4444'};
+      };
+
+      const markerPct = (b) => {
+        // scale 15-40
+        return Math.min(100,Math.max(0,((b-15)/25)*100));
+      };
+
+      const last14 = useMemo(()=>getLast(14,d=>d.toISOString().split('T')[0]),[]);
+
+      return (
+        <div>
+          <div className="card">
+            <h2>BMI Calculator</h2>
+            <div className="form-group" style={{maxWidth:220}}>
+              <label>Height (cm)</label>
+              <input type="number" min="100" max="250" value={height} onChange={e=>setHeight(e.target.value)} placeholder="e.g. 175"/>
+            </div>
+            {!weight && <div style={{color:'var(--text3)',fontSize:'.85rem',marginTop:8}}>Log today's weight in the Today tab first.</div>}
+            {bmi && (()=>{const cat=category(bmi); return (
+              <>
+                <div className="bmi-display">
+                  <div className="bmi-num" style={{color:cat.color}}>{bmi}</div>
+                  <div className="bmi-cat" style={{color:cat.color}}>{cat.label}</div>
+                  <div style={{fontSize:'.82rem',color:'var(--text3)',marginTop:4}}>{weight} kg · {height} cm</div>
+                </div>
+                <div style={{fontSize:'.78rem',display:'flex',justifyContent:'space-between',color:'var(--text3)',marginBottom:4}}>
+                  <span>15 Underweight</span><span>18.5 Normal</span><span>25 Overweight</span><span>30 Obese 40+</span>
+                </div>
+                <div className="bmi-scale">
+                  <div className="bmi-marker" style={{left:`${markerPct(bmi)}%`}}/>
+                </div>
+              </>
+            );})()}
+          </div>
+          {height && (
+            <div className="card">
+              <h2>BMI History — Last 14 Days</h2>
+              <table className="bmi-table">
+                <thead><tr><th>Date</th><th>Weight</th><th>BMI</th><th>Category</th></tr></thead>
+                <tbody>
+                  {last14.filter(d=>healthData[d]?.weight).map(d=>{
+                    const w=healthData[d].weight;
+                    const b=+(w/Math.pow(Number(height)/100,2)).toFixed(1);
+                    const cat=category(b);
+                    return (
+                      <tr key={d}>
+                        <td>{dateLabel(d)}</td>
+                        <td>{w} kg</td>
+                        <td style={{fontWeight:700,color:cat.color}}>{b}</td>
+                        <td style={{color:cat.color}}>{cat.label}</td>
+                      </tr>
+                    );
+                  })}
+                  {last14.filter(d=>healthData[d]?.weight).length===0 && (
+                    <tr><td colSpan={4} style={{textAlign:'center',color:'var(--text3)',padding:'20px 0'}}>No weight data yet</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function App() {
+      const [tab, setTab] = useState('Today');
+      const [healthData, setHealthData] = useState(()=>{
+        try { return JSON.parse(localStorage.getItem('healthData')||'{}'); } catch { return {}; }
+      });
+
+      useEffect(()=>{ localStorage.setItem('healthData',JSON.stringify(healthData)); },[healthData]);
+
+      return (
+        <>
+          <Navbar tab={tab} setTab={setTab}/>
+          <div className="container">
+            {tab==='Today'  && <TodayTab  healthData={healthData} setHealthData={setHealthData}/>}
+            {tab==='Charts' && <ChartsTab healthData={healthData}/>}
+            {tab==='Stats'  && <StatsTab  healthData={healthData}/>}
+            {tab==='BMI'    && <BMITab    healthData={healthData}/>}
+          </div>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Macro &amp; Calorie Tracker — VibedApps</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --bg:#051a0f; --accent:#10b981; --accent2:#059669; --accent3:#34d399;
+      --border:rgba(16,185,129,0.2); --glass:rgba(16,185,129,0.08);
+      --text:#e2fdf3; --text2:#6ee7b7; --text3:rgba(226,253,243,0.6);
+      --red:#ef4444; --yellow:#f59e0b; --blue:#3b82f6;
+    }
+    body { font-family:'Inter',sans-serif; background:linear-gradient(135deg,#051a0f,#0a2818,#071a10); min-height:100vh; color:var(--text); }
+    nav { position:sticky; top:0; z-index:100; background:rgba(5,26,15,0.92); backdrop-filter:blur(14px); border-bottom:1px solid var(--border); padding:0 20px; display:flex; align-items:center; justify-content:space-between; height:60px; }
+    nav h1 { font-size:1.1rem; font-weight:700; color:var(--accent); }
+    .layout { display:grid; grid-template-columns:260px 1fr; gap:20px; max-width:1200px; margin:0 auto; padding:24px 20px; }
+    @media(max-width:820px){ .layout{grid-template-columns:1fr;} }
+    .card { background:var(--glass); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:20px; }
+    .card h2 { font-size:.9rem; font-weight:700; color:var(--accent); margin-bottom:14px; letter-spacing:.05em; text-transform:uppercase; }
+    label { display:block; font-size:.78rem; color:var(--text2); margin-bottom:3px; font-weight:500; }
+    input, select { width:100%; background:rgba(16,185,129,0.08); border:1px solid var(--border); border-radius:8px; padding:8px 10px; color:var(--text); font-size:.85rem; font-family:'Inter',sans-serif; outline:none; transition:border .2s; }
+    input:focus, select:focus { border-color:var(--accent); }
+    select option { background:#0a2818; }
+    .form-group { margin-bottom:10px; }
+    .btn { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; border-radius:9px; padding:9px 16px; font-size:.85rem; font-weight:600; cursor:pointer; transition:opacity .2s; }
+    .btn:hover { opacity:.85; }
+    .btn-sm { padding:4px 10px; font-size:.75rem; border-radius:6px; }
+    .btn-outline { background:none; border:1px solid var(--border); color:var(--text2); font-size:.72rem; font-weight:600; padding:5px 9px; border-radius:7px; cursor:pointer; width:100%; text-align:left; margin-bottom:5px; transition:all .2s; font-family:'Inter',sans-serif; }
+    .btn-outline:hover { border-color:var(--accent); color:var(--accent); }
+    .btn-danger { background:linear-gradient(135deg,#ef4444,#b91c1c); }
+    .rings-wrap { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; padding:10px 0; }
+    .ring-item { display:flex; flex-direction:column; align-items:center; gap:6px; }
+    .ring-label { font-size:.75rem; color:var(--text3); font-weight:600; text-align:center; }
+    .ring-center { font-size:.72rem; font-weight:700; fill:#e2fdf3; }
+    .meal-section { margin-bottom:16px; }
+    .meal-header { font-weight:700; color:var(--accent3); font-size:.85rem; padding:6px 0; border-bottom:1px solid var(--border); margin-bottom:8px; display:flex; justify-content:space-between; }
+    .food-row { display:flex; align-items:center; gap:8px; padding:6px 0; font-size:.82rem; border-bottom:1px solid rgba(16,185,129,0.08); }
+    .food-row:last-child { border:none; }
+    .food-name { flex:1; font-weight:500; }
+    .food-macros { color:var(--text3); font-size:.72rem; }
+    .food-cal { color:var(--yellow); font-weight:700; min-width:46px; text-align:right; }
+    .date-nav { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+    .date-nav button { background:var(--glass); border:1px solid var(--border); color:var(--accent); padding:5px 11px; border-radius:8px; cursor:pointer; font-size:.9rem; }
+    .date-nav span { font-weight:600; font-size:.9rem; color:var(--text2); }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .empty { text-align:center; color:var(--text3); padding:24px; font-size:.85rem; }
+    .total-row { display:flex; justify-content:flex-end; gap:14px; font-size:.78rem; font-weight:700; color:var(--text2); padding:4px 0; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo } = React;
+
+    const QUICK_FOODS = [
+      {name:'Chicken Breast 100g', cal:165, protein:31, carbs:0,  fat:4},
+      {name:'White Rice 100g',     cal:130, protein:2,  carbs:28, fat:0},
+      {name:'Egg (large)',         cal:78,  protein:6,  carbs:0,  fat:5},
+      {name:'Banana',              cal:89,  protein:1,  carbs:23, fat:0},
+      {name:'Greek Yoghurt 170g',  cal:100, protein:17, carbs:6,  fat:0},
+      {name:'Oats 40g',            cal:150, protein:5,  carbs:27, fat:3},
+      {name:'Almonds 30g',         cal:174, protein:6,  carbs:6,  fat:15},
+      {name:'Avocado ½',           cal:120, protein:1,  carbs:6,  fat:11},
+      {name:'Tuna 100g',           cal:116, protein:26, carbs:0,  fat:1},
+      {name:'Sweet Potato 100g',   cal:86,  protein:2,  carbs:20, fat:0},
+      {name:'Whole Milk 240ml',    cal:149, protein:8,  carbs:12, fat:8},
+      {name:'Bread slice',         cal:80,  protein:3,  carbs:15, fat:1},
+      {name:'Apple',               cal:95,  protein:0,  carbs:25, fat:0},
+      {name:'Salmon 100g',         cal:208, protein:20, carbs:0,  fat:13},
+      {name:'Peanut Butter 2tbsp', cal:190, protein:8,  carbs:7,  fat:16},
+    ];
+
+    const MEALS = ['Breakfast','Lunch','Dinner','Snack'];
+
+    function today() { return new Date().toISOString().split('T')[0]; }
+
+    function DonutRing({ value, goal, color, label, unit='' }) {
+      const r=40, cx=52, cy=52, circ=2*Math.PI*r;
+      const pct=goal>0?Math.min(1,value/goal):0;
+      const dash=circ*pct;
+      return (
+        <div className="ring-item">
+          <svg width="104" height="104" viewBox="0 0 104 104">
+            <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(16,185,129,0.12)" strokeWidth="10"/>
+            <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="10"
+              strokeDasharray={`${dash} ${circ-dash}`} strokeLinecap="round"
+              transform={`rotate(-90 ${cx} ${cy})`} style={{transition:'stroke-dasharray .5s'}}/>
+            <text x={cx} y={cy-4} textAnchor="middle" className="ring-center" fontSize="12" fontWeight="800" fill="#e2fdf3">{value}</text>
+            <text x={cx} y={cy+12} textAnchor="middle" fontSize="9" fill="rgba(226,253,243,0.55)">/ {goal}{unit}</text>
+          </svg>
+          <span className="ring-label">{label}</span>
+        </div>
+      );
+    }
+
+    function DonutRings({ totals, goals }) {
+      return (
+        <div className="card">
+          <h2>Today's Progress</h2>
+          <div className="rings-wrap">
+            <DonutRing value={totals.cal}     goal={goals.cal}     color="#f97316" label="Calories" unit="kcal"/>
+            <DonutRing value={totals.protein} goal={goals.protein} color="#3b82f6" label="Protein"  unit="g"/>
+            <DonutRing value={totals.carbs}   goal={goals.carbs}   color="#f59e0b" label="Carbs"    unit="g"/>
+            <DonutRing value={totals.fat}     goal={goals.fat}     color="#a855f7" label="Fat"      unit="g"/>
+          </div>
+        </div>
+      );
+    }
+
+    function GoalsSidebar({ goals, setGoals, onQuickAdd }) {
+      const [local, setLocal] = useState({...goals});
+      const update = (k,v) => setLocal(p=>({...p,[k]:Number(v)}));
+      const save = () => setGoals(local);
+
+      return (
+        <div>
+          <div className="card">
+            <h2>Daily Goals</h2>
+            {[['cal','Calories (kcal)'],['protein','Protein (g)'],['carbs','Carbs (g)'],['fat','Fat (g)']].map(([k,l])=>(
+              <div key={k} className="form-group">
+                <label>{l}</label>
+                <input type="number" min="0" value={local[k]} onChange={e=>update(k,e.target.value)}/>
+              </div>
+            ))}
+            <button className="btn" style={{width:'100%'}} onClick={save}>Save Goals</button>
+          </div>
+          <div className="card">
+            <h2>Quick Add</h2>
+            {QUICK_FOODS.map(f=>(
+              <button key={f.name} className="btn-outline" onClick={()=>onQuickAdd(f)}>{f.name}</button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function AddFoodForm({ onAdd, selDate }) {
+      const empty = {name:'',cal:'',protein:'',carbs:'',fat:'',meal:'Breakfast',servings:'1'};
+      const [form, setForm] = useState(empty);
+      const set = (k,v) => setForm(p=>({...p,[k]:v}));
+      const submit = (e) => {
+        e.preventDefault();
+        if(!form.name||!form.cal) return;
+        const s=Number(form.servings)||1;
+        onAdd({
+          id:Date.now(), name:form.name, meal:form.meal, date:selDate,
+          cal:Math.round(Number(form.cal)*s), protein:Math.round(Number(form.protein||0)*s),
+          carbs:Math.round(Number(form.carbs||0)*s), fat:Math.round(Number(form.fat||0)*s),
+        });
+        setForm(empty);
+      };
+      return (
+        <div className="card">
+          <h2>Add Food</h2>
+          <form onSubmit={submit}>
+            <div className="form-group">
+              <label>Food Name</label>
+              <input value={form.name} onChange={e=>set('name',e.target.value)} placeholder="e.g. Chicken Breast" required/>
+            </div>
+            <div className="form-grid">
+              <div className="form-group"><label>Calories</label><input type="number" min="0" value={form.cal} onChange={e=>set('cal',e.target.value)} placeholder="kcal" required/></div>
+              <div className="form-group"><label>Protein (g)</label><input type="number" min="0" value={form.protein} onChange={e=>set('protein',e.target.value)} placeholder="0"/></div>
+              <div className="form-group"><label>Carbs (g)</label><input type="number" min="0" value={form.carbs} onChange={e=>set('carbs',e.target.value)} placeholder="0"/></div>
+              <div className="form-group"><label>Fat (g)</label><input type="number" min="0" value={form.fat} onChange={e=>set('fat',e.target.value)} placeholder="0"/></div>
+            </div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Meal</label>
+                <select value={form.meal} onChange={e=>set('meal',e.target.value)}>
+                  {MEALS.map(m=><option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              <div className="form-group"><label>Servings</label><input type="number" min="0.25" step="0.25" value={form.servings} onChange={e=>set('servings',e.target.value)}/></div>
+            </div>
+            <button className="btn" type="submit" style={{width:'100%'}}>Add Food</button>
+          </form>
+        </div>
+      );
+    }
+
+    function FoodLog({ entries, onDelete }) {
+      if(entries.length===0) return <div className="card"><h2>Food Log</h2><div className="empty">Nothing logged yet. Add food above.</div></div>;
+
+      const byMeal = MEALS.reduce((acc,m)=>{acc[m]=entries.filter(e=>e.meal===m);return acc;},{});
+
+      return (
+        <div className="card">
+          <h2>Food Log</h2>
+          {MEALS.map(m=>{
+            const items=byMeal[m];
+            if(!items.length) return null;
+            const tot={cal:items.reduce((s,i)=>s+i.cal,0),protein:items.reduce((s,i)=>s+i.protein,0),carbs:items.reduce((s,i)=>s+i.carbs,0),fat:items.reduce((s,i)=>s+i.fat,0)};
+            return (
+              <div key={m} className="meal-section">
+                <div className="meal-header">
+                  <span>{m}</span>
+                  <span style={{fontSize:'.75rem',color:'var(--text3)'}}>{tot.cal} kcal</span>
+                </div>
+                {items.map(i=>(
+                  <div key={i.id} className="food-row">
+                    <span className="food-name">{i.name}</span>
+                    <span className="food-macros">P:{i.protein}g C:{i.carbs}g F:{i.fat}g</span>
+                    <span className="food-cal">{i.cal}</span>
+                    <button className="btn btn-sm btn-danger" onClick={()=>onDelete(i.id)}>✕</button>
+                  </div>
+                ))}
+                <div className="total-row">
+                  <span>P:{tot.protein}g</span><span>C:{tot.carbs}g</span><span>F:{tot.fat}g</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    function App() {
+      const [goals, setGoals] = useState(()=>{
+        try{return JSON.parse(localStorage.getItem('macroGoals')||'null')||{cal:2000,protein:150,carbs:200,fat:65};}catch{return {cal:2000,protein:150,carbs:200,fat:65};}
+      });
+      const [foodLog, setFoodLog] = useState(()=>{
+        try{return JSON.parse(localStorage.getItem('macroLog')||'[]');}catch{return [];}
+      });
+      const [selDate, setSelDate] = useState(today());
+
+      useEffect(()=>localStorage.setItem('macroGoals',JSON.stringify(goals)),[goals]);
+      useEffect(()=>localStorage.setItem('macroLog',JSON.stringify(foodLog)),[foodLog]);
+
+      const addFood = useCallback((item)=>{ setFoodLog(p=>[...p,item]); },[]);
+      const deleteFood = useCallback((id)=>{ setFoodLog(p=>p.filter(e=>e.id!==id)); },[]);
+
+      const handleQuickAdd = useCallback((f,meal='Snack')=>{
+        addFood({id:Date.now(),name:f.name,meal,date:selDate,cal:f.cal,protein:f.protein,carbs:f.carbs,fat:f.fat});
+      },[addFood,selDate]);
+
+      const todayEntries = useMemo(()=>foodLog.filter(e=>e.date===selDate),[foodLog,selDate]);
+
+      const totals = useMemo(()=>todayEntries.reduce((a,e)=>({
+        cal:a.cal+e.cal, protein:a.protein+e.protein, carbs:a.carbs+e.carbs, fat:a.fat+e.fat
+      }),{cal:0,protein:0,carbs:0,fat:0}),[todayEntries]);
+
+      const prevDay = ()=>{ const d=new Date(selDate); d.setDate(d.getDate()-1); setSelDate(d.toISOString().split('T')[0]); };
+      const nextDay = ()=>{ const d=new Date(selDate); d.setDate(d.getDate()+1); setSelDate(d.toISOString().split('T')[0]); };
+
+      return (
+        <>
+          <nav>
+            <a href="../../index.html" style={{color:'var(--accent)',textDecoration:'none',fontWeight:600}}>← Back</a>
+            <h1>🥗 Macro Tracker</h1>
+            <div style={{width:60}}/>
+          </nav>
+          <div className="layout">
+            <GoalsSidebar goals={goals} setGoals={setGoals} onQuickAdd={handleQuickAdd}/>
+            <div>
+              <DonutRings totals={totals} goals={goals}/>
+              <div className="date-nav">
+                <button onClick={prevDay}>‹</button>
+                <span>{selDate===today()?'Today':selDate}</span>
+                <button onClick={nextDay}>›</button>
+              </div>
+              <AddFoodForm onAdd={addFood} selDate={selDate}/>
+              <FoodLog entries={todayEntries} onDelete={deleteFood}/>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
