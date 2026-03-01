@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Traffic Racer — VibedApps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--bg:#0d0500;--amber:#f59e0b;--amber2:#d97706;--amber3:#fbbf24;--border:rgba(245,158,11,.25);--glass:rgba(245,158,11,.08);--text:#fef3c7;--text2:#fbbf24;--text3:rgba(254,243,199,.6)}
+    body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0d0500,#1a0a00,#2d1600);min-height:100vh;color:var(--text);display:flex;flex-direction:column}
+    nav{position:sticky;top:0;background:rgba(13,5,0,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;z-index:100}
+    .back-btn{color:var(--amber);text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+    nav h1{font-size:18px;font-weight:700;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .wrap{display:flex;flex-direction:column;align-items:center;padding:20px;gap:10px;flex:1}
+    .hud{display:flex;gap:24px;font-weight:700}
+    .hi{color:var(--amber3);font-size:15px}
+    canvas{border:2px solid var(--border);border-radius:8px;display:block}
+    .btn-row{display:flex;gap:10px}
+    .btn{background:var(--glass);border:1px solid var(--border);color:var(--amber);padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s}
+    .btn:hover{background:rgba(245,158,11,.18)}
+    .info{color:var(--text3);font-size:12px;text-align:center}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="back-btn" href="../index.html">← Back</a>
+  <h1>🚗 Traffic Racer</h1>
+  <div></div>
+</nav>
+<div class="wrap">
+  <div class="hud">
+    <span class="hi">Score: <span id="sc">0</span></span>
+    <span class="hi">Best: <span id="bs">0</span></span>
+    <span class="hi">Lives: <span id="lv">❤️❤️❤️</span></span>
+    <span class="hi">Speed: <span id="sp">3.0</span>x</span>
+  </div>
+  <canvas id="c" width="560" height="500"></canvas>
+  <div class="btn-row">
+    <button class="btn" id="pauseBtn">⏸ Pause</button>
+    <button class="btn" id="restBtn">↺ Restart</button>
+  </div>
+  <div class="info">← → or A D to switch lanes · P to pause · R to restart</div>
+</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+const W=560,H=500,RL=70,RR=490,RW=420,LW=140;
+const LC=[RL+LW/2,RL+LW*1.5,RL+LW*2.5];
+const PW=36,PH=60;
+let best=parseInt(localStorage.getItem('trafficRacerBest')||'0');
+document.getElementById('bs').textContent=best;
+let S;
+function init(){
+  S={px:LC[1]-PW/2,py:H-90,lane:1,inv:0,lives:3,score:0,speed:3,enemies:[],frame:0,over:false,paused:false};
+  updateHUD();
+}
+function updateHUD(){
+  document.getElementById('sc').textContent=S.score;
+  document.getElementById('bs').textContent=best;
+  document.getElementById('lv').textContent='❤️'.repeat(Math.max(0,S.lives));
+  document.getElementById('sp').textContent=S.speed.toFixed(1);
+}
+function spawnEnemy(){
+  const lane=Math.floor(Math.random()*3);
+  const cols=['#ef4444','#3b82f6','#22c55e','#a855f7','#ec4899','#06b6d4'];
+  S.enemies.push({x:LC[lane]-PW/2,y:-PH-10,color:cols[Math.floor(Math.random()*cols.length)]});
+}
+function drawCar(x,y,color,isP){
+  ctx.fillStyle=color;
+  ctx.beginPath();ctx.roundRect(x,y,PW,PH,5);ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.45)';
+  ctx.fillRect(x+4,y+(isP?PH-22:8),PW-8,12);
+  ctx.fillRect(x+4,y+(isP?8:PH-20),PW-8,10);
+  ctx.fillStyle='#111';
+  [[x-4,y+10],[x+PW-2,y+10],[x-4,y+PH-18],[x+PW-2,y+PH-18]].forEach(([wx,wy])=>ctx.fillRect(wx,wy,5,8));
+  if(isP){
+    ctx.fillStyle='#ffd700';
+    ctx.fillRect(x+3,y,8,4);ctx.fillRect(x+PW-11,y,8,4);
+    ctx.fillStyle='#ef4444';
+    ctx.fillRect(x+3,y+PH-4,8,4);ctx.fillRect(x+PW-11,y+PH-4,8,4);
+  } else {
+    ctx.fillStyle='#ffd700';
+    ctx.fillRect(x+3,y+PH-4,8,4);ctx.fillRect(x+PW-11,y+PH-4,8,4);
+  }
+}
+function draw(){
+  ctx.fillStyle='#0a1a0a';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#222';ctx.fillRect(RL,0,RW,H);
+  ctx.fillStyle='#f59e0b';ctx.fillRect(RL,0,4,H);ctx.fillRect(RR-4,0,4,H);
+  ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=2;
+  ctx.setLineDash([24,20]);
+  ctx.lineDashOffset=-(S.frame*S.speed*1.4)%44;
+  for(let i=1;i<3;i++){ctx.beginPath();ctx.moveTo(RL+LW*i,0);ctx.lineTo(RL+LW*i,H);ctx.stroke();}
+  ctx.setLineDash([]);
+  S.enemies.forEach(e=>drawCar(e.x,e.y,e.color,false));
+  if(S.inv<=0||Math.floor(S.inv/5)%2===0) drawCar(S.px,S.py,'#f59e0b',true);
+  if(S.over){
+    ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(0,0,W,H);
+    ctx.textAlign='center';
+    ctx.fillStyle='#f59e0b';ctx.font='bold 40px Inter,sans-serif';ctx.fillText('GAME OVER',W/2,H/2-50);
+    ctx.fillStyle='#fef3c7';ctx.font='22px Inter,sans-serif';
+    ctx.fillText('Score: '+S.score,W/2,H/2);ctx.fillText('Best: '+best,W/2,H/2+34);
+    ctx.fillStyle='rgba(254,243,199,.5)';ctx.font='14px Inter,sans-serif';ctx.fillText('Press R or click Restart',W/2,H/2+70);
+  }
+  if(S.paused&&!S.over){
+    ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#f59e0b';ctx.font='bold 32px Inter,sans-serif';ctx.textAlign='center';ctx.fillText('⏸ PAUSED',W/2,H/2);
+  }
+}
+function update(){
+  if(S.over||S.paused)return;
+  S.frame++;S.score+=Math.ceil(S.speed*.08);
+  S.speed=Math.min(12,3+Math.floor(S.score/500)*.5);
+  const spawnRate=Math.max(35,100-Math.floor(S.score/200)*5);
+  if(S.frame%spawnRate===0)spawnEnemy();
+  S.enemies.forEach(e=>e.y+=S.speed);
+  S.enemies=S.enemies.filter(e=>e.y<H+100);
+  if(S.inv<=0){
+    for(const e of S.enemies){
+      if(S.px<e.x+PW&&S.px+PW>e.x&&S.py<e.y+PH&&S.py+PH>e.y){
+        S.lives--;S.inv=180;
+        if(S.lives<=0){S.over=true;if(S.score>best){best=S.score;localStorage.setItem('trafficRacerBest',best);}}
+        break;
+      }
+    }
+  } else S.inv--;
+  updateHUD();
+}
+const keys={};
+document.addEventListener('keydown',e=>{
+  if(['ArrowLeft','ArrowRight','KeyA','KeyD'].includes(e.code))e.preventDefault();
+  if(S.over){if(e.code==='KeyR')init();return;}
+  if(e.code==='KeyP'||e.code==='Escape'){togglePause();return;}
+  if(S.paused)return;
+  if((e.code==='ArrowLeft'||e.code==='KeyA')&&S.lane>0){S.lane--;S.px=LC[S.lane]-PW/2;}
+  if((e.code==='ArrowRight'||e.code==='KeyD')&&S.lane<2){S.lane++;S.px=LC[S.lane]-PW/2;}
+});
+function togglePause(){
+  if(S.over)return;S.paused=!S.paused;
+  document.getElementById('pauseBtn').textContent=S.paused?'▶ Resume':'⏸ Pause';
+}
+document.getElementById('pauseBtn').addEventListener('click',togglePause);
+document.getElementById('restBtn').addEventListener('click',init);
+function loop(){update();draw();requestAnimationFrame(loop);}
+init();loop();
+</script>
+</body>
+</html>

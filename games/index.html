@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Games Hub — VibedApps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--bg:#0d0500;--amber:#f59e0b;--amber2:#d97706;--amber3:#fbbf24;--border:rgba(245,158,11,.25);--glass:rgba(245,158,11,.08);--text:#fef3c7;--text2:#fbbf24;--text3:rgba(254,243,199,.6)}
+    body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0d0500,#1a0a00,#2d1600);min-height:100vh;color:var(--text)}
+    nav{position:sticky;top:0;background:rgba(13,5,0,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;z-index:100}
+    .back-btn{color:var(--amber);text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+    nav h1{font-size:18px;font-weight:700;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .disclaimer{background:rgba(220,38,38,.12);border-bottom:1px solid rgba(220,38,38,.35);color:#fca5a5;padding:10px 24px;text-align:center;font-size:13px;font-weight:600}
+    .hero{padding:48px 24px 32px;text-align:center}
+    .hero h2{font-size:36px;font-weight:800;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px}
+    .hero p{color:var(--text3);font-size:16px;max-width:520px;margin:0 auto}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;padding:32px 24px 48px;max-width:1200px;margin:0 auto}
+    .card{background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:24px;text-decoration:none;color:inherit;display:block;transition:transform .2s,box-shadow .2s,border-color .2s;position:relative;overflow:hidden}
+    .card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(245,158,11,.12),transparent 70%);opacity:0;transition:opacity .2s;pointer-events:none}
+    .card:hover{transform:translateY(-4px);box-shadow:0 8px 32px rgba(245,158,11,.2);border-color:rgba(245,158,11,.5)}
+    .card:hover::before{opacity:1}
+    .card-icon{font-size:48px;margin-bottom:12px;display:block}
+    .card-name{font-size:20px;font-weight:700;color:var(--amber3);margin-bottom:6px}
+    .card-desc{font-size:13px;color:var(--text3);line-height:1.5;margin-bottom:16px}
+    .card-footer{display:flex;align-items:center;justify-content:space-between}
+    .badge{background:rgba(245,158,11,.15);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--amber)}
+    .cta{color:var(--amber);font-size:13px;font-weight:700}
+    .warn{font-size:11px;color:#fca5a5;margin-top:8px}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="back-btn" href="../index.html">← Back</a>
+  <h1>🎮 Games Hub</h1>
+  <div></div>
+</nav>
+<div class="disclaimer">🎰 PLAY MONEY ONLY — Gambling &amp; Stake games use fictional in-game credits. No real money involved. For entertainment only (18+).</div>
+<div class="hero">
+  <h2>Pick Your Game</h2>
+  <p>11 categories · 34+ fully playable browser games · No downloads · No accounts required</p>
+</div>
+<div class="grid">
+  <a class="card" href="./2d-games/"><span class="card-icon">🕹️</span><div class="card-name">2D Games</div><div class="card-desc">Snake, Tetris &amp; Breakout — timeless classics in 2D</div><div class="card-footer"><span class="badge">3 games</span><span class="cta">Play →</span></div></a>
+  <a class="card" href="./3d-games/"><span class="card-icon">🎮</span><div class="card-name">3D Games</div><div class="card-desc">Cube Runner &amp; Space Shooter — immersive 3D browser action</div><div class="card-footer"><span class="badge">2 games</span><span class="cta">Play →</span></div></a>
+  <a class="card" href="./car-games/"><span class="card-icon">🚗</span><div class="card-name">Car Games</div><div class="card-desc">Dodge traffic on a 3-lane highway — how long can you last?</div><div class="card-footer"><span class="badge">1 game</span><span class="cta">Play →</span></div></a>
+  <a class="card" href="./shooting-games/"><span class="card-icon">🔫</span><div class="card-name">Shooting</div><div class="card-desc">Space Invaders &amp; Twin-Stick Shooter — aim, shoot, survive</div><div class="card-footer"><span class="badge">2 games</span><span class="cta">Play →</span></div></a>
+  <a class="card" href="./multiplayer-games/"><span class="card-icon">🤝</span><div class="card-name">Multiplayer</div><div class="card-desc">Pong, Tank Battle &amp; Connect 4 — local 2-player action</div><div class="card-footer"><span class="badge">3 games</span><span class="cta">Play →</span></div></a>
+  <a class="card" href="./puzzle-games/"><span class="card-icon">🧩</span><div class="card-name">Puzzle</div><div class="card-desc">Sudoku, Memory Match, Minesweeper &amp; 15-Puzzle</div><div class="card-footer"><span class="badge">4 games</span><span class="cta">Play →</span></div></a>
+  <a class="card" href="./classic-games/"><span class="card-icon">👾</span><div class="card-name">Classic</div><div class="card-desc">Pac-Man, Asteroids &amp; Frogger — arcade legends reborn</div><div class="card-footer"><span class="badge">3 games</span><span class="cta">Play →</span></div></a>
+  <a class="card" href="./card-games/"><span class="card-icon">🃏</span><div class="card-name">Card Games</div><div class="card-desc">Solitaire, Blackjack &amp; Snap — classic card fun</div><div class="card-footer"><span class="badge">3 games</span><span class="cta">Play →</span></div></a>
+  <a class="card" href="./board-games/"><span class="card-icon">♟️</span><div class="card-name">Board Games</div><div class="card-desc">Chess, Checkers &amp; Connect 4 — strategy at its finest</div><div class="card-footer"><span class="badge">3 games</span><span class="cta">Play →</span></div></a>
+  <a class="card" href="./gambling-games/"><span class="card-icon">🎰</span><div class="card-name">Gambling</div><div class="card-desc">Slots, Roulette &amp; Video Poker — play money only</div><div class="card-footer"><span class="badge">3 games</span><span class="cta">Play →</span></div><div class="warn">⚠️ Play money only — no real gambling</div></a>
+  <a class="card" href="./stake-classics/"><span class="card-icon">💎</span><div class="card-name">Stake Classics</div><div class="card-desc">Plinko, Mines, Crash, Dice &amp; more — virtual credits</div><div class="card-footer"><span class="badge">6 games</span><span class="cta">Play →</span></div><div class="warn">⚠️ Play money only — no real gambling</div></a>
+</div>
+</body>
+</html>

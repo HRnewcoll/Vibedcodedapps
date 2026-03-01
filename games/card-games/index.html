@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Card Games — VibedApps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--amber:#f59e0b;--amber3:#fbbf24;--border:rgba(245,158,11,.25);--glass:rgba(245,158,11,.08);--text:#fef3c7;--text3:rgba(254,243,199,.6)}
+    body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0d0500,#1a0a00,#2d1600);min-height:100vh;color:var(--text)}
+    nav{position:sticky;top:0;background:rgba(13,5,0,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;z-index:100}
+    .back-btn{color:var(--amber);text-decoration:none;font-size:14px;font-weight:600}
+    nav h1{font-size:18px;font-weight:700;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .disc{background:rgba(220,38,38,.12);border-bottom:1px solid rgba(220,38,38,.35);color:#fca5a5;padding:8px 24px;text-align:center;font-size:13px;font-weight:600}
+    .menu{display:flex;justify-content:center;gap:12px;padding:14px 24px;flex-wrap:wrap}
+    .mbtn{background:var(--glass);border:1px solid var(--border);color:var(--amber);padding:10px 22px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
+    .mbtn:hover,.mbtn.active{background:rgba(245,158,11,.2);border-color:var(--amber)}
+    .ga{display:flex;flex-direction:column;align-items:center;padding:8px 24px 24px;gap:10px}
+    .btn{background:var(--glass);border:1px solid var(--border);color:var(--amber);padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s}
+    .btn:hover{background:rgba(245,158,11,.2)}
+    .brow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
+    .stat{color:var(--amber3);font-size:14px;font-weight:600}
+    /* Card styles */
+    .card{width:64px;height:90px;background:#fff;border-radius:6px;border:1px solid #ccc;display:inline-flex;flex-direction:column;justify-content:space-between;padding:3px 4px;font-size:13px;font-weight:700;cursor:pointer;position:relative;user-select:none;flex-shrink:0}
+    .card.red{color:#dc2626}
+    .card.black{color:#1e293b}
+    .card.back{background:linear-gradient(135deg,#2d1600,#1a0a00);border-color:var(--border);color:transparent}
+    .card.back::after{content:'🂠';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px}
+    .card.selected{box-shadow:0 0 0 2px #f59e0b,0 0 12px rgba(245,158,11,.4)}
+    .card.empty{background:rgba(245,158,11,.05);border:2px dashed var(--border);cursor:default}
+    /* Solitaire */
+    #sol-area{width:min(780px,100%);overflow-x:auto}
+    #sol-top{display:flex;gap:12px;margin-bottom:16px;align-items:flex-start}
+    #sol-tableau{display:flex;gap:8px;align-items:flex-start}
+    .sol-col{display:flex;flex-direction:column;gap:0;min-height:110px;position:relative}
+    .sol-col .card{margin-bottom:-70px}
+    .sol-col .card:last-child{margin-bottom:0}
+    /* Blackjack */
+    .bj-table{background:rgba(0,80,20,.2);border:2px solid rgba(0,200,50,.2);border-radius:16px;padding:20px;width:min(600px,100%)}
+    .bj-hand{display:flex;gap:6px;flex-wrap:wrap;min-height:100px;align-items:flex-end}
+    .bj-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+    .chip{width:50px;height:50px;border-radius:50%;border:3px solid;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;transition:transform .1s}
+    .chip:hover{transform:scale(1.1)}
+    .chip.c5{background:#22c55e;border-color:#166534;color:#fff}
+    .chip.c25{background:#3b82f6;border-color:#1d4ed8;color:#fff}
+    .chip.c50{background:#a855f7;border-color:#7e22ce;color:#fff}
+    .chip.c100{background:#ef4444;border-color:#b91c1c;color:#fff}
+    /* Snap */
+    .snap-table{display:flex;gap:24px;align-items:center;justify-content:center;flex-wrap:wrap}
+    .snap-pile{display:flex;flex-direction:column;align-items:center;gap:8px}
+    .snap-btn-big{padding:14px 28px;font-size:20px;font-weight:800;border-radius:12px;background:rgba(220,38,38,.2);border:2px solid rgba(220,38,38,.5);color:#fca5a5;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
+    .snap-btn-big:hover,.snap-btn-big.flash{background:rgba(220,38,38,.5);border-color:#ef4444;color:#fff;transform:scale(1.05)}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="back-btn" href="../index.html">← Back</a>
+  <h1>🃏 Card Games</h1>
+  <div></div>
+</nav>
+<div class="disc">🎰 Blackjack uses play money only — no real currency involved.</div>
+<div class="menu">
+  <button class="mbtn active" id="b1" onclick="showGame(1)">🂡 Solitaire</button>
+  <button class="mbtn" id="b2" onclick="showGame(2)">🃏 Blackjack</button>
+  <button class="mbtn" id="b3" onclick="showGame(3)">👏 Snap</button>
+</div>
+
+<!-- SOLITAIRE -->
+<div id="g1" class="ga">
+  <div class="brow">
+    <span class="stat">Moves: <span id="sol-moves">0</span></span>
+    <span id="sol-msg" style="color:#22c55e;font-weight:700;font-size:14px;min-height:20px"></span>
+    <button class="btn" onclick="solInit()">🆕 New Game</button>
+  </div>
+  <div id="sol-area">
+    <div id="sol-top"></div>
+    <div id="sol-tableau"></div>
+  </div>
+</div>
+
+<!-- BLACKJACK -->
+<div id="g2" class="ga" style="display:none">
+  <div class="brow">
+    <span class="stat">Balance: $<span id="bj-bal">1000</span></span>
+    <span class="stat">Bet: $<span id="bj-bet">0</span></span>
+    <span id="bj-msg" style="color:#fbbf24;font-weight:700;font-size:15px;min-height:22px"></span>
+  </div>
+  <div class="bj-table">
+    <div style="margin-bottom:10px;color:var(--text3);font-size:13px">Dealer</div>
+    <div class="bj-hand" id="bj-dealer"></div>
+    <div style="margin:10px 0;text-align:center;font-size:13px;color:var(--text3)">Your Hand — <span id="bj-val">0</span></div>
+    <div class="bj-hand" id="bj-player"></div>
+  </div>
+  <div class="bj-chips">
+    <div class="chip c5" onclick="bjBet(5)">$5</div>
+    <div class="chip c25" onclick="bjBet(25)">$25</div>
+    <div class="chip c50" onclick="bjBet(50)">$50</div>
+    <div class="chip c100" onclick="bjBet(100)">$100</div>
+  </div>
+  <div class="brow" style="margin-top:4px">
+    <button class="btn" id="bj-deal" onclick="bjDeal()">Deal</button>
+    <button class="btn" id="bj-hit" onclick="bjHit()" disabled>Hit</button>
+    <button class="btn" id="bj-stand" onclick="bjStand()" disabled>Stand</button>
+    <button class="btn" id="bj-dbl" onclick="bjDouble()" disabled>Double</button>
+    <button class="btn" onclick="bjClear()">Clear Bet</button>
+  </div>
+  <div style="color:var(--text3);font-size:12px">Blackjack pays 3:2 · Dealer hits soft 17 · Play money only</div>
+</div>
+
+<!-- SNAP -->
+<div id="g3" class="ga" style="display:none">
+  <div class="brow">
+    <span class="stat">P1: <span id="sn-p1cnt">26</span> cards</span>
+    <span class="stat">P2: <span id="sn-p2cnt">26</span> cards</span>
+    <span id="sn-msg" style="color:#22c55e;font-weight:700;font-size:14px;min-height:20px"></span>
+  </div>
+  <div class="snap-table">
+    <div class="snap-pile">
+      <div class="stat">Player 1</div>
+      <div id="sn-p1pile" style="font-size:14px;color:var(--text3)">26 cards</div>
+      <button class="btn" onclick="snapFlip(1)">Flip ▶</button>
+      <button class="snap-btn-big" id="sn-snap1" onclick="snapSnap(1)">SNAP!</button>
+    </div>
+    <div class="snap-pile">
+      <div class="stat" style="text-align:center">Centre Pile</div>
+      <div id="sn-center" style="min-height:100px;display:flex;align-items:center;justify-content:center"></div>
+      <div id="sn-match" style="color:#22c55e;font-weight:700;font-size:14px;text-align:center;min-height:20px"></div>
+    </div>
+    <div class="snap-pile">
+      <div class="stat">Player 2</div>
+      <div id="sn-p2pile" style="font-size:14px;color:var(--text3)">26 cards</div>
+      <button class="btn" onclick="snapFlip(2)">◀ Flip</button>
+      <button class="snap-btn-big" id="sn-snap2" onclick="snapSnap(2)">SNAP!</button>
+    </div>
+  </div>
+  <button class="btn" onclick="snapInit()">🆕 New Game</button>
+</div>
+
+<script>
+function showGame(n){
+  [1,2,3].forEach(i=>{document.getElementById('g'+i).style.display=i===n?'flex':'none';document.getElementById('b'+i).classList.toggle('active',i===n);});
+}
+
+// ======= SOLITAIRE (Klondike) =======
+(function(){
+  const SUITS=['♠','♥','♦','♣'];const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+  const RED=new Set(['♥','♦']);
+  let deck=[],stock=[],waste=[],tableau=[],foundation=[],sel=null,moves=0;
+
+  function mkDeck(){const d=[];SUITS.forEach(s=>RANKS.forEach(r=>d.push({r,s,face:false})));return d;}
+  function shuffle(d){for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;}
+  function cardVal(r){return RANKS.indexOf(r)+1;}
+  function isRed(s){return RED.has(s);}
+  function canPlaceTab(card,target){
+    if(!target){return card.r==='K';}
+    return cardVal(card.r)===cardVal(target.r)-1&&isRed(card.s)!==isRed(target.s);
+  }
+  function canPlaceFdn(card,pile){
+    if(pile.length===0)return card.r==='A';
+    const top=pile[pile.length-1];
+    return card.s===top.s&&cardVal(card.r)===cardVal(top.r)+1;
+  }
+
+  window.solInit=function(){
+    deck=shuffle(mkDeck());stock=[];waste=[];tableau=Array.from({length:7},()=>[]);foundation=Array.from({length:4},()=>[]);sel=null;moves=0;
+    for(let col=0;col<7;col++){for(let i=0;i<=col;i++){const c=deck.pop();c.face=i===col;tableau[col].push(c);}}
+    deck.forEach(c=>{c.face=false;stock.push(c);});
+    document.getElementById('sol-moves').textContent=0;
+    document.getElementById('sol-msg').textContent='';
+    render();
+  };
+
+  function render(){
+    const topEl=document.getElementById('sol-top');
+    const tabEl=document.getElementById('sol-tableau');
+    topEl.innerHTML='';tabEl.innerHTML='';
+    // Stock
+    const stk=document.createElement('div');
+    stk.className='card back';stk.style.cursor='pointer';stk.style.opacity=stock.length?'1':'.3';
+    stk.onclick=()=>{if(stock.length){const c=stock.pop();c.face=true;waste.push(c);render();}else{waste.forEach(c=>{c.face=false;stock.push(c);});waste=[];render();}};
+    topEl.appendChild(stk);
+    // Waste
+    const wst=document.createElement('div');
+    if(waste.length>0){const c=waste[waste.length-1];wst.className='card '+(isRed(c.s)?'red':'black')+(sel&&sel.type==='waste'?' selected':'');wst.innerHTML=`<span>${c.r}${c.s}</span><span style="transform:rotate(180deg)">${c.r}${c.s}</span>`;wst.onclick=()=>{sel=sel&&sel.type==='waste'?null:{type:'waste',card:c};render();};}
+    else{wst.className='card empty';}
+    topEl.appendChild(wst);
+    // Gap
+    const gap=document.createElement('div');gap.style.width='24px';topEl.appendChild(gap);
+    // Foundations
+    for(let fi=0;fi<4;fi++){
+      const fdiv=document.createElement('div');
+      if(foundation[fi].length>0){const c=foundation[fi][foundation[fi].length-1];fdiv.className='card '+(isRed(c.s)?'red':'black');fdiv.innerHTML=`<span>${c.r}${c.s}</span><span style="transform:rotate(180deg)">${c.r}${c.s}</span>`;}
+      else{fdiv.className='card empty';fdiv.textContent=SUITS[fi];fdiv.style.display='flex';fdiv.style.alignItems='center';fdiv.style.justifyContent='center';fdiv.style.fontSize='20px';fdiv.style.color='var(--amber3)';}
+      fdiv.onclick=()=>{if(sel)moveToFoundation(fi);};
+      topEl.appendChild(fdiv);
+    }
+    // Tableau
+    for(let ci=0;ci<7;ci++){
+      const col=document.createElement('div');col.className='sol-col';
+      if(tableau[ci].length===0){const e=document.createElement('div');e.className='card empty';e.onclick=()=>{if(sel)moveToTab(ci);};col.appendChild(e);}
+      tableau[ci].forEach((c,idx)=>{
+        const cd=document.createElement('div');
+        if(!c.face){cd.className='card back';}
+        else{const isSel=sel&&sel.type==='tab'&&sel.col===ci&&sel.idx===idx;cd.className='card '+(isRed(c.s)?'red':'black')+(isSel?' selected':'');cd.innerHTML=`<span>${c.r}${c.s}</span><span style="transform:rotate(180deg)">${c.r}${c.s}</span>`;}
+        cd.onclick=()=>{
+          if(!c.face){if(idx===tableau[ci].length-1){c.face=true;render();}return;}
+          if(sel){if(sel.type==='tab'&&sel.col===ci&&sel.idx===idx){sel=null;render();return;}moveToTab(ci);}
+          else{sel={type:'tab',col:ci,idx};render();}
+        };
+        cd.ondblclick=()=>{if(!c.face)return;for(let fi=0;fi<4;fi++){if(canPlaceFdn(c,foundation[fi])){sel={type:'tab',col:ci,idx};moveToFoundation(fi);return;}}};
+        col.appendChild(cd);
+      });
+      col.onclick=e=>{if(e.target===col&&sel)moveToTab(ci);};
+      tabEl.appendChild(col);
+    }
+  }
+
+  function moveToTab(ci){
+    if(!sel)return;
+    let cards=[];
+    if(sel.type==='waste'){cards=[waste[waste.length-1]];}
+    else if(sel.type==='tab'){cards=tableau[sel.col].slice(sel.idx);}
+    else return;
+    const target=tableau[ci];
+    const topCard=target.length?target[target.length-1]:null;
+    if(!canPlaceTab(cards[0],topCard)){sel=null;render();return;}
+    if(sel.type==='waste')waste.pop();
+    else tableau[sel.col].splice(sel.idx);
+    if(sel.type==='tab'&&sel.idx>0&&tableau[sel.col].length>0)tableau[sel.col][tableau[sel.col].length-1].face=true;
+    cards.forEach(c=>target.push(c));
+    sel=null;moves++;document.getElementById('sol-moves').textContent=moves;
+    checkWin();render();
+  }
+
+  function moveToFoundation(fi){
+    if(!sel)return;
+    let card;
+    if(sel.type==='waste')card=waste[waste.length-1];
+    else if(sel.type==='tab')card=tableau[sel.col][sel.idx];
+    else return;
+    if(sel.type==='tab'&&sel.idx!==tableau[sel.col].length-1){sel=null;render();return;}
+    if(!canPlaceFdn(card,foundation[fi])){sel=null;render();return;}
+    if(sel.type==='waste')waste.pop();
+    else{tableau[sel.col].pop();if(tableau[sel.col].length>0)tableau[sel.col][tableau[sel.col].length-1].face=true;}
+    foundation[fi].push(card);sel=null;moves++;document.getElementById('sol-moves').textContent=moves;
+    checkWin();render();
+  }
+
+  function checkWin(){
+    if(foundation.every(f=>f.length===13))document.getElementById('sol-msg').textContent='🎉 You won in '+moves+' moves!';
+  }
+  solInit();
+})();
+
+// ======= BLACKJACK =======
+(function(){
+  const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];const SUITS=['♠','♥','♦','♣'];
+  const RED=new Set(['♥','♦']);
+  let shoe=[],pHand=[],dHand=[],bet=0,balance=parseInt(localStorage.getItem('bjBalance')||'1000'),gs='idle';
+  function mkShoe(){const d=[];for(let i=0;i<6;i++)SUITS.forEach(s=>RANKS.forEach(r=>d.push({r,s})));for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;}
+  function cardVal(r){if(['J','Q','K'].includes(r))return 10;if(r==='A')return 11;return parseInt(r);}
+  function handVal(h){let v=h.reduce((s,c)=>s+cardVal(c.r),0);let aces=h.filter(c=>c.r==='A').length;while(v>21&&aces>0){v-=10;aces--;}return v;}
+  function saveBalance(){localStorage.setItem('bjBalance',balance);}
+  function updateUI(){
+    document.getElementById('bj-bal').textContent=balance;
+    document.getElementById('bj-bet').textContent=bet;
+  }
+  function renderCards(el,hand,hideSecond){
+    const container=document.getElementById(el);container.innerHTML='';
+    hand.forEach((c,i)=>{
+      const div=document.createElement('div');
+      if(i===1&&hideSecond){div.className='card back';}
+      else{div.className='card '+(RED.has(c.s)?'red':'black');div.innerHTML=`<span>${c.r}${c.s}</span><span style="transform:rotate(180deg)">${c.r}${c.s}</span>`;}
+      container.appendChild(div);
+    });
+    if(el==='bj-player')document.getElementById('bj-val').textContent=handVal(hand);
+  }
+  function setButtons(dealing){
+    document.getElementById('bj-deal').disabled=dealing;
+    document.getElementById('bj-hit').disabled=!dealing;
+    document.getElementById('bj-stand').disabled=!dealing;
+    document.getElementById('bj-dbl').disabled=!dealing;
+  }
+  window.bjBet=function(amt){if(gs!=='idle')return;if(balance-bet>=amt){bet+=amt;updateUI();}};
+  window.bjClear=function(){if(gs!=='idle')return;bet=0;updateUI();};
+  window.bjDeal=function(){
+    if(bet<=0){document.getElementById('bj-msg').textContent='Place a bet first!';return;}
+    if(balance<bet){document.getElementById('bj-msg').textContent='Not enough balance!';return;}
+    if(shoe.length<20)shoe=mkShoe();
+    pHand=[shoe.pop(),shoe.pop()];dHand=[shoe.pop(),shoe.pop()];gs='playing';
+    balance-=bet;saveBalance();updateUI();
+    renderCards('bj-player',pHand,false);renderCards('bj-dealer',dHand,true);
+    document.getElementById('bj-msg').textContent='';
+    setButtons(true);
+    if(handVal(pHand)===21){bjStand();}
+  };
+  window.bjHit=function(){if(gs!=='playing')return;pHand.push(shoe.pop());renderCards('bj-player',pHand,false);if(handVal(pHand)>21){endGame('bust');}};
+  window.bjStand=function(){if(gs!=='playing')return;gs='dealer';renderCards('bj-dealer',dHand,false);dealerPlay();};
+  window.bjDouble=function(){if(gs!=='playing'||pHand.length!==2)return;if(balance<bet){document.getElementById('bj-msg').textContent='Not enough to double!';return;}balance-=bet;bet*=2;updateUI();saveBalance();pHand.push(shoe.pop());renderCards('bj-player',pHand,false);if(handVal(pHand)>21)endGame('bust');else bjStand();};
+  function dealerPlay(){
+    const dv=handVal(dHand);
+    if(dv<17||(dv===17&&dHand.some(c=>c.r==='A'))){setTimeout(()=>{dHand.push(shoe.pop());renderCards('bj-dealer',dHand,false);dealerPlay();},600);}
+    else{const pv=handVal(pHand),dvf=handVal(dHand);if(pv===21&&pHand.length===2)endGame('blackjack');else if(dvf>21)endGame('dealerbust');else if(pv>dvf)endGame('win');else if(pv===dvf)endGame('push');else endGame('lose');}
+  }
+  function endGame(result){
+    gs='idle';setButtons(false);renderCards('bj-dealer',dHand,false);
+    const msgs={blackjack:'🎉 Blackjack! Pays 3:2',win:'✅ You win!',dealerbust:'✅ Dealer busts! You win!',push:'🤝 Push — bet returned',bust:'❌ Bust!',lose:'❌ Dealer wins'};
+    document.getElementById('bj-msg').textContent=msgs[result];
+    if(result==='blackjack'){balance+=Math.floor(bet*2.5);}
+    else if(result==='win'||result==='dealerbust'){balance+=bet*2;}
+    else if(result==='push'){balance+=bet;}
+    bet=0;saveBalance();updateUI();
+    if(balance<=0){balance=1000;saveBalance();document.getElementById('bj-msg').textContent+=' — Balance reset to $1000';}
+  }
+  updateUI();
+})();
+
+// ======= SNAP =======
+(function(){
+  const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];const SUITS=['♠','♥','♦','♣'];
+  const RED=new Set(['♥','♦']);
+  let p1=[],p2=[],center=[],gs,matchFlag,snapLock;
+  function mkDeck(){const d=[];SUITS.forEach(s=>RANKS.forEach(r=>d.push({r,s})));for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;}
+  function cardDiv(c){const d=document.createElement('div');d.className='card '+(RED.has(c.s)?'red':'black');d.innerHTML=`<span>${c.r}${c.s}</span><span style="transform:rotate(180deg)">${c.r}${c.s}</span>`;return d;}
+  function updateCount(){document.getElementById('sn-p1cnt').textContent=p1.length;document.getElementById('sn-p2cnt').textContent=p2.length;}
+  function checkMatch(){
+    if(center.length<2)return false;
+    return center[center.length-1].r===center[center.length-2].r;
+  }
+  window.snapInit=function(){
+    const d=mkDeck();p1=d.slice(0,26);p2=d.slice(26);center=[];gs='playing';matchFlag=false;snapLock=false;
+    document.getElementById('sn-center').innerHTML='';document.getElementById('sn-msg').textContent='';document.getElementById('sn-match').textContent='';
+    updateCount();
+  };
+  window.snapFlip=function(player){
+    if(gs!=='playing')return;
+    const pile=player===1?p1:p2;
+    if(pile.length===0){document.getElementById('sn-msg').textContent='No cards! Go grab the center!';return;}
+    const c=pile.shift();center.push(c);
+    const cEl=document.getElementById('sn-center');cEl.innerHTML='';cEl.appendChild(cardDiv(c));
+    updateCount();
+    const isMatch=checkMatch();
+    document.getElementById('sn-match').textContent=isMatch?'👀 SNAP AVAILABLE!':'';
+    if(p1.length===0&&p2.length===0){gs='over';document.getElementById('sn-msg').textContent='Both out of cards! Check centre!';}
+    else if(p1.length===0){gs='over';document.getElementById('sn-msg').textContent='P2 Wins! P1 ran out of cards!';}
+    else if(p2.length===0){gs='over';document.getElementById('sn-msg').textContent='P1 Wins! P2 ran out of cards!';}
+  };
+  window.snapSnap=function(player){
+    if(gs!=='playing'||snapLock)return;
+    const isMatch=checkMatch();
+    if(isMatch){
+      const btn=document.getElementById('sn-snap'+player);btn.classList.add('flash');setTimeout(()=>btn.classList.remove('flash'),300);
+      const winner=player===1?p1:p2;const loser=player===1?p2:p1;
+      center.forEach(c=>winner.push(c));center=[];
+      document.getElementById('sn-center').innerHTML='';document.getElementById('sn-match').textContent='';
+      document.getElementById('sn-msg').textContent='P'+player+' snaps the pile! 🎉';
+      updateCount();
+      if(loser.length===0){gs='over';document.getElementById('sn-msg').textContent='P'+player+' wins the game! 🏆';}
+    } else {
+      // Wrong snap - give 5 cards to opponent
+      const loser=player===1?p1:p2;const winner=player===1?p2:p1;
+      const take=Math.min(5,loser.length);
+      for(let i=0;i<take;i++){if(loser.length)winner.push(loser.shift());}
+      document.getElementById('sn-msg').textContent='P'+player+' wrong snap! Loses 5 cards 😅';
+      updateCount();
+      if(loser.length===0){gs='over';document.getElementById('sn-msg').textContent='P'+(3-player)+' wins — P'+player+' has no cards!';}
+    }
+  };
+  snapInit();
+})();
+</script>
+</body>
+</html>
