@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bloomberg Terminal — Simulated</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#020b18; --accent:#3b82f6; --accent2:#2563eb; --accent3:#60a5fa;
+  --border:rgba(59,130,246,0.2); --glass:rgba(59,130,246,0.08);
+  --text:#e0f2fe; --text2:#93c5fd; --text3:rgba(224,242,254,0.6);
+  --green:#22c55e; --red:#ef4444; --yellow:#eab308;
+}
+body { font-family:'Inter',sans-serif; background:linear-gradient(135deg,#020b18,#041525,#020f1e); min-height:100vh; color:var(--text); overflow-x:hidden; }
+
+/* Watermark */
+.watermark {
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-30deg);
+  font-size:120px; font-weight:900; color:rgba(59,130,246,0.04);
+  white-space:nowrap; pointer-events:none; z-index:0; user-select:none;
+  letter-spacing:0.05em;
+}
+
+/* Back button */
+.back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--glass); border:1px solid var(--border); border-radius:8px; color:var(--text2); text-decoration:none; font-size:13px; transition:all 0.2s; }
+.back-btn:hover { background:rgba(59,130,246,0.16); color:var(--text); }
+
+/* Disclaimer */
+.disclaimer { background:rgba(234,179,8,0.12); border:1px solid rgba(234,179,8,0.35); border-radius:8px; padding:10px 16px; color:#fde68a; font-size:13px; font-weight:500; }
+
+/* Ticker */
+.ticker-wrap { width:100%; height:36px; background:rgba(3,14,30,0.95); border-top:1px solid var(--border); border-bottom:1px solid var(--border); overflow:hidden; position:relative; }
+.ticker-inner { display:flex; align-items:center; height:100%; animation:ticker 30s linear infinite; white-space:nowrap; }
+@keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+.tick-item { display:inline-flex; align-items:center; gap:8px; padding:0 24px; font-size:12px; font-weight:600; letter-spacing:0.04em; }
+.tick-sym { color:var(--text2); }
+.tick-pos { color:var(--green); }
+.tick-neg { color:var(--red); }
+
+/* Layout */
+.header { padding:12px 20px; display:flex; align-items:center; gap:16px; border-bottom:1px solid var(--border); position:relative; z-index:1; }
+.header h1 { font-size:18px; font-weight:700; color:var(--accent3); letter-spacing:0.06em; }
+.header-right { margin-left:auto; display:flex; align-items:center; gap:12px; }
+.clock { font-size:14px; font-weight:600; color:var(--text2); font-variant-numeric:tabular-nums; }
+
+.main { display:grid; grid-template-columns:65% 35%; gap:0; position:relative; z-index:1; height:calc(100vh - 110px); }
+.left-col { padding:16px; border-right:1px solid var(--border); overflow-y:auto; }
+.right-col { padding:16px; overflow-y:auto; }
+
+/* Cards */
+.panel { background:var(--glass); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:14px; }
+.panel-title { font-size:11px; font-weight:700; color:var(--text2); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:10px; }
+
+/* Chart controls */
+.chart-controls { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.chart-title { font-size:15px; font-weight:700; }
+select.sym-select { background:rgba(0,0,0,0.4); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:6px; font-size:13px; cursor:pointer; }
+select.sym-select:focus { outline:none; border-color:var(--accent); }
+
+canvas { display:block; }
+.canvas-wrap { position:relative; }
+.y-labels { position:absolute; left:0; top:0; width:52px; height:280px; display:flex; flex-direction:column; justify-content:space-between; font-size:10px; color:var(--text3); padding:4px 0; }
+.x-labels { display:flex; justify-content:space-between; font-size:10px; color:var(--text3); padding:2px 52px 0; }
+
+/* Order Book */
+.ob-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.ob-side th { font-size:10px; color:var(--text3); padding:4px 6px; font-weight:500; text-align:right; }
+.ob-side th:first-child { text-align:left; }
+.ob-side td { font-size:11px; padding:3px 6px; text-align:right; font-variant-numeric:tabular-nums; }
+.ob-side td:first-child { text-align:left; }
+.bid-row td:first-child { color:var(--green); }
+.ask-row td:first-child { color:var(--red); }
+.ob-side { width:100%; border-collapse:collapse; }
+
+/* Index cards */
+.index-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+.index-card { background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
+.idx-name { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; }
+.idx-val { font-size:16px; font-weight:700; margin:3px 0 2px; font-variant-numeric:tabular-nums; }
+.idx-chg { font-size:12px; font-weight:600; }
+.pulse { animation:pulse-anim 1s ease-out; }
+@keyframes pulse-anim { 0%{opacity:0.4;transform:scale(1.05)} 100%{opacity:1;transform:scale(1)} }
+
+/* News */
+.news-item { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid rgba(59,130,246,0.1); }
+.news-item:last-child { border-bottom:none; }
+.news-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; margin-top:5px; }
+.news-headline { font-size:12px; color:var(--text); line-height:1.4; }
+.news-time { font-size:11px; color:var(--text3); margin-top:2px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body>
+<div class="watermark">SIMULATED DATA</div>
+
+<div class="header">
+  <a href="../../index.html" class="back-btn">← Back</a>
+  <h1>🖥 BLOOMBERG TERMINAL</h1>
+  <div class="header-right">
+    <div class="disclaimer">⚠️ SIMULATED DATA — For educational purposes only. Not financial advice.</div>
+    <div class="clock" id="clock"></div>
+  </div>
+</div>
+
+<div class="ticker-wrap">
+  <div class="ticker-inner" id="tickerInner"></div>
+</div>
+
+<div class="main">
+  <!-- LEFT COLUMN -->
+  <div class="left-col">
+    <div class="panel">
+      <div class="chart-controls">
+        <select class="sym-select" id="symbolSelect">
+          <option value="AAPL">AAPL</option>
+          <option value="GOOGL">GOOGL</option>
+          <option value="MSFT">MSFT</option>
+          <option value="TSLA">TSLA</option>
+          <option value="AMZN">AMZN</option>
+        </select>
+        <div class="chart-title" id="chartTitle"></div>
+      </div>
+      <div class="canvas-wrap" style="position:relative;">
+        <div style="display:flex;">
+          <div style="width:52px;flex-shrink:0;position:relative;">
+            <div class="y-labels" id="yLabels" style="position:static;width:52px;"></div>
+          </div>
+          <div style="flex:1;">
+            <canvas id="candleCanvas" width="560" height="280"></canvas>
+            <canvas id="volumeCanvas" width="560" height="60" style="margin-top:4px;"></canvas>
+          </div>
+        </div>
+        <div class="x-labels" id="xLabels" style="padding-left:52px;"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Order Book</div>
+      <div class="ob-grid">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px;text-align:center;">BIDS</div>
+          <table class="ob-side"><thead><tr><th>Price</th><th>Size</th><th>Total</th></tr></thead><tbody id="bidBody"></tbody></table>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:4px;text-align:center;">ASKS</div>
+          <table class="ob-side"><thead><tr><th>Price</th><th>Size</th><th>Total</th></tr></thead><tbody id="askBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-col">
+    <div class="panel-title" style="margin-bottom:8px;">Market Overview</div>
+    <div class="index-grid" id="indexGrid"></div>
+
+    <div class="panel">
+      <div class="panel-title">Market News</div>
+      <div id="newsFeed"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CLOCK ──────────────────────────────────────────────────────────────────
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clock').textContent=
+    now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+' UTC';
+}
+setInterval(updateClock,1000); updateClock();
+
+// ── STOCKS DATA ────────────────────────────────────────────────────────────
+const stocks=[
+  {s:'AAPL',p:182.34,c:1.2},{s:'GOOGL',p:141.56,c:-0.8},{s:'MSFT',p:415.21,c:2.1},
+  {s:'TSLA',p:247.89,c:-3.2},{s:'AMZN',p:178.45,c:0.9},{s:'META',p:489.32,c:1.8},
+  {s:'NVDA',p:875.23,c:4.5},{s:'BRK.B',p:365.78,c:-0.3}
+];
+
+// ── TICKER ─────────────────────────────────────────────────────────────────
+function buildTicker(){
+  const inner=document.getElementById('tickerInner');
+  let html='';
+  for(let r=0;r<2;r++){
+    stocks.forEach(s=>{
+      const cls=s.c>=0?'tick-pos':'tick-neg';
+      const sign=s.c>=0?'+':'';
+      html+=`<span class="tick-item"><span class="tick-sym">${s.s}</span><span>${s.p.toFixed(2)}</span><span class="${cls}">${sign}${s.c.toFixed(2)}%</span></span>`;
+    });
+  }
+  inner.innerHTML=html;
+}
+buildTicker();
+
+function nudgeTicker(){
+  stocks.forEach(s=>{
+    const delta=(Math.random()-0.5)*0.01;
+    s.p=Math.max(0.01,s.p*(1+delta));
+    s.c+=delta*100;
+  });
+  buildTicker();
+}
+setInterval(nudgeTicker,10000);
+
+// ── OHLC DATA GENERATION ──────────────────────────────────────────────────
+const symPrices={AAPL:182,GOOGL:142,MSFT:415,TSLA:248,AMZN:178};
+const ohlcCache={};
+
+function genOHLC(symbol){
+  if(ohlcCache[symbol]) return ohlcCache[symbol];
+  let price=symPrices[symbol]||100;
+  const data=[];
+  const now=new Date();
+  for(let i=59;i>=0;i--){
+    const d=new Date(now); d.setDate(d.getDate()-i);
+    const open=price;
+    const change=(Math.random()-0.48)*price*0.025;
+    const close=Math.max(1,open+change);
+    const high=Math.max(open,close)*(1+Math.random()*0.012);
+    const low=Math.min(open,close)*(1-Math.random()*0.012);
+    const vol=Math.floor(1e7+Math.random()*5e7);
+    data.push({date:d,open,high,low,close,vol});
+    price=close;
+  }
+  ohlcCache[symbol]=data;
+  return data;
+}
+
+// ── CANDLESTICK CHART ─────────────────────────────────────────────────────
+function drawCandles(symbol){
+  const data=genOHLC(symbol);
+  const cc=document.getElementById('candleCanvas');
+  const vc=document.getElementById('volumeCanvas');
+  const ctx=cc.getContext('2d');
+  const vctx=vc.getContext('2d');
+  const W=cc.width, H=cc.height;
+
+  const prices=data.flatMap(d=>[d.high,d.low]);
+  const minP=Math.min(...prices)*0.998;
+  const maxP=Math.max(...prices)*1.002;
+  const range=maxP-minP;
+  const toY=p=>H-((p-minP)/range*H);
+
+  ctx.clearRect(0,0,W,H);
+
+  // Grid lines
+  ctx.strokeStyle='rgba(59,130,246,0.08)';
+  ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=H/4*i;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+
+  // Y-labels
+  const yLabDiv=document.getElementById('yLabels');
+  let yHtml='';
+  for(let i=4;i>=0;i--){
+    const val=minP+(range/4*i);
+    yHtml+=`<span>${val.toFixed(1)}</span>`;
+  }
+  yLabDiv.innerHTML=yHtml;
+
+  // X-labels
+  const xLabDiv=document.getElementById('xLabels');
+  let xHtml='<div style="display:flex;justify-content:space-between;width:100%">';
+  for(let i=0;i<60;i+=10){
+    const d=data[i].date;
+    xHtml+=`<span>${d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}</span>`;
+  }
+  xHtml+='</div>';
+  xLabDiv.innerHTML=xHtml;
+
+  const barW=7, gap=(W-(data.length*barW))/(data.length+1);
+
+  // Candles
+  data.forEach((d,i)=>{
+    const x=gap+(i*(barW+gap))+barW/2;
+    const isGreen=d.close>=d.open;
+    const color=isGreen?'#22c55e':'#ef4444';
+    ctx.strokeStyle=color;
+    ctx.fillStyle=color;
+    ctx.lineWidth=1;
+    // Wick
+    ctx.beginPath();
+    ctx.moveTo(x,toY(d.high));
+    ctx.lineTo(x,toY(d.low));
+    ctx.stroke();
+    // Body
+    const bodyTop=toY(Math.max(d.open,d.close));
+    const bodyBot=toY(Math.min(d.open,d.close));
+    const bodyH=Math.max(1,bodyBot-bodyTop);
+    ctx.fillRect(x-barW/2,bodyTop,barW,bodyH);
+  });
+
+  // Volume
+  vctx.clearRect(0,0,W,vc.height);
+  const maxVol=Math.max(...data.map(d=>d.vol));
+  data.forEach((d,i)=>{
+    const x=gap+(i*(barW+gap));
+    const h=(d.vol/maxVol)*vc.height*0.9;
+    vctx.fillStyle='rgba(59,130,246,0.5)';
+    vctx.fillRect(x,vc.height-h,barW,h);
+  });
+
+  // Chart title
+  const last=data[data.length-1];
+  const prev=data[data.length-2];
+  const pct=((last.close-prev.close)/prev.close*100);
+  const sign=pct>=0?'+':'';
+  const col=pct>=0?'var(--green)':'var(--red)';
+  document.getElementById('chartTitle').innerHTML=
+    `<span style="color:var(--text2)">${symbol}</span> &nbsp;<span style="font-size:19px">${last.close.toFixed(2)}</span>&nbsp;<span style="color:${col};font-size:13px">${sign}${pct.toFixed(2)}%</span>`;
+}
+
+// ── ORDER BOOK ────────────────────────────────────────────────────────────
+let obMid=180;
+function refreshOrderBook(){
+  const data=genOHLC(document.getElementById('symbolSelect').value);
+  obMid=data[data.length-1].close;
+  const bidBody=document.getElementById('bidBody');
+  const askBody=document.getElementById('askBody');
+  let bidHtml='', askHtml='';
+  let bidTotal=0, askTotal=0;
+  for(let i=0;i<8;i++){
+    const bidP=(obMid*(1-(i+1)*0.0008)*(1+(Math.random()-0.5)*0.0002));
+    const bidS=Math.floor(100+Math.random()*900);
+    bidTotal+=bidS;
+    bidHtml+=`<tr class="bid-row"><td>${bidP.toFixed(2)}</td><td>${bidS}</td><td>${bidTotal}</td></tr>`;
+    const askP=(obMid*(1+(i+1)*0.0008)*(1+(Math.random()-0.5)*0.0002));
+    const askS=Math.floor(100+Math.random()*900);
+    askTotal+=askS;
+    askHtml+=`<tr class="ask-row"><td>${askP.toFixed(2)}</td><td>${askS}</td><td>${askTotal}</td></tr>`;
+  }
+  bidBody.innerHTML=bidHtml;
+  askBody.innerHTML=askHtml;
+}
+setInterval(refreshOrderBook,3000);
+
+// ── INDEX CARDS ───────────────────────────────────────────────────────────
+const indices=[
+  {name:'S&P 500',val:4892.34,chg:0.45},
+  {name:'NASDAQ',val:17234.56,chg:0.82},
+  {name:'DJIA',val:38765.23,chg:-0.12},
+  {name:'FTSE 100',val:7654.32,chg:0.28}
+];
+
+function renderIndices(){
+  const grid=document.getElementById('indexGrid');
+  grid.innerHTML=indices.map((idx,i)=>{
+    const col=idx.chg>=0?'var(--green)':'var(--red)';
+    const sign=idx.chg>=0?'+':'';
+    return `<div class="index-card">
+      <div class="idx-name">${idx.name}</div>
+      <div class="idx-val" id="idxVal${i}">${idx.val.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+      <div class="idx-chg" style="color:${col}" id="idxChg${i}">${sign}${idx.chg.toFixed(2)}%</div>
+    </div>`;
+  }).join('');
+}
+
+function nudgeIndices(){
+  indices.forEach((idx,i)=>{
+    const delta=(Math.random()-0.5)*0.002;
+    idx.val=Math.max(1,idx.val*(1+delta));
+    idx.chg+=delta*100;
+    const el=document.getElementById(`idxVal${i}`);
+    const ce=document.getElementById(`idxChg${i}`);
+    if(el){
+      el.textContent=idx.val.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+      const col=idx.chg>=0?'var(--green)':'var(--red)';
+      const sign=idx.chg>=0?'+':'';
+      ce.textContent=`${sign}${idx.chg.toFixed(2)}%`;
+      ce.style.color=col;
+    }
+  });
+}
+setInterval(nudgeIndices,5000);
+
+// ── NEWS ──────────────────────────────────────────────────────────────────
+const newsItems=[
+  {headline:"Fed signals pause in rate hikes — markets rally",time:"2h ago"},
+  {headline:"Tech earnings beat expectations across the board",time:"4h ago"},
+  {headline:"Oil prices stabilize amid Middle East tensions",time:"7h ago"},
+  {headline:"UK inflation drops to 3.2%, lowest in 2 years",time:"1d ago"},
+  {headline:"Bitcoin ETF sees record $2.3B inflows",time:"1d ago"}
+];
+
+document.getElementById('newsFeed').innerHTML=newsItems.map(n=>`
+  <div class="news-item">
+    <div class="news-dot"></div>
+    <div>
+      <div class="news-headline">${n.headline}</div>
+      <div class="news-time">${n.time}</div>
+    </div>
+  </div>`).join('');
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+renderIndices();
+drawCandles('AAPL');
+refreshOrderBook();
+
+document.getElementById('symbolSelect').addEventListener('change',function(){
+  drawCandles(this.value);
+  refreshOrderBook();
+});
+</script>
+</body>
+</html>

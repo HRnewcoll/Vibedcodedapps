@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spending Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#020b18; --accent:#3b82f6; --accent2:#2563eb; --accent3:#60a5fa;
+  --border:rgba(59,130,246,0.2); --glass:rgba(59,130,246,0.08);
+  --text:#e0f2fe; --text2:#93c5fd; --text3:rgba(224,242,254,0.6);
+  --green:#22c55e; --red:#ef4444; --yellow:#eab308;
+}
+body { font-family:'Inter',sans-serif; background:linear-gradient(135deg,#020b18,#041525,#020f1e); min-height:100vh; color:var(--text); }
+.back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--glass); border:1px solid var(--border); border-radius:8px; color:var(--text2); text-decoration:none; font-size:13px; }
+.back-btn:hover { background:rgba(59,130,246,0.16); }
+.navbar { padding:14px 24px; display:flex; align-items:center; gap:16px; border-bottom:1px solid var(--border); }
+.navbar h1 { font-size:19px; font-weight:700; color:var(--accent3); }
+.navbar-right { margin-left:auto; display:flex; gap:10px; }
+.app-layout { display:grid; grid-template-columns:300px 1fr; min-height:calc(100vh - 57px); }
+.sidebar { background:rgba(0,0,0,0.2); border-right:1px solid var(--border); padding:16px; overflow-y:auto; }
+.main { padding:20px; overflow-y:auto; }
+.panel { background:var(--glass); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:14px; }
+.panel-title { font-size:11px; font-weight:700; color:var(--text2); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:12px; }
+input, select { background:rgba(0,0,0,0.35); border:1px solid var(--border); border-radius:7px; color:var(--text); padding:8px 12px; font-size:13px; width:100%; margin-bottom:8px; font-family:inherit; }
+input:focus, select:focus { outline:none; border-color:var(--accent); }
+.btn { padding:9px 18px; border-radius:8px; border:none; cursor:pointer; font-weight:600; font-size:13px; font-family:inherit; transition:all 0.2s; }
+.btn-primary { background:var(--accent2); color:#fff; }
+.btn-primary:hover { background:var(--accent); }
+.btn-sm { padding:4px 10px; border-radius:5px; font-size:11px; }
+.btn-danger { background:rgba(239,68,68,0.2); color:#f87171; border:1px solid rgba(239,68,68,0.3); }
+.btn-danger:hover { background:rgba(239,68,68,0.35); }
+.btn-outline { background:transparent; border:1px solid var(--border); color:var(--text2); }
+.btn-outline:hover { background:var(--glass); }
+.cards-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
+.stat-card { background:var(--glass); border:1px solid var(--border); border-radius:10px; padding:12px; }
+.stat-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:5px; }
+.stat-value { font-size:18px; font-weight:700; font-variant-numeric:tabular-nums; }
+.month-nav { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.month-nav button { background:var(--glass); border:1px solid var(--border); color:var(--text2); width:30px; height:30px; border-radius:6px; cursor:pointer; font-size:16px; }
+.month-nav button:hover { background:rgba(59,130,246,0.16); }
+.month-label { font-size:15px; font-weight:700; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0; }
+.legend-row { display:flex; align-items:center; gap:8px; font-size:12px; margin:3px 0; }
+.progress-bar-wrap { background:rgba(0,0,0,0.3); border-radius:4px; height:6px; overflow:hidden; flex:1; }
+.progress-bar { height:100%; border-radius:4px; transition:width 0.4s; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+th { color:var(--text3); font-weight:500; padding:6px 8px; border-bottom:1px solid var(--border); text-align:left; }
+td { padding:6px 8px; border-bottom:1px solid rgba(59,130,246,0.06); }
+.tx-date-group { font-size:11px; font-weight:700; color:var(--text2); padding:10px 0 4px; letter-spacing:0.05em; }
+.empty-state { text-align:center; padding:30px; color:var(--text3); font-size:13px; }
+.cat-badge { padding:2px 8px; border-radius:12px; font-size:10px; font-weight:600; }
+::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const CATEGORIES = ['Food','Transport','Shopping','Bills','Entertainment','Health','Other'];
+const CAT_COLORS = {Food:'#f59e0b',Transport:'#3b82f6',Shopping:'#8b5cf6',Bills:'#ef4444',Entertainment:'#ec4899',Health:'#10b981',Other:'#6b7280'};
+
+function useLocalStorage(key, init) {
+  const [val, setVal] = useState(() => {
+    try { const s=localStorage.getItem(key); return s?JSON.parse(s):init; } catch { return init; }
+  });
+  useEffect(() => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }, [key, val]);
+  return [val, setVal];
+}
+
+function PieChart({ data }) {
+  const ref = useRef();
+  useEffect(() => {
+    const canvas = ref.current;
+    const ctx = canvas.getContext('2d');
+    const W=canvas.width, H=canvas.height, cx=W/2, cy=H/2, R=100, r=50;
+    ctx.clearRect(0,0,W,H);
+    const total = data.reduce((a,b)=>a+b.value,0);
+    if (!total) {
+      ctx.fillStyle='rgba(59,130,246,0.2)';
+      ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fill();
+      ctx.clearRect(cx-r,cy-r,r*2,r*2);
+      ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle='#020b18'; ctx.fill();
+      return;
+    }
+    let angle = -Math.PI/2;
+    data.forEach(seg => {
+      if (!seg.value) return;
+      const slice = (seg.value/total)*Math.PI*2;
+      ctx.beginPath();
+      ctx.moveTo(cx,cy);
+      ctx.arc(cx,cy,R,angle,angle+slice);
+      ctx.closePath();
+      ctx.fillStyle = seg.color;
+      ctx.fill();
+      ctx.strokeStyle='#020b18'; ctx.lineWidth=2; ctx.stroke();
+      angle += slice;
+    });
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fillStyle='#020b18'; ctx.fill();
+    ctx.fillStyle='var(--text3)'; ctx.font='bold 11px Inter'; ctx.textAlign='center';
+    ctx.fillText(total?`£${total.toFixed(0)}`:'', cx, cy+4);
+  }, [data]);
+  return <canvas ref={ref} width={240} height={240}/>;
+}
+
+function AddTransactionForm({ onAdd }) {
+  const [form, setForm] = useState({ amount:'', category:'Food', desc:'', date:new Date().toISOString().slice(0,10) });
+  const set = k => e => setForm(f=>({...f,[k]:e.target.value}));
+  const submit = () => {
+    if (!form.amount || isNaN(+form.amount)) return;
+    onAdd({ id:Date.now(), amount:+form.amount, category:form.category, desc:form.desc, date:form.date });
+    setForm(f=>({...f,amount:'',desc:''}));
+  };
+  return (
+    <div className="panel">
+      <div className="panel-title">Add Transaction</div>
+      <input type="number" placeholder="Amount (£)" value={form.amount} onChange={set('amount')}/>
+      <select value={form.category} onChange={set('category')}>
+        {CATEGORIES.map(c=><option key={c}>{c}</option>)}
+      </select>
+      <input placeholder="Description" value={form.desc} onChange={set('desc')}/>
+      <input type="date" value={form.date} onChange={set('date')}/>
+      <button className="btn btn-primary" style={{width:'100%'}} onClick={submit}>+ Add Transaction</button>
+    </div>
+  );
+}
+
+function BudgetSettings({ budgets, onSave }) {
+  const [vals, setVals] = useState(budgets);
+  useEffect(()=>setVals(budgets),[budgets]);
+  const set = k => e => setVals(v=>({...v,[k]:e.target.value}));
+  return (
+    <div className="panel">
+      <div className="panel-title">Monthly Budgets</div>
+      <div style={{marginBottom:6,fontSize:12,color:'var(--text3)'}}>Total Budget (£)</div>
+      <input type="number" value={vals.total||''} onChange={set('total')} placeholder="Total budget"/>
+      {CATEGORIES.map(c=>(
+        <div key={c} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+          <div className="legend-dot" style={{background:CAT_COLORS[c]}}/>
+          <span style={{fontSize:12,width:90,color:'var(--text2)'}}>{c}</span>
+          <input type="number" value={vals[c]||''} onChange={set(c)} style={{margin:0,width:'100%'}} placeholder="0"/>
+        </div>
+      ))}
+      <button className="btn btn-primary" style={{width:'100%',marginTop:6}} onClick={()=>onSave(vals)}>Save Budgets</button>
+    </div>
+  );
+}
+
+function Dashboard({ transactions, budgets, month, onPrevMonth, onNextMonth }) {
+  const [year, mon] = month;
+  const monthTx = transactions.filter(t => {
+    const d=new Date(t.date); return d.getFullYear()===year && d.getMonth()===mon;
+  });
+  const total = monthTx.reduce((a,b)=>a+b.amount,0);
+  const budget = +budgets.total||0;
+  const remaining = budget - total;
+  const topCat = CATEGORIES.reduce((a,c)=>{
+    const s=monthTx.filter(t=>t.category===c).reduce((x,y)=>x+y.amount,0);
+    return s>a.s?{c,s}:a;
+  },{c:'-',s:0}).c;
+  const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return (
+    <>
+      <div className="month-nav">
+        <button onClick={onPrevMonth}>‹</button>
+        <span className="month-label">{MONTHS[mon]} {year}</span>
+        <button onClick={onNextMonth}>›</button>
+      </div>
+      <div className="cards-row">
+        <div className="stat-card"><div className="stat-label">Total Spent</div><div className="stat-value">£{total.toFixed(2)}</div></div>
+        <div className="stat-card"><div className="stat-label">Budget Left</div><div className="stat-value" style={{color:remaining<0?'var(--red)':'var(--green)'}}>£{remaining.toFixed(2)}</div></div>
+        <div className="stat-card"><div className="stat-label">Transactions</div><div className="stat-value">{monthTx.length}</div></div>
+        <div className="stat-card"><div className="stat-label">Top Category</div><div className="stat-value" style={{fontSize:14,color:CAT_COLORS[topCat]||'var(--text2)'}}>{topCat}</div></div>
+      </div>
+    </>
+  );
+}
+
+function CategoryBreakdown({ transactions, budgets, month }) {
+  const [year, mon] = month;
+  const monthTx = transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===mon;});
+  return (
+    <div className="panel">
+      <div className="panel-title">Category Breakdown</div>
+      <table>
+        <thead><tr><th>Category</th><th>Budget</th><th>Spent</th><th style={{width:'120px'}}>Progress</th><th>Left</th></tr></thead>
+        <tbody>
+          {CATEGORIES.map(cat=>{
+            const spent=monthTx.filter(t=>t.category===cat).reduce((a,b)=>a+b.amount,0);
+            const budget=+(budgets[cat]||0);
+            const pct=budget>0?Math.min(100,(spent/budget)*100):0;
+            const left=budget-spent;
+            return (
+              <tr key={cat}>
+                <td><span className="legend-dot" style={{background:CAT_COLORS[cat],marginRight:6}}/>{cat}</td>
+                <td>{budget?`£${budget.toFixed(0)}`:'—'}</td>
+                <td>£{spent.toFixed(2)}</td>
+                <td><div className="progress-bar-wrap"><div className="progress-bar" style={{width:`${pct}%`,background:pct>=100?'#ef4444':CAT_COLORS[cat]}}/></div></td>
+                <td style={{color:left<0?'#f87171':'#4ade80'}}>{budget?`£${left.toFixed(2)}`:'—'}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function TransactionList({ transactions, onDelete, month }) {
+  const [year, mon] = month;
+  const monthTx = transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===mon;});
+  if (!monthTx.length) return <div className="empty-state">No transactions this month.<br/>Add your first one!</div>;
+  const grouped = {};
+  [...monthTx].sort((a,b)=>b.date.localeCompare(a.date)).forEach(t=>{
+    if (!grouped[t.date]) grouped[t.date]=[];
+    grouped[t.date].push(t);
+  });
+  return (
+    <div className="panel">
+      <div className="panel-title">Transactions</div>
+      {Object.entries(grouped).map(([date,txs])=>(
+        <div key={date}>
+          <div className="tx-date-group">{new Date(date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'long'})}</div>
+          {txs.map(t=>(
+            <div key={t.id} style={{display:'flex',alignItems:'center',gap:10,padding:'7px 0',borderBottom:'1px solid rgba(59,130,246,0.07)'}}>
+              <div className="legend-dot" style={{background:CAT_COLORS[t.category]}}/>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13}}>{t.desc||'(no description)'}</div>
+                <span className="cat-badge" style={{background:CAT_COLORS[t.category]+'22',color:CAT_COLORS[t.category]}}>{t.category}</span>
+              </div>
+              <div style={{fontWeight:700,color:'var(--red)',fontSize:14}}>-£{t.amount.toFixed(2)}</div>
+              <button className="btn btn-sm btn-danger" onClick={()=>onDelete(t.id)}>✕</button>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function App() {
+  const [transactions, setTransactions] = useLocalStorage('spendingData',[]);
+  const [budgets, setBudgets] = useLocalStorage('spendingBudgets',{total:2000});
+  const now = new Date();
+  const [month, setMonth] = useState([now.getFullYear(), now.getMonth()]);
+
+  const addTx = tx => setTransactions(t=>[...t,tx]);
+  const delTx = id => setTransactions(t=>t.filter(x=>x.id!==id));
+
+  const prevMonth = () => setMonth(([y,m])=>m===0?[y-1,11]:[y,m-1]);
+  const nextMonth = () => setMonth(([y,m])=>m===11?[y+1,0]:[y,m+1]);
+
+  const [year,mon] = month;
+  const monthTx = transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===year&&d.getMonth()===mon;});
+  const pieData = CATEGORIES.map(c=>({color:CAT_COLORS[c],value:monthTx.filter(t=>t.category===c).reduce((a,b)=>a+b.amount,0)}));
+
+  const exportData = () => {
+    const lines=['Spending Export','',`Period: ${month[0]}-${String(month[1]+1).padStart(2,'0')}`,'',...transactions.map(t=>`${t.date} | ${t.category} | ${t.desc||''} | £${t.amount.toFixed(2)}`)];
+    window.open('data:text/plain;charset=utf-8,'+encodeURIComponent(lines.join('\n')));
+  };
+
+  return (
+    <div>
+      <div className="navbar">
+        <a href="../../index.html" className="back-btn">← Back</a>
+        <h1>💳 Spending Tracker</h1>
+        <div className="navbar-right">
+          <button className="btn btn-outline" onClick={exportData}>Export</button>
+        </div>
+      </div>
+      <div className="app-layout">
+        <div className="sidebar">
+          <AddTransactionForm onAdd={addTx}/>
+          <BudgetSettings budgets={budgets} onSave={setBudgets}/>
+        </div>
+        <div className="main">
+          <Dashboard transactions={transactions} budgets={budgets} month={month} onPrevMonth={prevMonth} onNextMonth={nextMonth}/>
+          <div className="grid2" style={{marginBottom:16}}>
+            <div className="panel">
+              <div className="panel-title">Spending by Category</div>
+              <div style={{display:'flex',gap:16,alignItems:'center',flexWrap:'wrap'}}>
+                <PieChart data={pieData}/>
+                <div>
+                  {CATEGORIES.map((c,i)=>(
+                    <div key={c} className="legend-row">
+                      <div className="legend-dot" style={{background:CAT_COLORS[c]}}/>
+                      <span style={{color:'var(--text3)',fontSize:11,width:80}}>{c}</span>
+                      <span style={{fontSize:12,fontWeight:600}}>£{(pieData[i]?.value||0).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <CategoryBreakdown transactions={transactions} budgets={budgets} month={month}/>
+          </div>
+          <TransactionList transactions={transactions} onDelete={delTx} month={month}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
