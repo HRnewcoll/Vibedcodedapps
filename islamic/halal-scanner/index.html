@@ -659,9 +659,9 @@
         }
       }
 
-      // Check doubtful
+      // Check doubtful — only add if not already covered by a haram match
       for (const d of DOUBTFUL_INGREDIENTS) {
-        if (allText.includes(d) && !foundHaram.some(h => h.includes(d.split(' ')[0]))) {
+        if (allText.includes(d) && !foundHaram.some(h => d === h || d.startsWith(h) || h.startsWith(d))) {
           if (!foundDoubtful.includes(d)) foundDoubtful.push(d);
         }
       }
@@ -726,7 +726,7 @@
 
       // Nutrition per 100g
       const n = p.nutriments || {};
-      const cal = Math.round(n['energy-kcal_100g'] || n['energy_100g'] / 4.184 || 0);
+      const cal = Math.round(n['energy-kcal_100g'] || (n['energy_100g'] || 0) / 4.184);
       const fat = (n['fat_100g'] || 0).toFixed(1);
       const satFat = (n['saturated-fat_100g'] || 0).toFixed(1);
       const carbs = (n['carbohydrates_100g'] || 0).toFixed(1);
@@ -888,20 +888,37 @@
       }
       list.innerHTML = scanHistory.map((h, idx) => {
         const timeStr = new Date(h.time).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
-        return `<div class="history-item" onclick="fetchProduct('${escHtml(h.barcode)}')">
-          ${h.image ? `<img src="${escHtml(h.image)}" class="history-thumb" alt="" onerror="this.src=''"/>` : '<div class="history-thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px;">📦</div>'}
+        return `<div class="history-item" data-barcode="${escHtml(h.barcode)}" data-idx="${idx}">
+          ${h.image ? `<img src="${escHtml(h.image)}" class="history-thumb" alt="" onerror="this.style.display='none'"/>` : '<div class="history-thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px;">📦</div>'}
           <div style="flex:1;min-width:0;">
             <div class="history-name">${escHtml(h.name)}</div>
             <div class="history-brand">${escHtml(h.brand)}</div>
             <div class="history-time">${escHtml(timeStr)} · ${escHtml(h.barcode)}</div>
           </div>
           <span class="history-badge badge-${escHtml(h.verdict)}">${h.verdict.toUpperCase()}</span>
-          <button class="history-del" onclick="event.stopPropagation();removeHistory(${idx})">✕</button>
+          <button class="history-del" data-del-idx="${idx}" title="Remove">✕</button>
         </div>`;
       }).join('');
+
+      // Attach events via delegation (safe — no inline JS)
+      list.querySelectorAll('.history-item').forEach(el => {
+        el.addEventListener('click', function(e) {
+          if (e.target.closest('.history-del')) return;
+          const barcode = this.dataset.barcode;
+          if (barcode) fetchProduct(barcode);
+        });
+      });
+      list.querySelectorAll('.history-del').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const idx = parseInt(this.dataset.delIdx, 10);
+          if (!isNaN(idx)) removeHistory(idx);
+        });
+      });
     }
 
     function removeHistory(idx) {
+      if (idx < 0 || idx >= scanHistory.length) return;
       scanHistory.splice(idx, 1);
       localStorage.setItem('halalScanHistory', JSON.stringify(scanHistory));
       renderHistory();
