@@ -4,342 +4,1097 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Cheap Food Finder</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0d0800;--accent:#f97316;--accent2:#ea580c;--accent3:#fb923c;--border:rgba(249,115,22,0.2);--glass:rgba(249,115,22,0.08);--text:#fff7ed;--text2:#fdba74;--text3:rgba(255,247,237,0.6)}
-body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0d0800,#1c0e00,#2d1600);min-height:100vh;color:var(--text)}
-a{color:var(--accent);text-decoration:none}
-.navbar{background:rgba(13,8,0,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.navbar h1{font-size:1.1rem;font-weight:600}
-.back-btn{color:var(--text3);font-size:.85rem}
-.back-btn:hover{color:var(--accent)}
-.container{max-width:960px;margin:0 auto;padding:24px 16px}
-.section{background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px}
-.section h2{font-size:1rem;font-weight:600;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.tabs{display:flex;gap:4px;margin-bottom:20px;background:rgba(255,255,255,.04);border-radius:12px;padding:4px}
-.tab{flex:1;padding:8px;border-radius:9px;border:none;background:transparent;color:var(--text3);font-family:'Inter',sans-serif;font-size:.82rem;cursor:pointer;transition:all .2s;white-space:nowrap}
-.tab.active{background:rgba(249,115,22,.2);color:var(--accent);font-weight:500}
-.btn{padding:8px 16px;border-radius:10px;border:none;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .2s}
-.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
-.btn-primary:hover{opacity:.9}
-.btn-sm{padding:5px 10px;font-size:.75rem}
-.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}
-.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
-.btn-danger{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171}
-.btn-danger:hover{background:rgba(239,68,68,.2)}
-.input-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:12px}
-.inp{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:10px;padding:8px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;width:100%}
-.inp:focus{border-color:var(--accent)}
-.inp::placeholder{color:var(--text3)}
-select.inp{cursor:pointer}
-.recipe-card{background:rgba(13,8,0,.5);border:1px solid var(--border);border-radius:14px;padding:16px;transition:all .2s;cursor:pointer}
-.recipe-card:hover{border-color:rgba(249,115,22,.4);background:rgba(249,115,22,.05)}
-.recipe-card h3{font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px}
-.recipe-meta{display:flex;gap:10px;font-size:.75rem;color:var(--text3);flex-wrap:wrap;margin-bottom:8px}
-.cost-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:600}
-.cost-green{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
-.cost-amber{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
-.cost-unknown{background:rgba(255,255,255,.08);color:var(--text3);border:1px solid var(--border)}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdropFilter:blur(6px);z-index:2000;overflow-y:auto;display:flex;justify-content:center;padding:24px 16px}
-.modal-box{background:linear-gradient(135deg,#1c0e00,#2d1600);border:1px solid rgba(249,115,22,.3);border-radius:20px;width:100%;max-width:600px;height:fit-content;padding:28px}
-.modal-box h2{font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:12px}
-.ing-list li{font-size:.85rem;color:var(--text3);line-height:1.7;padding:3px 0}
-.ing-missing{color:#f87171!important}
-.steps-text{font-size:.85rem;line-height:1.7;color:rgba(255,247,237,.8);white-space:pre-line}
-.pantry-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(249,115,22,.08)}
-.pantry-item:last-child{border-bottom:none}
-.pantry-name{font-size:.875rem;color:var(--text)}
-.pantry-price{font-size:.8rem;color:var(--text2)}
-.day-plan{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
-.day-card{background:rgba(13,8,0,.5);border:1px solid var(--border);border-radius:12px;padding:14px}
-.day-card h4{font-size:.8rem;color:var(--accent3);margin-bottom:6px}
-.day-meal{font-size:.8rem;color:var(--text);margin-bottom:3px}
-.day-cost{font-size:.75rem;color:var(--text3)}
-.deal-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(249,115,22,.08)}
-.deal-item:last-child{border-bottom:none}
-.saving-badge{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3);padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:600}
-.empty{text-align:center;color:var(--text3);font-size:.875rem;padding:24px}
-.sort-btns{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
-.sort-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text3);font-family:'Inter',font-size:.78rem;cursor:pointer;transition:all .15s}
-.sort-btn.active{background:rgba(249,115,22,.2);border-color:var(--accent);color:var(--accent)}
+  :root{--bg:#0d0800;--accent:#f97316;--border:rgba(249,115,22,0.2);--text:#fff7ed;--card:#1a0e00;--muted:#a07040;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;}
+  a{color:var(--accent);text-decoration:none;}
+  ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--card);}
+  ::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px;}
+  .app{max-width:960px;margin:0 auto;padding:16px;}
+  .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;margin-bottom:16px;transition:color .2s;}
+  .back-link:hover{color:var(--accent);}
+  .header{text-align:center;padding:20px 0 28px;}
+  .header h1{font-size:2rem;font-weight:800;color:var(--accent);}
+  .header p{color:var(--muted);margin-top:6px;font-size:14px;}
+  .tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--card);border-radius:12px;padding:4px;border:1px solid var(--border);}
+  .tab{flex:1;padding:9px;border:none;border-radius:9px;background:none;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;}
+  .tab.active{background:var(--accent);color:#fff;}
+  .tab:hover:not(.active){color:var(--accent);}
+  .budget-panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:24px;}
+  .budget-panel h3{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:12px;}
+  .budget-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .budget-amount{font-size:2rem;font-weight:800;color:var(--accent);min-width:80px;}
+  input[type=range]{flex:1;min-width:160px;accent-color:var(--accent);}
+  .budget-period{display:flex;gap:6px;}
+  .period-btn{padding:5px 14px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;}
+  .period-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center;}
+  .search-wrap{position:relative;flex:1;min-width:180px;}
+  .search-wrap input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px 9px 36px;font-size:13px;}
+  .search-wrap input:focus{outline:none;border-color:var(--accent);}
+  .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none;}
+  select{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;}
+  select:focus{outline:none;border-color:var(--accent);}
+  .recipe-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:24px;}
+  .recipe-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;cursor:pointer;transition:all .2s;position:relative;}
+  .recipe-card:hover{border-color:rgba(249,115,22,0.5);transform:translateY(-2px);box-shadow:0 8px 24px rgba(249,115,22,0.1);}
+  .recipe-emoji{font-size:40px;text-align:center;margin-bottom:10px;}
+  .recipe-name{font-size:15px;font-weight:700;margin-bottom:6px;}
+  .recipe-cost{font-size:1.3rem;font-weight:800;color:var(--accent);}
+  .recipe-meta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;font-size:12px;color:var(--muted);}
+  .recipe-meta span{display:flex;align-items:center;gap:3px;}
+  .diff-badge{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+  .diff-easy{background:rgba(5,150,105,0.2);color:#34d399;}
+  .diff-medium{background:rgba(217,119,6,0.2);color:#fbbf24;}
+  .diff-hard{background:rgba(220,38,38,0.2);color:#f87171;}
+  .nutrition{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+  .nut{background:rgba(249,115,22,0.1);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--muted);}
+  .heart-btn{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;font-size:20px;transition:transform .2s;}
+  .heart-btn:hover{transform:scale(1.2);}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .modal{background:#1a0e00;border:1px solid var(--border);border-radius:20px;max-width:620px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;}
+  .modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;}
+  .modal-title{font-size:1.4rem;font-weight:800;}
+  .close-btn{background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1;transition:color .2s;}
+  .close-btn:hover{color:var(--accent);}
+  .modal-emoji{font-size:60px;text-align:center;margin:12px 0;}
+  .section-title{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 10px;}
+  .ingredient-list{list-style:none;}
+  .ingredient-list li{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .ingredient-list li:last-child{border-bottom:none;}
+  .ingredient-price{color:var(--accent);font-weight:600;}
+  .steps{counter-reset:steps;}
+  .step{display:flex;gap:12px;margin-bottom:12px;font-size:13px;line-height:1.6;}
+  .step-num{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;margin-top:1px;}
+  .tips-list{list-style:none;}
+  .tips-list li{padding:6px 0 6px 20px;position:relative;font-size:13px;color:var(--muted);}
+  .tips-list li::before{content:'💡';position:absolute;left:0;}
+  .deals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+  .deal-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;}
+  .deal-store{font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600;text-transform:uppercase;}
+  .deal-name{font-size:14px;font-weight:700;margin-bottom:6px;}
+  .deal-prices{display:flex;gap:8px;align-items:baseline;margin-bottom:4px;}
+  .deal-new{font-size:1.2rem;font-weight:800;color:var(--accent);}
+  .deal-old{font-size:13px;color:var(--muted);text-decoration:line-through;}
+  .deal-save{font-size:11px;background:rgba(249,115,22,0.2);color:var(--accent);padding:2px 8px;border-radius:20px;font-weight:700;}
+  .deal-exp{font-size:11px;color:var(--muted);margin-top:6px;}
+  .mealplan{margin-bottom:24px;}
+  .mealplan h3{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:14px;}
+  .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
+  .day-cell{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;min-height:80px;text-align:center;}
+  .day-name{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px;}
+  .day-recipe{font-size:12px;cursor:pointer;line-height:1.4;}
+  .day-recipe .emoji{font-size:20px;display:block;margin-bottom:3px;}
+  .day-cost{font-size:11px;color:var(--accent);}
+  .day-empty{font-size:11px;color:var(--muted);cursor:pointer;padding-top:8px;}
+  .day-empty:hover{color:var(--accent);}
+  .week-total{text-align:right;font-size:13px;color:var(--muted);margin-top:10px;}
+  .week-total strong{color:var(--accent);}
+  .shopping-section{margin-top:20px;}
+  .shopping-section h3{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:14px;}
+  .shopping-add{display:flex;gap:8px;margin-bottom:14px;}
+  .shopping-add input{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;font-size:13px;}
+  .shopping-add input:focus{outline:none;border-color:var(--accent);}
+  .btn{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:#ea6b0e;transform:translateY(-1px);}
+  .btn-ghost{background:none;border:1px solid var(--border);color:var(--muted);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+  .shopping-list{list-style:none;}
+  .shop-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .shop-item:last-child{border-bottom:none;}
+  .shop-item input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px;cursor:pointer;}
+  .shop-item.checked span{text-decoration:line-through;color:var(--muted);}
+  .shop-del{background:none;border:none;cursor:pointer;color:var(--muted);margin-left:auto;font-size:13px;transition:color .2s;}
+  .shop-del:hover{color:#f87171;}
+  .shop-price{color:var(--accent);font-size:12px;font-weight:600;white-space:nowrap;}
+  .empty{text-align:center;padding:40px;color:var(--muted);}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#f97316;color:#fff;padding:10px 24px;border-radius:12px;font-weight:600;font-size:14px;z-index:999;pointer-events:none;box-shadow:0 4px 20px rgba(249,115,22,0.4);}
+  .total-cost-modal{background:rgba(249,115,22,0.1);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;font-size:14px;}
+  .total-cost-modal .price{font-size:1.5rem;font-weight:800;color:var(--accent);}
+  .alt-ingredients{background:rgba(249,115,22,0.05);border-radius:10px;padding:12px;font-size:13px;color:var(--muted);}
+  @media(max-width:640px){
+    .week-grid{grid-template-columns:repeat(4,1fr);}
+    .recipe-grid{grid-template-columns:1fr;}
+    .tabs span{display:none;}
+    .deals-grid{grid-template-columns:1fr;}
+  }
 </style>
 </head>
 <body>
-<nav class="navbar">
-  <a class="back-btn" href="../../index.html">← Back</a>
-  <h1>💰 Cheap Food Finder</h1>
-  <div style="width:60px"></div>
-</nav>
-<div class="container">
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('recipes')">🍽 Recipes</button>
-    <button class="tab" onclick="showTab('pantry')">🛒 My Prices</button>
-    <button class="tab" onclick="showTab('planner')">📅 Meal Plan</button>
-    <button class="tab" onclick="showTab('deals')">🏷 Deals</button>
-  </div>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
-  <!-- RECIPES -->
-  <div id="view-recipes">
-    <div style="margin-bottom:12px">
-      <div class="sort-btns">
-        <span style="font-size:.8rem;color:var(--text3);padding:5px 0">Sort:</span>
-        <button class="sort-btn active" onclick="sortRecipes('cost')">💷 Cheapest</button>
-        <button class="sort-btn" onclick="sortRecipes('value')">📊 Best Value</button>
-        <button class="sort-btn" onclick="sortRecipes('time')">⏱ Quickest</button>
-      </div>
-    </div>
-    <div id="recipeGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px"></div>
-  </div>
+// ─── Ingredient Cost Database (50+ items) ────────────────────────────────────
+const INGREDIENTS_DB = {
+  'eggs':           {price:0.25,  unit:'each'},
+  'pasta 500g':     {price:0.85,  unit:'pack'},
+  'rice 1kg':       {price:1.09,  unit:'bag'},
+  'bread 800g':     {price:1.10,  unit:'loaf'},
+  'milk 2L':        {price:1.35,  unit:'bottle'},
+  'butter 250g':    {price:1.70,  unit:'block'},
+  'cheddar 400g':   {price:2.50,  unit:'block'},
+  'chicken breast': {price:0.90,  unit:'each'},
+  'chicken thighs': {price:0.60,  unit:'each'},
+  'minced beef 500g':{price:2.80, unit:'pack'},
+  'bacon 250g':     {price:1.80,  unit:'pack'},
+  'sausages x6':    {price:1.80,  unit:'pack'},
+  'tuna tin':       {price:0.75,  unit:'tin'},
+  'sardines tin':   {price:0.85,  unit:'tin'},
+  'baked beans':    {price:0.55,  unit:'tin'},
+  'chopped tomatoes':{price:0.45, unit:'tin'},
+  'red lentils 500g':{price:1.10, unit:'bag'},
+  'chickpeas tin':  {price:0.65,  unit:'tin'},
+  'kidney beans':   {price:0.55,  unit:'tin'},
+  'onion':          {price:0.20,  unit:'each'},
+  'garlic bulb':    {price:0.55,  unit:'bulb'},
+  'potatoes 1kg':   {price:1.00,  unit:'bag'},
+  'sweet potato':   {price:0.60,  unit:'each'},
+  'carrots 1kg':    {price:0.80,  unit:'bag'},
+  'broccoli':       {price:0.75,  unit:'head'},
+  'spinach 200g':   {price:1.00,  unit:'bag'},
+  'courgette':      {price:0.60,  unit:'each'},
+  'bell pepper':    {price:0.60,  unit:'each'},
+  'mushrooms 250g': {price:1.00,  unit:'pack'},
+  'tomatoes 6pk':   {price:1.00,  unit:'pack'},
+  'cucumber':       {price:0.55,  unit:'each'},
+  'lettuce':        {price:0.75,  unit:'head'},
+  'celery':         {price:0.80,  unit:'head'},
+  'apple':          {price:0.30,  unit:'each'},
+  'banana':         {price:0.15,  unit:'each'},
+  'lemon':          {price:0.30,  unit:'each'},
+  'olive oil 500ml':{price:2.50,  unit:'bottle'},
+  'sunflower oil':  {price:1.50,  unit:'bottle'},
+  'flour 1.5kg':    {price:1.20,  unit:'bag'},
+  'porridge oats':  {price:1.00,  unit:'bag'},
+  'cornflakes':     {price:1.50,  unit:'box'},
+  'sugar 1kg':      {price:1.10,  unit:'bag'},
+  'salt':           {price:0.50,  unit:'pack'},
+  'black pepper':   {price:1.00,  unit:'jar'},
+  'paprika':        {price:1.00,  unit:'jar'},
+  'cumin':          {price:1.00,  unit:'jar'},
+  'curry powder':   {price:1.20,  unit:'jar'},
+  'mixed herbs':    {price:0.90,  unit:'jar'},
+  'soy sauce':      {price:1.10,  unit:'bottle'},
+  'tomato puree':   {price:0.55,  unit:'tube'},
+  'stock cube':     {price:0.15,  unit:'each'},
+  'coconut milk':   {price:1.10,  unit:'tin'},
+  'peanut butter':  {price:1.80,  unit:'jar'},
+  'honey':          {price:2.00,  unit:'jar'},
+  'yoghurt 500g':   {price:0.85,  unit:'pot'},
+  'cream cheese':   {price:1.50,  unit:'tub'},
+  'tortillas x8':   {price:1.50,  unit:'pack'},
+  'breadcrumbs':    {price:0.90,  unit:'pack'},
+  'noodles 300g':   {price:0.90,  unit:'pack'},
+};
 
-  <!-- PANTRY PRICES -->
-  <div id="view-pantry" style="display:none">
-    <div class="section">
-      <h2>➕ Add Price</h2>
-      <div class="input-grid">
-        <input class="inp" id="pItem" placeholder="Item name"/>
-        <input class="inp" id="pPrice" type="number" step="0.01" min="0" placeholder="Price £"/>
-        <input class="inp" id="pWeight" type="number" step="1" min="1" placeholder="Weight/Volume"/>
-        <select class="inp" id="pUnit"><option>g</option><option>ml</option><option>each</option><option>kg</option><option>L</option></select>
-      </div>
-      <button class="btn btn-primary" onclick="addPantryItem()">Add Item</button>
-    </div>
-    <div class="section">
-      <h2>🛒 My Price List</h2>
-      <div id="pantryList"></div>
-    </div>
-  </div>
-
-  <!-- MEAL PLANNER -->
-  <div id="view-planner" style="display:none">
-    <div class="section">
-      <h2>📅 Weekly Meal Plan</h2>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-        <label style="font-size:.875rem;color:var(--text3)">Budget:</label>
-        <select class="inp" id="budgetSel" style="width:120px">
-          <option value="5">£5/week</option>
-          <option value="10" selected>£10/week</option>
-          <option value="15">£15/week</option>
-          <option value="20">£20/week</option>
-        </select>
-        <button class="btn btn-primary" onclick="generatePlan()">Generate Plan</button>
-      </div>
-      <div id="planGrid"></div>
-    </div>
-  </div>
-
-  <!-- DEALS -->
-  <div id="view-deals" style="display:none">
-    <div class="section">
-      <h2>➕ Add Deal</h2>
-      <div class="input-grid">
-        <input class="inp" id="dItem" placeholder="Item name"/>
-        <input class="inp" id="dOrig" type="number" step="0.01" placeholder="Original £"/>
-        <input class="inp" id="dSale" type="number" step="0.01" placeholder="Sale £"/>
-        <input class="inp" id="dStore" placeholder="Store name"/>
-        <input class="inp" id="dExpiry" type="date"/>
-      </div>
-      <button class="btn btn-primary" onclick="addDeal()">Add Deal</button>
-    </div>
-    <div class="section">
-      <h2>🏷 Active Deals</h2>
-      <div id="dealsList"></div>
-    </div>
-  </div>
-</div>
-
-<!-- RECIPE MODAL -->
-<div id="recipeModal" style="display:none" class="modal-overlay" onclick="closeModal()">
-  <div class="modal-box" onclick="event.stopPropagation()">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-      <h2 id="modalTitle"></h2>
-      <button onclick="closeModal()" style="background:rgba(255,255,255,.08);border:none;color:var(--text3);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:.85rem">✕</button>
-    </div>
-    <div id="modalMeta" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;font-size:.8rem;color:var(--text3)"></div>
-    <h3 style="font-size:.85rem;color:var(--text2);margin-bottom:8px">Ingredients</h3>
-    <ul id="modalIngredients" style="list-style:none;margin-bottom:16px;padding-left:8px"></ul>
-    <h3 style="font-size:.85rem;color:var(--text2);margin-bottom:8px">Instructions</h3>
-    <div id="modalSteps" class="steps-text"></div>
-  </div>
-</div>
-
-<script>
+// ─── Recipes (15+) ───────────────────────────────────────────────────────────
 const RECIPES = [
-  {id:1,name:'Pasta Bolognese',ings:[{n:'pasta',q:200,u:'g'},{n:'minced beef',q:150,u:'g'},{n:'tomato',q:200,u:'g'},{n:'onion',q:100,u:'g'},{n:'garlic',q:10,u:'g'}],cal:480,protein:28,time:30,steps:'1. Boil pasta until al dente.\n2. Fry onion and garlic in oil.\n3. Add mince, brown well.\n4. Add tomatoes, simmer 15 min.\n5. Serve sauce over pasta.'},
-  {id:2,name:'Egg Fried Rice',ings:[{n:'rice',q:200,u:'g'},{n:'eggs',q:2,u:'each'},{n:'soy sauce',q:20,u:'ml'},{n:'peas',q:80,u:'g'},{n:'carrot',q:50,u:'g'}],cal:380,protein:14,time:20,steps:'1. Cook rice and cool.\n2. Scramble eggs in wok.\n3. Add veg and rice.\n4. Add soy sauce, stir fry 3 min.'},
-  {id:3,name:'Bean Chilli',ings:[{n:'kidney beans',q:400,u:'g'},{n:'tomato',q:400,u:'g'},{n:'onion',q:150,u:'g'},{n:'pepper',q:100,u:'g'},{n:'chilli powder',q:5,u:'g'}],cal:320,protein:16,time:35,steps:'1. Fry onion and pepper.\n2. Add spices, stir 1 min.\n3. Add beans and tomatoes.\n4. Simmer 20 min. Serve with rice.'},
-  {id:4,name:'Omelette',ings:[{n:'eggs',q:3,u:'each'},{n:'butter',q:10,u:'g'},{n:'milk',q:30,u:'ml'}],cal:280,protein:20,time:8,steps:'1. Beat eggs with milk and seasoning.\n2. Melt butter in pan.\n3. Pour in eggs, fold when set.'},
-  {id:5,name:'Toast with Beans',ings:[{n:'bread',q:80,u:'g'},{n:'baked beans',q:200,u:'g'},{n:'butter',q:10,u:'g'}],cal:340,protein:14,time:5,steps:'1. Toast bread.\n2. Heat beans in pan or microwave.\n3. Serve beans over toast.'},
-  {id:6,name:'Potato Soup',ings:[{n:'potato',q:500,u:'g'},{n:'onion',q:100,u:'g'},{n:'vegetable stock',q:500,u:'ml'},{n:'butter',q:20,u:'g'},{n:'milk',q:100,u:'ml'}],cal:250,protein:6,time:30,steps:'1. Fry onion in butter.\n2. Add cubed potato and stock.\n3. Simmer 20 min until soft.\n4. Blend, add milk, season.'},
-  {id:7,name:'Stir Fry Noodles',ings:[{n:'noodles',q:200,u:'g'},{n:'soy sauce',q:30,u:'ml'},{n:'cabbage',q:150,u:'g'},{n:'carrot',q:100,u:'g'},{n:'garlic',q:10,u:'g'}],cal:360,protein:10,time:15,steps:'1. Cook noodles.\n2. Stir fry veg in hot oil.\n3. Add noodles and soy sauce.\n4. Toss and serve.'},
-  {id:8,name:'Lentil Dal',ings:[{n:'red lentils',q:200,u:'g'},{n:'onion',q:100,u:'g'},{n:'tomato',q:200,u:'g'},{n:'garlic',q:10,u:'g'},{n:'cumin',q:5,u:'g'},{n:'turmeric',q:3,u:'g'}],cal:300,protein:18,time:25,steps:'1. Fry onion, garlic and spices.\n2. Add tomatoes, cook 5 min.\n3. Add lentils and water.\n4. Simmer 20 min until soft.'},
-  {id:9,name:'Scrambled Eggs on Toast',ings:[{n:'eggs',q:3,u:'each'},{n:'bread',q:80,u:'g'},{n:'butter',q:15,u:'g'},{n:'milk',q:30,u:'ml'}],cal:320,protein:22,time:8,steps:'1. Beat eggs with milk.\n2. Cook slowly in buttered pan, stirring.\n3. Serve on toasted bread.'},
-  {id:10,name:'Tuna Pasta',ings:[{n:'pasta',q:200,u:'g'},{n:'tuna',q:145,u:'g'},{n:'mayonnaise',q:30,u:'g'},{n:'sweetcorn',q:80,u:'g'}],cal:420,protein:30,time:15,steps:'1. Cook pasta, drain.\n2. Mix tuna, mayo and sweetcorn.\n3. Combine with pasta. Serve.'},
-  {id:11,name:'Veggie Curry',ings:[{n:'potato',q:300,u:'g'},{n:'chickpeas',q:400,u:'g'},{n:'tomato',q:400,u:'g'},{n:'onion',q:150,u:'g'},{n:'curry powder',q:10,u:'g'}],cal:340,protein:14,time:35,steps:'1. Fry onion until golden.\n2. Add curry powder, 1 min.\n3. Add potatoes, tomatoes, chickpeas.\n4. Simmer 25 min. Serve with rice.'},
-  {id:12,name:'Jacket Potato',ings:[{n:'potato',q:300,u:'g'},{n:'butter',q:20,u:'g'},{n:'baked beans',q:200,u:'g'}],cal:380,protein:12,time:60,steps:'1. Pierce potato, microwave 8 min or bake 60 min at 200°C.\n2. Split open, add butter.\n3. Top with hot beans.'},
-  {id:13,name:'Mac & Cheese',ings:[{n:'pasta',q:200,u:'g'},{n:'milk',q:300,u:'ml'},{n:'cheddar cheese',q:80,u:'g'},{n:'butter',q:20,u:'g'},{n:'flour',q:20,u:'g'}],cal:460,protein:18,time:25,steps:'1. Cook pasta.\n2. Melt butter, add flour, cook 1 min.\n3. Add milk slowly, stirring. Add cheese.\n4. Combine with pasta.'},
-  {id:14,name:'Porridge',ings:[{n:'oats',q:80,u:'g'},{n:'milk',q:250,u:'ml'},{n:'banana',q:1,u:'each'}],cal:360,protein:12,time:8,steps:'1. Mix oats and milk in pan.\n2. Cook on medium heat, stirring, 5 min.\n3. Slice banana on top. Serve.'},
-  {id:15,name:'Bean Burgers',ings:[{n:'kidney beans',q:400,u:'g'},{n:'bread',q:60,u:'g'},{n:'onion',q:100,u:'g'},{n:'eggs',q:1,u:'each'},{n:'flour',q:30,u:'g'}],cal:350,protein:15,time:25,steps:'1. Mash beans, mix with breadcrumbs, onion and egg.\n2. Form into patties, dust with flour.\n3. Fry 4 min each side until golden.'},
-  {id:16,name:'Fried Rice',ings:[{n:'rice',q:200,u:'g'},{n:'eggs',q:2,u:'each'},{n:'soy sauce',q:20,u:'ml'},{n:'onion',q:80,u:'g'}],cal:360,protein:12,time:18,steps:'1. Cook and cool rice.\n2. Fry onion, add rice.\n3. Push aside, scramble eggs in.\n4. Mix, add soy sauce.'},
-  {id:17,name:'Minestrone Soup',ings:[{n:'pasta',q:80,u:'g'},{n:'kidney beans',q:200,u:'g'},{n:'tomato',q:400,u:'g'},{n:'carrot',q:100,u:'g'},{n:'celery',q:100,u:'g'},{n:'onion',q:100,u:'g'}],cal:280,protein:12,time:40,steps:'1. Fry onion, carrot and celery.\n2. Add tomatoes, beans and 1L water.\n3. Simmer 20 min.\n4. Add pasta, cook further 10 min.'},
-  {id:18,name:'Cheese Sandwich',ings:[{n:'bread',q:80,u:'g'},{n:'cheddar cheese',q:50,u:'g'},{n:'butter',q:10,u:'g'}],cal:360,protein:16,time:3,steps:'1. Butter the bread.\n2. Add sliced cheese.\n3. Press together and serve.'},
-  {id:19,name:'Greek Salad',ings:[{n:'tomato',q:200,u:'g'},{n:'cucumber',q:200,u:'g'},{n:'feta cheese',q:100,u:'g'},{n:'olives',q:50,u:'g'},{n:'onion',q:50,u:'g'}],cal:260,protein:10,time:10,steps:'1. Chop tomatoes, cucumber and onion.\n2. Add olives and crumbled feta.\n3. Drizzle with olive oil. Season.'},
-  {id:20,name:'Banana Pancakes',ings:[{n:'banana',q:2,u:'each'},{n:'eggs',q:2,u:'each'},{n:'flour',q:80,u:'g'},{n:'milk',q:100,u:'ml'},{n:'butter',q:10,u:'g'}],cal:380,protein:14,time:15,steps:'1. Mash banana with eggs.\n2. Mix in flour and milk.\n3. Fry spoonfuls in buttered pan.\n4. Cook 2 min each side.'}
+  {
+    id:'r01', emoji:'🍝', name:'Pasta Arrabbiata', dietary:'Vegan',
+    cookTime:20, difficulty:'Easy', serves:2,
+    ingredients:[
+      {name:'pasta 500g', qty:0.5, note:'250g'},
+      {name:'chopped tomatoes', qty:1, note:'1 tin'},
+      {name:'garlic bulb', qty:0.3, note:'3 cloves'},
+      {name:'olive oil 500ml', qty:0.1, note:'1 tbsp'},
+      {name:'paprika', qty:0.05, note:'pinch'},
+      {name:'salt', qty:0.05, note:'pinch'},
+    ],
+    nutrition:{cal:420, protein:14, carbs:78, fat:6},
+    steps:[
+      'Boil salted water and cook pasta according to packet — usually 10-12 min.',
+      'Peel and thinly slice garlic cloves.',
+      'Heat olive oil in a pan over medium heat, add garlic and fry 1 min until golden.',
+      'Add chopped tomatoes, paprika, salt. Simmer 8 min, stirring occasionally.',
+      'Drain pasta, reserving a cup of pasta water.',
+      'Toss pasta in sauce, add a splash of pasta water to loosen if needed. Serve hot.',
+    ],
+    tips:['Use value pasta — tastes the same.','Pasta water starch makes the sauce silky.','Add chilli flakes if you have them.'],
+    alternates:'Swap olive oil for sunflower oil. Use any pasta shape.',
+  },
+  {
+    id:'r02', emoji:'🥣', name:'Porridge with Banana', dietary:'Vegan',
+    cookTime:10, difficulty:'Easy', serves:1,
+    ingredients:[
+      {name:'porridge oats', qty:0.15, note:'50g'},
+      {name:'milk 2L', qty:0.2, note:'200ml'},
+      {name:'banana', qty:1, note:'1'},
+      {name:'honey', qty:0.05, note:'1 tsp'},
+    ],
+    nutrition:{cal:380, protein:12, carbs:65, fat:7},
+    steps:[
+      'Measure 50g oats into a saucepan.',
+      'Add 200ml milk and 100ml water.',
+      'Cook over medium heat, stirring continuously, for 4-5 minutes until thick.',
+      'Slice banana while porridge cooks.',
+      'Pour into a bowl, top with banana slices.',
+      'Drizzle honey over the top. Serve immediately.',
+    ],
+    tips:['Oats are one of the cheapest breakfasts per serving.','Frozen banana works too.','Add cinnamon if available.'],
+    alternates:'Use water instead of milk to reduce cost. Any fruit topping works.',
+  },
+  {
+    id:'r03', emoji:'🍛', name:'Red Lentil Dal', dietary:'Vegan',
+    cookTime:30, difficulty:'Easy', serves:4,
+    ingredients:[
+      {name:'red lentils 500g', qty:0.5, note:'250g'},
+      {name:'chopped tomatoes', qty:1, note:'1 tin'},
+      {name:'onion', qty:1, note:'1'},
+      {name:'garlic bulb', qty:0.2, note:'2 cloves'},
+      {name:'curry powder', qty:0.08, note:'2 tsp'},
+      {name:'cumin', qty:0.05, note:'1 tsp'},
+      {name:'sunflower oil', qty:0.05, note:'1 tbsp'},
+      {name:'stock cube', qty:1, note:'1'},
+      {name:'salt', qty:0.05, note:'to taste'},
+    ],
+    nutrition:{cal:290, protein:18, carbs:45, fat:4},
+    steps:[
+      'Dice onion finely and mince garlic.',
+      'Heat oil in a large pot. Fry onion 5 min until soft and translucent.',
+      'Add garlic, curry powder and cumin. Fry 1 min until fragrant.',
+      'Add lentils, chopped tomatoes, stock cube and 600ml boiling water.',
+      'Simmer 20 minutes, stirring every 5 min, until lentils break down.',
+      'Season with salt. Serve over rice or with bread.',
+    ],
+    tips:['Lentils are one of cheapest proteins available.','Makes great leftovers — freezes well.','Add spinach at the end for extra nutrition.'],
+    alternates:'Swap stock cube for just salt and extra spices.',
+  },
+  {
+    id:'r04', emoji:'🥚', name:'Scrambled Egg Toast', dietary:'Vegetarian',
+    cookTime:8, difficulty:'Easy', serves:1,
+    ingredients:[
+      {name:'eggs', qty:2, note:'2 eggs'},
+      {name:'bread 800g', qty:0.15, note:'2 slices'},
+      {name:'butter 250g', qty:0.04, note:'small knob'},
+      {name:'salt', qty:0.02, note:'pinch'},
+      {name:'black pepper', qty:0.02, note:'pinch'},
+    ],
+    nutrition:{cal:340, protein:18, carbs:28, fat:16},
+    steps:[
+      'Crack eggs into a bowl, season with salt and pepper, whisk well.',
+      'Toast the bread slices.',
+      'Melt butter in a non-stick pan over low-medium heat.',
+      'Pour in eggs and stir slowly with a spatula, pushing from the edges.',
+      'Remove from heat while still slightly runny — residual heat finishes cooking.',
+      'Serve immediately on toast.',
+    ],
+    tips:['Low heat is the secret to creamy scrambled eggs.','Do not overcook — remove while glossy.','A splash of milk makes them fluffier.'],
+    alternates:'Use olive oil instead of butter. Add a slice of cheese on top.',
+  },
+  {
+    id:'r05', emoji:'🫘', name:'Beans on Toast', dietary:'Vegan',
+    cookTime:8, difficulty:'Easy', serves:1,
+    ingredients:[
+      {name:'baked beans', qty:1, note:'1 tin'},
+      {name:'bread 800g', qty:0.15, note:'2 slices'},
+      {name:'butter 250g', qty:0.02, note:'for toast'},
+      {name:'black pepper', qty:0.02, note:'pinch'},
+    ],
+    nutrition:{cal:380, protein:15, carbs:65, fat:5},
+    steps:[
+      'Open baked beans and pour into a small saucepan.',
+      'Heat over medium heat, stirring occasionally, for 3-4 minutes.',
+      'Toast bread in a toaster or under a grill.',
+      'Butter the toast lightly.',
+      'Pour beans over the toast.',
+      'Season with black pepper and serve hot.',
+    ],
+    tips:['Cheapest complete meal in Britain.','Add a poached egg on top for extra protein.','Grated cheese on top adds flavour.'],
+    alternates:'Use any canned beans. Works on any bread type.',
+  },
+  {
+    id:'r06', emoji:'🍲', name:'Vegetable Soup', dietary:'Vegan',
+    cookTime:35, difficulty:'Easy', serves:4,
+    ingredients:[
+      {name:'carrots 1kg', qty:0.3, note:'3 carrots'},
+      {name:'potatoes 1kg', qty:0.3, note:'3 medium'},
+      {name:'onion', qty:1, note:'1 large'},
+      {name:'celery', qty:0.2, note:'2 sticks'},
+      {name:'stock cube', qty:2, note:'2'},
+      {name:'mixed herbs', qty:0.05, note:'1 tsp'},
+      {name:'salt', qty:0.03, note:'to taste'},
+      {name:'sunflower oil', qty:0.04, note:'1 tbsp'},
+    ],
+    nutrition:{cal:180, protein:5, carbs:35, fat:3},
+    steps:[
+      'Dice onion, carrots, potatoes and celery into rough chunks.',
+      'Heat oil in a large pot, add onion and celery, fry 5 min.',
+      'Add carrots and potatoes, stir to coat.',
+      'Add 1.2L boiling water, stock cubes and herbs.',
+      'Simmer 25 minutes until all vegetables are tender.',
+      'Blend half the soup for a creamier texture, or serve chunky. Season and serve.',
+    ],
+    tips:['Use any veg that needs using up.','Freezes brilliantly in portions.','Stale bread makes great dipping soldiers.'],
+    alternates:'Add red lentils for protein. Any root vegetable works.',
+  },
+  {
+    id:'r07', emoji:'🌮', name:'Tuna Sweetcorn Wraps', dietary:'Meat',
+    cookTime:10, difficulty:'Easy', serves:2,
+    ingredients:[
+      {name:'tuna tin', qty:1, note:'1 tin'},
+      {name:'tortillas x8', qty:0.25, note:'2 tortillas'},
+      {name:'yoghurt 500g', qty:0.2, note:'2 tbsp'},
+      {name:'lemon', qty:0.5, note:'squeeze'},
+      {name:'lettuce', qty:0.2, note:'handful'},
+      {name:'black pepper', qty:0.02, note:'to taste'},
+    ],
+    nutrition:{cal:310, protein:24, carbs:38, fat:5},
+    steps:[
+      'Drain tuna well and flake into a bowl.',
+      'Add yoghurt, squeeze of lemon, black pepper. Mix well.',
+      'Wash and roughly tear lettuce leaves.',
+      'Warm tortillas in a dry pan for 30 seconds each side or microwave 20s.',
+      'Lay out tortillas, add lettuce, then tuna mixture.',
+      'Roll or fold and serve immediately.',
+    ],
+    tips:['Yoghurt is a cheaper substitute for mayo.','Canned tuna is one of the cheapest protein sources.','Cucumber or tomato add crunch cheaply.'],
+    alternates:'Use bread instead of wraps. Swap tuna for sardines.',
+  },
+  {
+    id:'r08', emoji:'🍳', name:'Sausage & Potato Hash', dietary:'Meat',
+    cookTime:25, difficulty:'Medium', serves:2,
+    ingredients:[
+      {name:'sausages x6', qty:0.5, note:'3 sausages'},
+      {name:'potatoes 1kg', qty:0.4, note:'4 medium'},
+      {name:'onion', qty:1, note:'1'},
+      {name:'sunflower oil', qty:0.05, note:'2 tbsp'},
+      {name:'paprika', qty:0.05, note:'1 tsp'},
+      {name:'salt', qty:0.03, note:'to taste'},
+      {name:'black pepper', qty:0.03, note:'to taste'},
+    ],
+    nutrition:{cal:520, protein:22, carbs:55, fat:22},
+    steps:[
+      'Dice potatoes into 1cm cubes and parboil 8 minutes until just tender.',
+      'Slice sausages into rounds and dice onion.',
+      'Heat oil in a large frying pan over high heat.',
+      'Add sausage pieces, fry 4 min until browned.',
+      'Add onion, fry 3 more minutes.',
+      'Add drained potato, paprika, salt, pepper. Fry 8 min until crispy, pressing down. Serve hot.',
+    ],
+    tips:['Parboiling the potatoes is the key to getting them crispy.','Value sausages work fine here.','Top with a fried egg for a complete meal.'],
+    alternates:'Use sweet potato instead. Swap sausages for bacon pieces.',
+  },
+  {
+    id:'r09', emoji:'🍜', name:'Peanut Noodles', dietary:'Vegan',
+    cookTime:15, difficulty:'Easy', serves:2,
+    ingredients:[
+      {name:'noodles 300g', qty:0.5, note:'150g'},
+      {name:'peanut butter', qty:0.15, note:'3 tbsp'},
+      {name:'soy sauce', qty:0.1, note:'2 tbsp'},
+      {name:'garlic bulb', qty:0.2, note:'2 cloves'},
+      {name:'lemon', qty:0.5, note:'half'},
+      {name:'honey', qty:0.05, note:'1 tsp'},
+      {name:'carrot', qty:0.1, note:'½ carrot, grated'},
+    ],
+    nutrition:{cal:460, protein:16, carbs:62, fat:16},
+    steps:[
+      'Cook noodles in boiling water per packet instructions (usually 3-4 min).',
+      'Mince garlic finely.',
+      'Mix peanut butter, soy sauce, lemon juice, honey and garlic in a bowl.',
+      'Add 3 tbsp hot pasta water to loosen the sauce into a pourable consistency.',
+      'Drain noodles, return to pan off heat.',
+      'Pour sauce over noodles, add grated carrot, toss well. Serve warm or cold.',
+    ],
+    tips:['Hot pasta water is key to loosening the peanut butter sauce.','Great served cold as a packed lunch.','Add any raw vegetables you have — spring onion, cucumber.'],
+    alternates:'Swap noodles for spaghetti. Sunflower butter instead of peanut.',
+  },
+  {
+    id:'r10', emoji:'🍚', name:'Egg Fried Rice', dietary:'Vegetarian',
+    cookTime:15, difficulty:'Easy', serves:2,
+    ingredients:[
+      {name:'rice 1kg', qty:0.25, note:'200g'},
+      {name:'eggs', qty:2, note:'2 eggs'},
+      {name:'soy sauce', qty:0.1, note:'2 tbsp'},
+      {name:'onion', qty:0.5, note:'half'},
+      {name:'sunflower oil', qty:0.05, note:'2 tbsp'},
+      {name:'garlic bulb', qty:0.15, note:'1 clove'},
+      {name:'salt', qty:0.02, note:'pinch'},
+    ],
+    nutrition:{cal:440, protein:15, carbs:68, fat:12},
+    steps:[
+      'Cook rice per packet. For best results, use day-old cold rice.',
+      'Dice onion finely, mince garlic.',
+      'Heat oil in wok or large pan on high heat — it should be very hot.',
+      'Add onion and garlic, fry 2 min stirring constantly.',
+      'Add rice, break up any clumps, stir-fry 3 min.',
+      'Push rice to side, crack in eggs, scramble quickly then mix through rice. Add soy sauce, toss, serve.',
+    ],
+    tips:['Day-old cold rice is the secret to non-soggy fried rice.','High heat is essential — get the pan smoking.','Add any leftover veg or meat to bulk it up.'],
+    alternates:'Add frozen peas (£0.80/bag) for extra nutrition. Any soy-based sauce works.',
+  },
+  {
+    id:'r11', emoji:'🥔', name:'Jacket Potato with Cheese', dietary:'Vegetarian',
+    cookTime:60, difficulty:'Easy', serves:1,
+    ingredients:[
+      {name:'potatoes 1kg', qty:0.25, note:'1 large'},
+      {name:'cheddar 400g', qty:0.1, note:'40g grated'},
+      {name:'butter 250g', qty:0.03, note:'small knob'},
+      {name:'salt', qty:0.02, note:'pinch'},
+      {name:'black pepper', qty:0.02, note:'pinch'},
+    ],
+    nutrition:{cal:420, protein:14, carbs:58, fat:14},
+    steps:[
+      'Preheat oven to 200°C / 180°C fan.',
+      'Scrub potato well. Prick all over with a fork.',
+      'Rub lightly with oil or butter, sprinkle with salt.',
+      'Place directly on oven rack. Bake 50-60 minutes until crispy outside, fluffy inside.',
+      'Test with a skewer — should slide in easily.',
+      'Cut open, add butter and grated cheese. Season and serve.',
+    ],
+    tips:['Pricking prevents steam explosions.','Microwave 8 min first then 15 min in oven for speed.','Add baked beans on top for a full meal under £1.'],
+    alternates:'Swap cheese for baked beans (cheaper). Add tuna mayo instead.',
+  },
+  {
+    id:'r12', emoji:'🥘', name:'Chickpea Curry', dietary:'Vegan',
+    cookTime:25, difficulty:'Easy', serves:3,
+    ingredients:[
+      {name:'chickpeas tin', qty:1, note:'1 tin'},
+      {name:'chopped tomatoes', qty:1, note:'1 tin'},
+      {name:'coconut milk', qty:0.5, note:'half tin'},
+      {name:'onion', qty:1, note:'1'},
+      {name:'garlic bulb', qty:0.2, note:'2 cloves'},
+      {name:'curry powder', qty:0.1, note:'2 tsp'},
+      {name:'cumin', qty:0.05, note:'1 tsp'},
+      {name:'sunflower oil', qty:0.04, note:'1 tbsp'},
+      {name:'rice 1kg', qty:0.3, note:'to serve'},
+    ],
+    nutrition:{cal:380, protein:14, carbs:52, fat:12},
+    steps:[
+      'Cook rice while making the curry.',
+      'Dice onion, mince garlic.',
+      'Heat oil in a pan, fry onion 5 min until golden.',
+      'Add garlic, curry powder and cumin, fry 1 min.',
+      'Add drained chickpeas, chopped tomatoes and coconut milk.',
+      'Simmer 15 minutes until thickened. Season and serve over rice.',
+    ],
+    tips:['Chickpeas are filling and very cheap per serving.','Coconut milk makes it rich — use half a tin to save cost.','Freezes well — make a big batch.'],
+    alternates:'Replace coconut milk with stock for fewer calories. Use kidney beans instead.',
+  },
+  {
+    id:'r13', emoji:'🥗', name:'Budget Greek Salad', dietary:'Vegetarian',
+    cookTime:10, difficulty:'Easy', serves:2,
+    ingredients:[
+      {name:'tomatoes 6pk', qty:0.4, note:'3 tomatoes'},
+      {name:'cucumber', qty:0.5, note:'half'},
+      {name:'onion', qty:0.3, note:'quarter red'},
+      {name:'cheddar 400g', qty:0.08, note:'30g crumbled'},
+      {name:'olive oil 500ml', qty:0.1, note:'1 tbsp'},
+      {name:'lemon', qty:0.5, note:'half'},
+      {name:'mixed herbs', qty:0.03, note:'pinch'},
+      {name:'salt', qty:0.02, note:'to taste'},
+    ],
+    nutrition:{cal:180, protein:7, carbs:12, fat:11},
+    steps:[
+      'Chop tomatoes into quarters.',
+      'Slice cucumber into half-moons.',
+      'Thinly slice onion into rings.',
+      'Combine tomatoes, cucumber and onion in a bowl.',
+      'Drizzle with olive oil and lemon juice.',
+      'Crumble cheese over top, sprinkle herbs and salt. Toss gently and serve.',
+    ],
+    tips:['Cheddar replaces feta at a fraction of the cost.','Make this alongside any main to add veggies to your diet.','Season generously — it makes a big difference.'],
+    alternates:'Any hard cheese works. Add olives if available.',
+  },
+  {
+    id:'r14', emoji:'🍔', name:'Homemade Beef Burgers', dietary:'Meat',
+    cookTime:20, difficulty:'Medium', serves:2,
+    ingredients:[
+      {name:'minced beef 500g', qty:0.5, note:'250g'},
+      {name:'bread 800g', qty:0.15, note:'2 bread rolls equiv'},
+      {name:'onion', qty:0.5, note:'half'},
+      {name:'salt', qty:0.03, note:'to taste'},
+      {name:'black pepper', qty:0.03, note:'to taste'},
+      {name:'mixed herbs', qty:0.03, note:'1 tsp'},
+      {name:'cheddar 400g', qty:0.08, note:'optional slice'},
+    ],
+    nutrition:{cal:540, protein:34, carbs:30, fat:28},
+    steps:[
+      'Finely grate or dice half an onion.',
+      'Mix minced beef with onion, herbs, salt and pepper in a bowl using your hands.',
+      'Divide into 2 equal patties, slightly larger than the bread — they shrink when cooking.',
+      'Heat a pan or grill to high. Cook patties 4 min each side for medium-well done.',
+      'In the last minute, add a slice of cheese on top if using — let it melt.',
+      'Toast the bread lightly, assemble with any salad you have, serve immediately.',
+    ],
+    tips:['80/20 minced beef makes juicier burgers.','Do not press down with a spatula while cooking — loses the juices.','Add sliced tomato and lettuce to stretch the meal further.'],
+    alternates:'Use any bread as the bun. Add egg on top instead of cheese.',
+  },
+  {
+    id:'r15', emoji:'🍞', name:'French Toast', dietary:'Vegetarian',
+    cookTime:12, difficulty:'Easy', serves:2,
+    ingredients:[
+      {name:'bread 800g', qty:0.2, note:'4 slices'},
+      {name:'eggs', qty:2, note:'2 eggs'},
+      {name:'milk 2L', qty:0.1, note:'100ml'},
+      {name:'butter 250g', qty:0.04, note:'small knob'},
+      {name:'sugar 1kg', qty:0.03, note:'1 tbsp'},
+      {name:'honey', qty:0.04, note:'to serve'},
+    ],
+    nutrition:{cal:360, protein:14, carbs:42, fat:14},
+    steps:[
+      'Crack eggs into a shallow bowl, add milk and sugar. Whisk well.',
+      'Dip bread slices into the egg mixture, coating both sides. Let it soak 30 seconds.',
+      'Melt butter in a non-stick frying pan over medium heat.',
+      'Cook each slice for 2-3 minutes per side until golden brown.',
+      'Work in batches — do not crowd the pan.',
+      'Serve warm drizzled with honey.',
+    ],
+    tips:['Stale bread soaks up the egg mixture better.','Dust with cinnamon for extra flavour.','Top with sliced banana for a complete breakfast.'],
+    alternates:'Use jam instead of honey. Any milk substitute works.',
+  },
+  {
+    id:'r16', emoji:'🥙', name:'Spicy Lentil Soup', dietary:'Vegan',
+    cookTime:35, difficulty:'Easy', serves:4,
+    ingredients:[
+      {name:'red lentils 500g', qty:0.4, note:'200g'},
+      {name:'onion', qty:1, note:'1'},
+      {name:'carrots 1kg', qty:0.2, note:'2 carrots'},
+      {name:'garlic bulb', qty:0.2, note:'2 cloves'},
+      {name:'tomato puree', qty:0.1, note:'1 tbsp'},
+      {name:'cumin', qty:0.05, note:'2 tsp'},
+      {name:'paprika', qty:0.05, note:'1 tsp'},
+      {name:'stock cube', qty:2, note:'2'},
+      {name:'sunflower oil', qty:0.04, note:'1 tbsp'},
+    ],
+    nutrition:{cal:220, protein:14, carbs:36, fat:3},
+    steps:[
+      'Dice onion and carrots, mince garlic.',
+      'Heat oil in a large pot. Sauté onion and carrot 6 minutes until soft.',
+      'Add garlic, cumin and paprika. Fry 1 minute until fragrant.',
+      'Add lentils, tomato puree, stock cubes and 1.2L boiling water.',
+      'Simmer 25 minutes until lentils are completely soft.',
+      'Blend until smooth. Season and serve with bread.',
+    ],
+    tips:['Blending makes it feel luxurious for almost no cost.','Add a swirl of yoghurt on top if available.','Lemon juice brightens the flavour significantly.'],
+    alternates:'Swap red lentils for yellow split peas. Add any root veg.',
+  },
 ];
 
-let pantry = JSON.parse(localStorage.getItem('pantryPrices')||'[]');
-let deals = JSON.parse(localStorage.getItem('pantryDeals')||'[]');
-let sortMode = 'cost';
+// ─── Deals Data ───────────────────────────────────────────────────────────────
+const DEALS = [
+  {store:'Tesco',name:'Pasta 1kg',newPrice:0.75,oldPrice:1.25,savePercent:40,expires:'3 days'},
+  {store:'Aldi',name:'6 Eggs',newPrice:0.89,oldPrice:1.29,savePercent:31,expires:'4 days'},
+  {store:'Lidl',name:'Chicken Breast 500g',newPrice:2.49,oldPrice:3.99,savePercent:38,expires:'2 days'},
+  {store:'Asda',name:'Chopped Tomatoes x4',newPrice:0.99,oldPrice:1.60,savePercent:38,expires:'5 days'},
+  {store:'Tesco',name:'Porridge Oats 1kg',newPrice:0.75,oldPrice:1.20,savePercent:38,expires:'6 days'},
+  {store:'Morrisons',name:'Red Lentils 500g',newPrice:0.79,oldPrice:1.20,savePercent:34,expires:'1 day'},
+  {store:'Sainsbury\'s',name:'Baked Beans x4',newPrice:1.00,oldPrice:1.80,savePercent:44,expires:'7 days'},
+  {store:'Aldi',name:'Minced Beef 500g',newPrice:2.29,oldPrice:3.20,savePercent:28,expires:'3 days'},
+  {store:'Lidl',name:'Frozen Veg 1kg',newPrice:0.99,oldPrice:1.50,savePercent:34,expires:'5 days'},
+  {store:'Asda',name:'Bread 800g',newPrice:0.75,oldPrice:1.10,savePercent:32,expires:'2 days'},
+];
 
-function showTab(t) {
-  ['recipes','pantry','planner','deals'].forEach(x=>{
-    document.getElementById('view-'+x).style.display=x===t?'block':'none';
-    document.querySelectorAll('.tab').forEach((b,i)=>{
-      b.classList.toggle('active',['recipes','pantry','planner','deals'][i]===t);
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+function calcRecipeCost(recipe){
+  return recipe.ingredients.reduce((sum, ing) => {
+    const db = INGREDIENTS_DB[ing.name];
+    if(!db) return sum;
+    return sum + db.price * ing.qty;
+  }, 0);
+}
+
+function loadFavourites(){
+  try{ const d = localStorage.getItem('cheap_food_favs'); if(d) return JSON.parse(d); }catch(e){}
+  return [];
+}
+function saveFavourites(d){
+  try{ localStorage.setItem('cheap_food_favs', JSON.stringify(d)); }catch(e){}
+}
+function loadMealPlan(){
+  try{ const d = localStorage.getItem('cheap_food_plan'); if(d) return JSON.parse(d); }catch(e){}
+  return {};
+}
+function saveMealPlan(d){
+  try{ localStorage.setItem('cheap_food_plan', JSON.stringify(d)); }catch(e){}
+}
+function loadShoppingList(){
+  try{ const d = localStorage.getItem('cheap_food_shop'); if(d) return JSON.parse(d); }catch(e){}
+  return [];
+}
+function saveShoppingList(d){
+  try{ localStorage.setItem('cheap_food_shop', JSON.stringify(d)); }catch(e){}
+}
+
+// ─── Recipe Detail Modal ──────────────────────────────────────────────────────
+function RecipeModal({ recipe, onClose, onAddToDay }){
+  const cost = calcRecipeCost(recipe);
+  const perServing = cost / recipe.serves;
+  const diffClass = recipe.difficulty === 'Easy' ? 'diff-easy' : recipe.difficulty === 'Medium' ? 'diff-medium' : 'diff-hard';
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-header">
+          <div>
+            <div className="modal-title">{recipe.name}</div>
+            <div style={{color:'var(--muted)',fontSize:13,marginTop:4}}>{recipe.dietary} · {recipe.cookTime} min · Serves {recipe.serves}</div>
+          </div>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+
+        <div className="modal-emoji">{recipe.emoji}</div>
+
+        <div className="total-cost-modal">
+          <span>Total estimated cost</span>
+          <div>
+            <span className="price">£{cost.toFixed(2)}</span>
+            <span style={{fontSize:12,color:'var(--muted)',marginLeft:8}}>£{perServing.toFixed(2)}/serving</span>
+          </div>
+        </div>
+
+        <div className="nutrition">
+          <span className="nut">🔥 {recipe.nutrition.cal} kcal</span>
+          <span className="nut">💪 {recipe.nutrition.protein}g protein</span>
+          <span className="nut">🌾 {recipe.nutrition.carbs}g carbs</span>
+          <span className="nut">🫙 {recipe.nutrition.fat}g fat</span>
+        </div>
+
+        <div className="section-title">Ingredients</div>
+        <ul className="ingredient-list">
+          {recipe.ingredients.map((ing, i) => {
+            const db = INGREDIENTS_DB[ing.name];
+            const cost = db ? (db.price * ing.qty).toFixed(2) : '—';
+            return (
+              <li key={i}>
+                <span>{ing.note} {ing.name.split(' ')[0] !== ing.note.split(' ')[0] ? ing.name : ''}</span>
+                <span className="ingredient-price">≈ £{cost}</span>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="section-title">Method</div>
+        <div className="steps">
+          {recipe.steps.map((step, i) => (
+            <div className="step" key={i}>
+              <div className="step-num">{i+1}</div>
+              <div>{step}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="section-title">Money-Saving Tips</div>
+        <ul className="tips-list">
+          {recipe.tips.map((tip, i) => <li key={i}>{tip}</li>)}
+        </ul>
+
+        <div className="section-title">Alternative Ingredients</div>
+        <div className="alt-ingredients">{recipe.alternates}</div>
+
+        <div style={{marginTop:20}}>
+          <div style={{fontSize:13,color:'var(--muted)',marginBottom:8}}>Add to meal plan:</div>
+          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+            {DAYS.map(d => (
+              <button key={d} className="btn btn-ghost" style={{fontSize:12,padding:'5px 10px'}} onClick={() => { onAddToDay(d, recipe); onClose(); }}>
+                {d}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Recipes Tab ─────────────────────────────────────────────────────────────
+function RecipesTab({ budget, period, favourites, onToggleFav, onOpenRecipe }){
+  const [search, setSearch] = useState('');
+  const [dietary, setDietary] = useState('Any');
+  const [maxCook, setMaxCook] = useState('Any');
+  const [maxCost, setMaxCost] = useState('Any');
+
+  const dailyBudget = period === 'weekly' ? budget / 7 : budget;
+  const mealBudget = dailyBudget / 3;
+
+  const filtered = useMemo(() => {
+    return RECIPES.filter(r => {
+      const cost = calcRecipeCost(r);
+      const perServing = cost / r.serves;
+      if(search && !r.name.toLowerCase().includes(search.toLowerCase()) &&
+         !r.ingredients.some(i => i.name.toLowerCase().includes(search.toLowerCase()))) return false;
+      if(dietary !== 'Any' && r.dietary !== dietary) return false;
+      if(maxCook === '15' && r.cookTime > 15) return false;
+      if(maxCook === '30' && r.cookTime > 30) return false;
+      if(maxCook === '60' && r.cookTime > 60) return false;
+      if(maxCost === '1' && perServing > 1) return false;
+      if(maxCost === '2' && perServing > 2) return false;
+      if(maxCost === '3' && perServing > 3) return false;
+      return true;
     });
-  });
-  if(t==='pantry')renderPantry();
-  if(t==='deals')renderDeals();
+  }, [search, dietary, maxCook, maxCost]);
+
+  return (
+    <div>
+      <div className="filters">
+        <div className="search-wrap">
+          <span className="search-icon">🔍</span>
+          <input type="text" placeholder="Search recipes or ingredients…" value={search} onChange={e => setSearch(e.target.value)}/>
+        </div>
+        <select value={dietary} onChange={e => setDietary(e.target.value)}>
+          <option>Any</option><option>Vegan</option><option>Vegetarian</option><option>Meat</option>
+        </select>
+        <select value={maxCook} onChange={e => setMaxCook(e.target.value)}>
+          <option value="Any">Any time</option>
+          <option value="15">Under 15 min</option>
+          <option value="30">Under 30 min</option>
+          <option value="60">Under 1 hour</option>
+        </select>
+        <select value={maxCost} onChange={e => setMaxCost(e.target.value)}>
+          <option value="Any">Any cost</option>
+          <option value="1">Under £1/serving</option>
+          <option value="2">Under £2/serving</option>
+          <option value="3">Under £3/serving</option>
+        </select>
+      </div>
+      <div style={{fontSize:13,color:'var(--muted)',marginBottom:14}}>
+        Budget: <strong style={{color:'var(--accent)'}}>£{mealBudget.toFixed(2)}</strong> per meal · {filtered.length} recipes
+      </div>
+      {filtered.length === 0 && <div className="empty"><div style={{fontSize:40}}>🥘</div><p>No recipes match your filters.</p></div>}
+      <div className="recipe-grid">
+        {filtered.map(r => {
+          const cost = calcRecipeCost(r);
+          const perServing = cost / r.serves;
+          const diffClass = r.difficulty === 'Easy' ? 'diff-easy' : r.difficulty === 'Medium' ? 'diff-medium' : 'diff-hard';
+          const fav = favourites.includes(r.id);
+          const withinBudget = perServing <= mealBudget;
+          return (
+            <div key={r.id} className="recipe-card" onClick={() => onOpenRecipe(r)} style={withinBudget ? {borderColor:'rgba(249,115,22,0.4)'} : {}}>
+              <button className="heart-btn" onClick={e => {e.stopPropagation(); onToggleFav(r.id);}} title={fav?'Remove favourite':'Add favourite'}>
+                {fav ? '❤️' : '🤍'}
+              </button>
+              <div className="recipe-emoji">{r.emoji}</div>
+              <div className="recipe-name">{r.name}</div>
+              <div className="recipe-cost">£{perServing.toFixed(2)} <span style={{fontSize:13,fontWeight:400,color:'var(--muted)'}}>/ serving</span></div>
+              <div className="recipe-meta">
+                <span>⏱ {r.cookTime}min</span>
+                <span>👤 {r.serves}</span>
+                <span className={'diff-badge ' + diffClass}>{r.difficulty}</span>
+                <span style={{fontSize:11,padding:'2px 7px',borderRadius:20,background:r.dietary==='Vegan'?'rgba(5,150,105,0.15)':r.dietary==='Vegetarian'?'rgba(59,130,246,0.15)':'rgba(220,38,38,0.15)',color:r.dietary==='Vegan'?'#34d399':r.dietary==='Vegetarian'?'#60a5fa':'#f87171'}}>{r.dietary}</span>
+              </div>
+              <div className="nutrition">
+                <span className="nut">🔥{r.nutrition.cal}</span>
+                <span className="nut">💪{r.nutrition.protein}g</span>
+                <span className="nut">🌾{r.nutrition.carbs}g</span>
+              </div>
+              {withinBudget && <div style={{marginTop:8,fontSize:11,color:'#34d399',fontWeight:600}}>✓ Within your budget</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
-function getPricePerG(itemName) {
-  const item = pantry.find(p=>p.name.toLowerCase().includes(itemName.toLowerCase())||itemName.toLowerCase().includes(p.name.toLowerCase()));
-  if(!item)return null;
-  let weightG = item.weight;
-  if(item.unit==='kg')weightG=item.weight*1000;
-  if(item.unit==='L')weightG=item.weight*1000;
-  if(item.unit==='each')weightG=1;
-  return item.price/weightG;
+// ─── Deals Tab ────────────────────────────────────────────────────────────────
+function DealsTab(){
+  return (
+    <div>
+      <div style={{fontSize:14,color:'var(--muted)',marginBottom:18}}>Simulated current supermarket deals — updated weekly.</div>
+      <div className="deals-grid">
+        {DEALS.map((d, i) => (
+          <div key={i} className="deal-card">
+            <div className="deal-store">{d.store}</div>
+            <div className="deal-name">{d.name}</div>
+            <div className="deal-prices">
+              <span className="deal-new">£{d.newPrice.toFixed(2)}</span>
+              <span className="deal-old">£{d.oldPrice.toFixed(2)}</span>
+              <span className="deal-save">Save {d.savePercent}%</span>
+            </div>
+            <div className="deal-exp">⏰ Expires in {d.expires}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-function calcRecipeCost(recipe) {
-  let total=0;
-  let missing=[];
-  recipe.ings.forEach(ing=>{
-    const ppg=getPricePerG(ing.n);
-    if(ppg===null){missing.push(ing.n);return}
-    if(ing.u==='each')total+=ppg*ing.q;
-    else total+=ppg*ing.q;
-  });
-  if(missing.length>0&&missing.length===recipe.ings.length)return{cost:null,missing};
-  return{cost:parseFloat(total.toFixed(2)),missing};
+// ─── Meal Plan Tab ────────────────────────────────────────────────────────────
+function MealPlanTab({ mealPlan, onAssignDay, onClearDay, shoppingList, onUpdateShoppingList }){
+  const [picking, setPicking] = useState(null);
+  const [newItem, setNewItem] = useState('');
+
+  const weekCost = DAYS.reduce((s, d) => {
+    if(!mealPlan[d]) return s;
+    const r = RECIPES.find(r => r.id === mealPlan[d]);
+    return r ? s + calcRecipeCost(r) : s;
+  }, 0);
+
+  const addToList = () => {
+    if(!newItem.trim()) return;
+    const item = {id:'si'+Date.now(),name:newItem.trim(),price:null,checked:false,auto:false};
+    onUpdateShoppingList([...shoppingList, item]);
+    setNewItem('');
+  };
+
+  const toggleCheck = (id) => {
+    onUpdateShoppingList(shoppingList.map(i => i.id===id ? {...i,checked:!i.checked} : i));
+  };
+
+  const removeItem = (id) => {
+    onUpdateShoppingList(shoppingList.filter(i => i.id!==id));
+  };
+
+  const genShoppingList = () => {
+    const items = [];
+    DAYS.forEach(d => {
+      if(!mealPlan[d]) return;
+      const r = RECIPES.find(r => r.id === mealPlan[d]);
+      if(!r) return;
+      r.ingredients.forEach(ing => {
+        const db = INGREDIENTS_DB[ing.name];
+        const existing = items.find(i => i.name === ing.name);
+        if(!existing){
+          items.push({id:'ag'+Date.now()+Math.random(),name:ing.name,price:db ? db.price*ing.qty : null,checked:false,auto:true,note:ing.note});
+        }
+      });
+    });
+    const manual = shoppingList.filter(i => !i.auto);
+    onUpdateShoppingList([...items, ...manual]);
+  };
+
+  return (
+    <div>
+      <div className="mealplan">
+        <h3>📅 Weekly Meal Plan</h3>
+        <div className="week-grid">
+          {DAYS.map(d => {
+            const recipeId = mealPlan[d];
+            const r = recipeId ? RECIPES.find(r => r.id === recipeId) : null;
+            return (
+              <div key={d} className="day-cell">
+                <div className="day-name">{d}</div>
+                {r ? (
+                  <div className="day-recipe" onClick={() => setPicking(d)}>
+                    <span className="emoji">{r.emoji}</span>
+                    <span style={{fontSize:11}}>{r.name}</span>
+                    <div className="day-cost">£{(calcRecipeCost(r)/r.serves).toFixed(2)}</div>
+                  </div>
+                ) : (
+                  <div className="day-empty" onClick={() => setPicking(d)}>+ Add meal</div>
+                )}
+                {r && <button style={{marginTop:4,background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:11}} onClick={() => onClearDay(d)}>✕</button>}
+              </div>
+            );
+          })}
+        </div>
+        <div className="week-total">Week total: <strong>£{weekCost.toFixed(2)}</strong></div>
+        <div style={{marginTop:10,display:'flex',gap:8,justifyContent:'flex-end'}}>
+          <button className="btn btn-ghost" onClick={genShoppingList}>🛒 Generate Shopping List</button>
+        </div>
+      </div>
+
+      {picking && (
+        <div className="modal-overlay" onClick={e => e.target===e.currentTarget && setPicking(null)}>
+          <div className="modal" style={{maxWidth:460}}>
+            <div className="modal-header">
+              <div className="modal-title">Pick a recipe for {picking}</div>
+              <button className="close-btn" onClick={() => setPicking(null)}>×</button>
+            </div>
+            <div className="recipe-grid" style={{marginTop:12}}>
+              {RECIPES.map(r => (
+                <div key={r.id} className="recipe-card" onClick={() => { onAssignDay(picking, r.id); setPicking(null); }}>
+                  <div className="recipe-emoji" style={{fontSize:28,marginBottom:6}}>{r.emoji}</div>
+                  <div className="recipe-name" style={{fontSize:13}}>{r.name}</div>
+                  <div className="recipe-cost" style={{fontSize:1.1+'rem'}}>£{(calcRecipeCost(r)/r.serves).toFixed(2)}/serving</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="shopping-section">
+        <h3>🛒 Shopping List</h3>
+        <div className="shopping-add">
+          <input
+            type="text"
+            placeholder="Add an item manually…"
+            value={newItem}
+            onChange={e => setNewItem(e.target.value)}
+            onKeyDown={e => { if(e.key==='Enter') addToList(); }}
+          />
+          <button className="btn btn-primary" onClick={addToList}>Add</button>
+        </div>
+        {shoppingList.length === 0 && (
+          <div className="empty" style={{padding:24}}>
+            <p>No items yet. Assign meals above then click Generate.</p>
+          </div>
+        )}
+        <ul className="shopping-list">
+          {shoppingList.map(item => (
+            <li key={item.id} className={'shop-item' + (item.checked?' checked':'')}>
+              <input type="checkbox" checked={item.checked} onChange={() => toggleCheck(item.id)}/>
+              <span>{item.name}{item.note ? ' ('+item.note+')' : ''}</span>
+              {item.price !== null && <span className="shop-price">≈ £{item.price.toFixed(2)}</span>}
+              <button className="shop-del" onClick={() => removeItem(item.id)}>✕</button>
+            </li>
+          ))}
+        </ul>
+        {shoppingList.length > 0 && (
+          <div style={{marginTop:12,textAlign:'right',fontSize:13,color:'var(--muted)'}}>
+            Total: <strong style={{color:'var(--accent)'}}>
+              £{shoppingList.filter(i=>!i.checked&&i.price!==null).reduce((s,i)=>s+(i.price||0),0).toFixed(2)}
+            </strong> remaining
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
-function sortRecipes(mode) {
-  sortMode=mode;
-  document.querySelectorAll('.sort-btn').forEach((b,i)=>b.classList.toggle('active',['cost','value','time'][i]===mode));
-  renderRecipes();
+// ─── Main App ─────────────────────────────────────────────────────────────────
+function App(){
+  const [tab, setTab] = useState('recipes');
+  const [budget, setBudget] = useState(25);
+  const [period, setPeriod] = useState('weekly');
+  const [favourites, setFavourites] = useState(() => loadFavourites());
+  const [mealPlan, setMealPlan] = useState(() => loadMealPlan());
+  const [shoppingList, setShoppingList] = useState(() => loadShoppingList());
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [toast, setToast] = useState('');
+  const toastRef = useRef(null);
+
+  useEffect(() => { saveFavourites(favourites); }, [favourites]);
+  useEffect(() => { saveMealPlan(mealPlan); }, [mealPlan]);
+  useEffect(() => { saveShoppingList(shoppingList); }, [shoppingList]);
+
+  const showToast = useCallback((msg) => {
+    setToast(msg);
+    if(toastRef.current) clearTimeout(toastRef.current);
+    toastRef.current = setTimeout(() => setToast(''), 2500);
+  }, []);
+
+  const toggleFav = useCallback((id) => {
+    setFavourites(prev => {
+      const next = prev.includes(id) ? prev.filter(f => f!==id) : [...prev, id];
+      showToast(prev.includes(id) ? '💔 Removed from favourites' : '❤️ Added to favourites!');
+      return next;
+    });
+  }, [showToast]);
+
+  const assignDay = useCallback((day, recipeId) => {
+    setMealPlan(prev => ({...prev, [day]: recipeId}));
+    showToast('📅 Added to ' + day + '!');
+  }, [showToast]);
+
+  const clearDay = useCallback((day) => {
+    setMealPlan(prev => { const n={...prev}; delete n[day]; return n; });
+  }, []);
+
+  const addToDay = useCallback((day, recipe) => {
+    assignDay(day, recipe.id);
+  }, [assignDay]);
+
+  const sliderMax = period === 'weekly' ? 100 : 20;
+  const sliderMin = period === 'weekly' ? 7 : 1;
+
+  return (
+    <div className="app">
+      <a href="../../index.html" className="back-link">← Back to Apps</a>
+      <div className="header">
+        <h1>🍳 Cheap Food Finder</h1>
+        <p>Budget recipes, supermarket deals, and weekly meal planning — all in one place.</p>
+      </div>
+
+      <div className="budget-panel">
+        <h3>💰 Your Budget</h3>
+        <div className="budget-row">
+          <div className="budget-amount">£{budget}</div>
+          <input
+            type="range"
+            min={sliderMin}
+            max={sliderMax}
+            value={budget}
+            onChange={e => setBudget(Number(e.target.value))}
+          />
+          <div className="budget-period">
+            <button className={'period-btn' + (period==='daily'?' active':'')} onClick={() => { setPeriod('daily'); setBudget(Math.min(budget,20)); }}>Daily</button>
+            <button className={'period-btn' + (period==='weekly'?' active':'')} onClick={() => { setPeriod('weekly'); setBudget(Math.max(budget,7)); }}>Weekly</button>
+          </div>
+        </div>
+        <div style={{fontSize:12,color:'var(--muted)',marginTop:8}}>
+          ≈ £{(period==='weekly' ? budget/21 : budget/3).toFixed(2)} per meal · £{(period==='weekly'?budget/7:budget).toFixed(2)} per day
+        </div>
+      </div>
+
+      <div className="tabs">
+        <button className={'tab' + (tab==='recipes'?' active':'')} onClick={() => setTab('recipes')}>🍽️ <span>Recipes</span></button>
+        <button className={'tab' + (tab==='favourites'?' active':'')} onClick={() => setTab('favourites')}>❤️ <span>Favourites ({favourites.length})</span></button>
+        <button className={'tab' + (tab==='deals'?' active':'')} onClick={() => setTab('deals')}>🏷️ <span>Deals</span></button>
+        <button className={'tab' + (tab==='plan'?' active':'')} onClick={() => setTab('plan')}>📅 <span>Meal Plan</span></button>
+      </div>
+
+      {tab === 'recipes' && (
+        <RecipesTab
+          budget={budget}
+          period={period}
+          favourites={favourites}
+          onToggleFav={toggleFav}
+          onOpenRecipe={setSelectedRecipe}
+        />
+      )}
+      {tab === 'favourites' && (
+        <div>
+          {favourites.length === 0 && (
+            <div className="empty">
+              <div style={{fontSize:48}}>🤍</div>
+              <p>No favourites yet. Heart a recipe to save it here.</p>
+            </div>
+          )}
+          <div className="recipe-grid">
+            {RECIPES.filter(r => favourites.includes(r.id)).map(r => {
+              const cost = calcRecipeCost(r);
+              const perServing = cost / r.serves;
+              const diffClass = r.difficulty === 'Easy' ? 'diff-easy' : r.difficulty === 'Medium' ? 'diff-medium' : 'diff-hard';
+              return (
+                <div key={r.id} className="recipe-card" onClick={() => setSelectedRecipe(r)}>
+                  <button className="heart-btn" onClick={e => {e.stopPropagation(); toggleFav(r.id);}}>❤️</button>
+                  <div className="recipe-emoji">{r.emoji}</div>
+                  <div className="recipe-name">{r.name}</div>
+                  <div className="recipe-cost">£{perServing.toFixed(2)}<span style={{fontSize:13,fontWeight:400,color:'var(--muted)'}}>/serving</span></div>
+                  <div className="recipe-meta">
+                    <span>⏱ {r.cookTime}min</span>
+                    <span className={'diff-badge '+diffClass}>{r.difficulty}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {tab === 'deals' && <DealsTab />}
+      {tab === 'plan' && (
+        <MealPlanTab
+          mealPlan={mealPlan}
+          onAssignDay={assignDay}
+          onClearDay={clearDay}
+          shoppingList={shoppingList}
+          onUpdateShoppingList={setShoppingList}
+        />
+      )}
+
+      {selectedRecipe && (
+        <RecipeModal
+          recipe={selectedRecipe}
+          onClose={() => setSelectedRecipe(null)}
+          onAddToDay={addToDay}
+        />
+      )}
+
+      {toast && <div className="toast">{toast}</div>}
+    </div>
+  );
 }
 
-function renderRecipes() {
-  const sorted=[...RECIPES].sort((a,b)=>{
-    if(sortMode==='cost'){
-      const ca=calcRecipeCost(a).cost;const cb=calcRecipeCost(b).cost;
-      if(ca===null&&cb===null)return 0;if(ca===null)return 1;if(cb===null)return-1;return ca-cb;
-    }
-    if(sortMode==='value'){
-      const ca=calcRecipeCost(a).cost||0.01;const cb=calcRecipeCost(b).cost||0.01;
-      return(cb/b.cal)-(ca/a.cal);
-    }
-    return a.time-b.time;
-  });
-  const grid=document.getElementById('recipeGrid');
-  grid.innerHTML=sorted.map(r=>{
-    const {cost,missing}=calcRecipeCost(r);
-    let badge='';
-    if(cost===null)badge=`<span class="cost-badge cost-unknown">Price unknown</span>`;
-    else if(cost<1.5)badge=`<span class="cost-badge cost-green">£${cost.toFixed(2)}/serving</span>`;
-    else badge=`<span class="cost-badge cost-amber">£${cost.toFixed(2)}/serving</span>`;
-    return`<div class="recipe-card" onclick="openRecipe(${r.id})">
-      <h3>${r.name}</h3>
-      <div class="recipe-meta"><span>⏱ ${r.time}min</span><span>🔥 ${r.cal} kcal</span><span>💪 ${r.protein}g protein</span></div>
-      ${badge}
-      ${missing.length?`<div style="font-size:.72rem;color:#f87171;margin-top:5px">Missing prices: ${missing.slice(0,3).join(', ')}${missing.length>3?'...':''}</div>`:''}
-    </div>`;
-  }).join('');
-}
-
-function openRecipe(id){
-  const r=RECIPES.find(x=>x.id===id);
-  if(!r)return;
-  document.getElementById('modalTitle').textContent=r.name;
-  const {cost,missing}=calcRecipeCost(r);
-  document.getElementById('modalMeta').innerHTML=`<span>⏱ ${r.time} min</span><span>🔥 ${r.cal} kcal</span><span>💪 ${r.protein}g protein</span>${cost!==null?`<span>💷 £${cost.toFixed(2)}/serving</span>`:''}`;
-  document.getElementById('modalIngredients').innerHTML=r.ings.map(ing=>{
-    const ppg=getPricePerG(ing.n);
-    const isMissing=ppg===null;
-    const cost=ppg!==null?` — £${(ppg*(ing.u==='each'?1:ing.q)).toFixed(2)}`:'';
-    return`<li class="ing-list ${isMissing?'ing-missing':''}" style="${isMissing?'color:#f87171':'color:rgba(255,247,237,.7)'}">• ${ing.q}${ing.u} ${ing.n}${cost}${isMissing?' ⚠️ Add price':''}</li>`;
-  }).join('');
-  document.getElementById('modalSteps').textContent=r.steps;
-  document.getElementById('recipeModal').style.display='flex';
-}
-function closeModal(){document.getElementById('recipeModal').style.display='none'}
-
-function addPantryItem(){
-  const name=document.getElementById('pItem').value.trim();
-  const price=parseFloat(document.getElementById('pPrice').value);
-  const weight=parseFloat(document.getElementById('pWeight').value);
-  const unit=document.getElementById('pUnit').value;
-  if(!name||isNaN(price)||isNaN(weight))return;
-  pantry=pantry.filter(p=>p.name.toLowerCase()!==name.toLowerCase());
-  pantry.push({name,price,weight,unit});
-  localStorage.setItem('pantryPrices',JSON.stringify(pantry));
-  document.getElementById('pItem').value='';document.getElementById('pPrice').value='';document.getElementById('pWeight').value='';
-  renderPantry();renderRecipes();
-}
-
-function renderPantry(){
-  const el=document.getElementById('pantryList');
-  if(!pantry.length){el.innerHTML='<div class="empty">No prices added yet</div>';return}
-  el.innerHTML=pantry.map((p,i)=>`<div class="pantry-item"><div><div class="pantry-name">${p.name}</div><div class="pantry-price">£${p.price.toFixed(2)} / ${p.weight}${p.unit}</div></div><button onclick="removePantry(${i})" class="btn btn-danger btn-sm">✕</button></div>`).join('');
-}
-
-function removePantry(i){pantry.splice(i,1);localStorage.setItem('pantryPrices',JSON.stringify(pantry));renderPantry();renderRecipes()}
-
-function generatePlan(){
-  const budget=parseFloat(document.getElementById('budgetSel').value);
-  const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const dayBudget=budget/7;
-  const affordable=RECIPES.map(r=>({...r,...calcRecipeCost(r)})).filter(r=>r.cost!==null&&r.cost<=dayBudget*1.5).sort((a,b)=>a.cost-b.cost);
-  const plan=days.map((day,i)=>{
-    const meal=affordable[i%affordable.length]||RECIPES[i%RECIPES.length];
-    const cost=affordable[i%affordable.length]?.cost;
-    return{day,meal:meal.name,cost};
-  });
-  const total=plan.reduce((s,d)=>s+(d.cost||0),0);
-  document.getElementById('planGrid').innerHTML=`<p style="font-size:.8rem;color:var(--text3);margin-bottom:12px">Estimated weekly cost: <strong style="color:var(--accent)">£${total.toFixed(2)}</strong> / £${budget}</p><div class="day-plan">${plan.map(d=>`<div class="day-card"><h4>${d.day}</h4><div class="day-meal">${d.meal}</div><div class="day-cost">${d.cost?'£'+d.cost.toFixed(2):'Price unknown'}</div></div>`).join('')}</div>`;
-}
-
-function addDeal(){
-  const item=document.getElementById('dItem').value.trim();
-  const orig=parseFloat(document.getElementById('dOrig').value);
-  const sale=parseFloat(document.getElementById('dSale').value);
-  const store=document.getElementById('dStore').value.trim();
-  const expiry=document.getElementById('dExpiry').value;
-  if(!item||isNaN(orig)||isNaN(sale))return;
-  deals.push({item,orig,sale,store,expiry,added:new Date().toLocaleDateString()});
-  deals.sort((a,b)=>((b.orig-b.sale)/b.orig)-((a.orig-a.sale)/a.orig));
-  localStorage.setItem('pantryDeals',JSON.stringify(deals));
-  document.getElementById('dItem').value='';document.getElementById('dOrig').value='';document.getElementById('dSale').value='';document.getElementById('dStore').value='';document.getElementById('dExpiry').value='';
-  renderDeals();
-}
-
-function renderDeals(){
-  const el=document.getElementById('dealsList');
-  const today=new Date().toISOString().slice(0,10);
-  const active=deals.filter(d=>!d.expiry||d.expiry>=today);
-  if(!active.length){el.innerHTML='<div class="empty">No active deals</div>';return}
-  el.innerHTML=active.map((d,i)=>{
-    const saving=((d.orig-d.sale)/d.orig*100).toFixed(0);
-    return`<div class="deal-item"><div><div style="font-size:.875rem;font-weight:500;color:var(--text)">${d.item}</div><div style="font-size:.75rem;color:var(--text3)">${d.store?d.store+' · ':''}Was £${d.orig.toFixed(2)} → £${d.sale.toFixed(2)}${d.expiry?' · Expires '+d.expiry:''}</div></div><div style="display:flex;align-items:center;gap:8px"><span class="saving-badge">-${saving}%</span><button onclick="removeDeal(${i})" class="btn btn-danger btn-sm">✕</button></div></div>`;
-  }).join('');
-}
-
-function removeDeal(i){deals.splice(i,1);localStorage.setItem('pantryDeals',JSON.stringify(deals));renderDeals()}
-
-renderRecipes();
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
 </script>
 </body>
 </html>
