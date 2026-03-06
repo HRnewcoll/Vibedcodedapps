@@ -663,7 +663,7 @@ function RecipeModal({ recipe, onClose, onAddToDay }){
             const cost = db ? (db.price * ing.qty).toFixed(2) : '—';
             return (
               <li key={i}>
-                <span>{ing.note} {ing.name.split(' ')[0] !== ing.note.split(' ')[0] ? ing.name : ''}</span>
+                <span>{ing.name} <span style={{color:'var(--muted)',fontSize:12}}>({ing.note})</span></span>
                 <span className="ingredient-price">≈ £{cost}</span>
               </li>
             );

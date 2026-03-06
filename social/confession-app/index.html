@@ -351,7 +351,7 @@ function CommentSection({ confession, onAddComment, onDeleteComment, myCommentId
       )}
       {confession.comments.map(cm => (
         <div className="comment" key={cm.id}>
-          <span className="comment-text">{escHtml(cm.text)}</span>
+          <span className="comment-text">{cm.text}</span>
           {myCommentIds.includes(cm.id) && (
             <button className="comment-del" onClick={() => onDeleteComment(confession.id, cm.id)} title="Delete">✕</button>
           )}
@@ -396,7 +396,7 @@ function ConfessionCard({ confession, myReactions, onReact, onAddComment, onDele
       </div>
 
       <div className={'card-text' + (isLong && !expanded ? ' truncated' : '')}>
-        {escHtml(confession.text)}
+        {confession.text}
       </div>
       {isLong && (
         <span className="read-more" onClick={() => setExpanded(v => !v)}>
