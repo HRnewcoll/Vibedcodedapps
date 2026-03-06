@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Instagram — VibedApps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#000;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;
+      --border:rgba(255,255,255,0.12);--text:#fff;--text2:rgba(255,255,255,0.7);
+      --text3:rgba(255,255,255,0.45);--accent:#e1306c;
+      --gradient:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
+      --radius:999px;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+    /* ── Layout ── */
+    .app{display:flex;min-height:100vh}
+    .left-sidebar{width:240px;position:fixed;top:0;left:0;height:100vh;border-right:1px solid var(--border);padding:12px 16px;display:flex;flex-direction:column;z-index:100;background:var(--bg)}
+    @media(max-width:1100px){.left-sidebar{width:72px}}
+    @media(max-width:640px){.left-sidebar{width:0;display:none}}
+    .main-area{margin-left:240px;flex:1;padding:32px 16px;max-width:1200px}
+    @media(max-width:1100px){.main-area{margin-left:72px}}
+    @media(max-width:640px){.main-area{margin-left:0}}
+
+    /* ── Nav ── */
+    .logo-ig{font-size:26px;font-weight:900;font-style:italic;padding:18px 14px 24px;cursor:pointer;letter-spacing:-1px}
+    .nav-item{display:flex;align-items:center;gap:16px;padding:12px 14px;border-radius:14px;cursor:pointer;font-size:16px;font-weight:500;color:var(--text);transition:background .15s;margin-bottom:4px;text-decoration:none}
+    .nav-item:hover{background:var(--bg3)}
+    .nav-item.active{font-weight:700}
+    .nav-icon{font-size:26px;width:28px;text-align:center;flex-shrink:0}
+    .nav-label{font-size:16px}
+    @media(max-width:1100px){.nav-label{display:none}.nav-item{justify-content:center;gap:0}}
+    .new-post-btn{margin-top:12px;background:none;border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:16px;cursor:pointer;width:100%;color:var(--text);font-size:16px;font-weight:500;font-family:'Inter',sans-serif;transition:background .15s}
+    .new-post-btn:hover{background:var(--bg3)}
+    @media(max-width:1100px){.new-post-btn{justify-content:center;gap:0}}
+    .sidebar-profile{margin-top:auto;display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;border-radius:14px;transition:background .15s}
+    .sidebar-profile:hover{background:var(--bg3)}
+    
+    /* ── Stories row ── */
+    .stories-wrap{display:flex;gap:16px;padding:16px 0 24px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+    .stories-wrap::-webkit-scrollbar{display:none}
+    .story-item{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;flex-shrink:0;scroll-snap-align:start}
+    .story-ring{width:66px;height:66px;border-radius:50%;background:var(--gradient);padding:3px;cursor:pointer;transition:transform .15s}
+    .story-ring:hover{transform:scale(1.05)}
+    .story-ring.seen{background:rgba(255,255,255,0.2)}
+    .story-avatar{width:100%;height:100%;border-radius:50%;background:var(--bg3);border:3px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden}
+    .story-avatar img{width:100%;height:100%;object-fit:cover}
+    .story-name{font-size:12px;color:var(--text2);max-width:72px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .your-story .story-ring{background:var(--bg3)}
+    .story-add{position:relative}
+    .story-add-btn{position:absolute;bottom:2px;right:2px;background:var(--accent);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;border:2px solid var(--bg)}
+
+    /* ── Feed grid ── */
+    .feed-layout{display:grid;grid-template-columns:1fr 340px;gap:32px;max-width:1000px}
+    @media(max-width:960px){.feed-layout{grid-template-columns:1fr}.right-panel{display:none}}
+    
+    /* ── Post card ── */
+    .post-card{border:1px solid var(--border);border-radius:12px;margin-bottom:24px;background:var(--bg2);overflow:hidden;animation:fadeUp .25s ease}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .post-header{display:flex;align-items:center;gap:12px;padding:14px 16px}
+    .post-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743);padding:2.5px;flex-shrink:0;cursor:pointer}
+    .post-avatar-inner{width:100%;height:100%;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid var(--bg2)}
+    .post-username{font-weight:700;font-size:15px;cursor:pointer}
+    .post-location{font-size:12px;color:var(--text3)}
+    .post-more{margin-left:auto;background:none;border:none;color:var(--text2);cursor:pointer;font-size:20px;padding:4px 8px;border-radius:8px;transition:background .15s}
+    .post-more:hover{background:var(--bg3)}
+    .post-image-wrap{width:100%;aspect-ratio:1;background:var(--bg3);overflow:hidden;position:relative;cursor:pointer}
+    .post-image-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+    .post-image-wrap:hover img{transform:scale(1.02)}
+    .post-image-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:72px}
+    .post-actions-row{display:flex;align-items:center;padding:10px 16px 6px;gap:8px}
+    .action-btn-ig{background:none;border:none;cursor:pointer;font-size:26px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all .15s;color:var(--text)}
+    .action-btn-ig:hover{background:rgba(255,255,255,0.07)}
+    .action-btn-ig.liked{color:var(--accent);animation:heartPop .3s ease}
+    @keyframes heartPop{0%{transform:scale(1)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
+    .save-btn{margin-left:auto}
+    .like-count{font-weight:700;font-size:15px;padding:0 16px 8px}
+    .caption-row{padding:0 16px 8px;font-size:15px;line-height:1.55}
+    .caption-username{font-weight:700;cursor:pointer;margin-right:6px}
+    .view-comments{font-size:15px;color:var(--text3);padding:0 16px 6px;cursor:pointer}
+    .view-comments:hover{color:var(--text2)}
+    .comment-preview{padding:0 16px 4px;font-size:15px;display:flex;gap:6px}
+    .comment-preview-user{font-weight:700;cursor:pointer}
+    .post-time{font-size:12px;color:var(--text3);padding:0 16px 12px;text-transform:uppercase;letter-spacing:0.04em}
+    .comment-input-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--border)}
+    .comment-input-bar input{flex:1;background:none;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:15px;outline:none}
+    .comment-input-bar input::placeholder{color:var(--text3)}
+    .comment-input-bar button{background:none;border:none;color:var(--accent);font-weight:700;font-size:15px;cursor:pointer;opacity:0.5;transition:opacity .15s}
+    .comment-input-bar button:enabled{opacity:1}
+    
+    /* ── Explore grid ── */
+    .explore-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+    .explore-cell{aspect-ratio:1;background:var(--bg3);overflow:hidden;cursor:pointer;position:relative}
+    .explore-cell:hover .explore-overlay{opacity:1}
+    .explore-cell-img{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;transition:transform .3s}
+    .explore-cell:hover .explore-cell-img{transform:scale(1.05)}
+    .explore-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;gap:16px;opacity:0;transition:opacity .15s;font-size:14px;font-weight:700}
+    .explore-overlay span{display:flex;align-items:center;gap:4px}
+
+    /* ── Profile view ── */
+    .profile-view-header{display:flex;align-items:flex-start;gap:32px;padding:0 0 32px;margin-bottom:24px;border-bottom:1px solid var(--border)}
+    .profile-avatar-lg{width:150px;height:150px;border-radius:50%;background:var(--gradient);padding:4px;flex-shrink:0}
+    .profile-avatar-lg-inner{width:100%;height:100%;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:56px;border:4px solid var(--bg)}
+    .profile-info h2{font-size:28px;font-weight:300;margin-bottom:16px}
+    .profile-stats-row{display:flex;gap:32px;margin-bottom:16px}
+    .profile-stat{text-align:center}
+    .profile-stat-num{font-size:18px;font-weight:700}
+    .profile-stat-label{font-size:14px;color:var(--text2)}
+    .profile-bio-text{font-size:15px;line-height:1.5;color:var(--text2);margin-bottom:4px}
+    .profile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+    .profile-cell{aspect-ratio:1;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:40px;cursor:pointer;overflow:hidden;position:relative}
+    .profile-cell:hover .profile-cell-overlay{opacity:1}
+    .profile-cell-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;font-size:13px;font-weight:700;gap:12px}
+
+    /* ── Reels view ── */
+    .reels-container{max-width:400px;margin:0 auto}
+    .reel-card{position:relative;background:var(--bg2);border-radius:14px;overflow:hidden;margin-bottom:16px;aspect-ratio:9/16;max-height:80vh;display:flex;align-items:center;justify-content:center}
+    .reel-content{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;font-size:64px}
+    .reel-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 40%)}
+    .reel-bottom{position:absolute;bottom:0;left:0;right:0;padding:16px 16px 20px}
+    .reel-user{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .reel-avatar{width:36px;height:36px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid var(--text)}
+    .reel-username{font-weight:700;font-size:15px}
+    .follow-sm{background:none;border:1px solid #fff;border-radius:var(--radius);padding:4px 14px;font-size:13px;font-weight:600;cursor:pointer;color:#fff;font-family:'Inter',sans-serif;margin-left:8px;transition:all .15s}
+    .follow-sm:hover{background:rgba(255,255,255,0.15)}
+    .reel-caption{font-size:14px;line-height:1.5;margin-bottom:8px;max-width:85%}
+    .reel-sound{font-size:13px;color:var(--text2);}
+    .reel-actions{position:absolute;right:12px;bottom:80px;display:flex;flex-direction:column;gap:20px;align-items:center}
+    .reel-action{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+    .reel-action-icon{font-size:28px;transition:transform .15s}
+    .reel-action:hover .reel-action-icon{transform:scale(1.15)}
+    .reel-action-count{font-size:12px;font-weight:600;color:var(--text2)}
+
+    /* ── Right panel ── */
+    .right-panel{padding-top:8px}
+    .profile-suggest{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .suggest-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#f09433,#bc1888);padding:2px;flex-shrink:0}
+    .suggest-avatar-inner{width:100%;height:100%;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid var(--bg)}
+    .suggest-info{flex:1}
+    .suggest-name{font-weight:700;font-size:14px}
+    .suggest-reason{font-size:12px;color:var(--text3)}
+    .follow-link{font-size:13px;font-weight:700;color:var(--accent);cursor:pointer}
+    .follow-link:hover{color:var(--text)}
+
+    /* ── Story viewer ── */
+    .story-viewer{position:fixed;inset:0;background:#000;z-index:1000;display:none;align-items:center;justify-content:center}
+    .story-viewer.open{display:flex}
+    .story-viewer-inner{width:100%;max-width:400px;height:100%;max-height:100vh;position:relative;background:var(--bg2);overflow:hidden}
+    .story-progress{display:flex;gap:4px;padding:12px}
+    .story-progress-bar{flex:1;height:3px;background:rgba(255,255,255,0.3);border-radius:3px;overflow:hidden}
+    .story-progress-fill{height:100%;background:#fff;width:0%;transition:width linear}
+    .story-content{width:100%;height:calc(100% - 80px);display:flex;align-items:center;justify-content:center;font-size:80px}
+    .story-header{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:10px;padding:12px 16px 8px;z-index:1}
+    .story-close{position:absolute;top:16px;right:16px;background:none;border:none;color:#fff;font-size:24px;cursor:pointer;z-index:2;width:36px;height:36px;display:flex;align-items:center;justify-content:center}
+    .story-bottom{position:absolute;bottom:0;left:0;right:0;padding:12px 16px;background:linear-gradient(to top,rgba(0,0,0,0.6),transparent)}
+
+    /* ── Modal ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(8px)}
+    .modal-overlay.open{opacity:1;pointer-events:all}
+    .modal{background:var(--bg2);border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;transform:scale(0.96);transition:transform .2s;margin:16px}
+    .modal-overlay.open .modal{transform:scale(1)}
+    .modal-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:17px;font-weight:700}
+    .close-btn{background:none;border:none;color:var(--text);cursor:pointer;font-size:22px;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .15s}
+    .close-btn:hover{background:var(--bg3)}
+
+    /* ── New post modal ── */
+    .post-type-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px}
+    .post-type-tab{flex:1;padding:12px;text-align:center;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent;transition:all .15s}
+    .post-type-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+    .upload-zone{border:2px dashed var(--border);border-radius:12px;padding:48px 32px;text-align:center;cursor:pointer;transition:all .15s;margin-bottom:16px}
+    .upload-zone:hover{border-color:var(--accent);background:rgba(225,48,108,0.05)}
+    .caption-textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:15px;resize:vertical;min-height:100px;outline:none;margin-bottom:12px;transition:border-color .2s}
+    .caption-textarea:focus{border-color:var(--accent)}
+    .share-btn{width:100%;background:var(--gradient);border:none;border-radius:var(--radius);padding:14px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .15s}
+    .share-btn:hover{opacity:0.9}
+    .share-btn:disabled{opacity:0.5;cursor:not-allowed}
+
+    /* ── Toast ── */
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:12px 24px;border-radius:var(--radius);font-size:15px;font-weight:600;z-index:9999;transition:transform .3s cubic-bezier(0.34,1.56,0.64,1)}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+
+    /* ── Tab underline ── */
+    .view-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:24px}
+    .view-tab{flex:1;padding:14px;text-align:center;cursor:pointer;font-size:15px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent;transition:all .15s}
+    .view-tab.active{color:var(--text);border-bottom-color:var(--text)}
+    .view-tab:hover{background:rgba(255,255,255,0.03)}
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ── Left Sidebar ── -->
+  <aside class="left-sidebar">
+    <div class="logo-ig" onclick="showView('home')">Instagram</div>
+    <a class="nav-item active" id="nav-home" onclick="showView('home')"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></a>
+    <a class="nav-item" id="nav-explore" onclick="showView('explore')"><span class="nav-icon">🔍</span><span class="nav-label">Explore</span></a>
+    <a class="nav-item" id="nav-reels" onclick="showView('reels')"><span class="nav-icon">🎬</span><span class="nav-label">Reels</span></a>
+    <a class="nav-item" id="nav-messages" onclick="showView('messages')"><span class="nav-icon">✉️</span><span class="nav-label">Messages</span></a>
+    <a class="nav-item" id="nav-notifications" onclick="showView('notifications')"><span class="nav-icon">❤️</span><span class="nav-label">Notifications</span></a>
+    <button class="new-post-btn" onclick="openNewPostModal()"><span class="nav-icon">➕</span><span class="nav-label">Create</span></button>
+    <a class="nav-item" id="nav-profile" onclick="showView('profile')"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></a>
+    <div class="sidebar-profile" onclick="showView('profile')">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px" id="sidebarAvatar">U</div>
+      <span class="nav-label" id="sidebarUsername" style="font-size:14px">vibeduser</span>
+    </div>
+    <a href="../../index.html" style="font-size:12px;color:var(--text3);text-decoration:none;padding:8px 14px;margin-top:8px" class="nav-label">← Back to Hub</a>
+  </aside>
+
+  <!-- ── Main Area ── -->
+  <div class="main-area" id="mainArea">
+
+    <!-- Home Feed -->
+    <div id="view-home">
+      <div class="feed-layout">
+        <div>
+          <!-- Stories -->
+          <div class="stories-wrap" id="storiesRow"></div>
+          <!-- Feed posts -->
+          <div id="feedPosts"></div>
+        </div>
+        <!-- Right panel -->
+        <div class="right-panel" id="homeRightPanel">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px">
+            <div style="width:56px;height:56px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:26px" id="profileAvatarWidget">U</div>
+            <div>
+              <div style="font-weight:700;font-size:15px" id="profileNameWidget">vibeduser</div>
+              <div style="font-size:13px;color:var(--text3)">Your account</div>
+            </div>
+            <button onclick="showView('profile')" style="margin-left:auto;background:none;border:none;color:#1877f2;font-weight:700;font-size:14px;cursor:pointer">Switch</button>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:var(--text3);margin-bottom:16px;display:flex;justify-content:space-between">
+            Suggested for you
+            <span style="color:var(--text);cursor:pointer">See all</span>
+          </div>
+          <div id="suggestedUsers"></div>
+          <div style="font-size:12px;color:var(--text3);margin-top:24px;line-height:2">
+            About · Help · API · Jobs · Privacy · Terms · Locations · Language<br>
+            © 2025 VibedGram from Meta
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Explore -->
+    <div id="view-explore" style="display:none">
+      <div style="margin-bottom:20px">
+        <input type="text" placeholder="Search" style="width:100%;max-width:400px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 18px;color:var(--text);font-family:'Inter',sans-serif;font-size:15px;outline:none" oninput="filterExplore(this.value)"/>
+      </div>
+      <div class="explore-grid" id="exploreGrid"></div>
+    </div>
+
+    <!-- Reels -->
+    <div id="view-reels" style="display:none">
+      <div class="reels-container" id="reelsContainer"></div>
+    </div>
+
+    <!-- Messages -->
+    <div id="view-messages" style="display:none">
+      <div style="display:flex;height:calc(100vh - 80px);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <div style="width:360px;border-right:1px solid var(--border);overflow-y:auto">
+          <div style="padding:16px;font-size:20px;font-weight:700;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            Messages <button onclick="showToast('New message 💬')" style="background:none;border:none;color:var(--text);cursor:pointer;font-size:22px">✏️</button>
+          </div>
+          <div id="dmList"></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column" id="dmChatArea">
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--text3)">
+            <span style="font-size:56px">✉️</span>
+            <div style="font-size:20px;font-weight:700;color:var(--text)">Your messages</div>
+            <div style="font-size:14px">Send private photos and messages to a friend or group.</div>
+            <button onclick="showToast('Opening new message...')" style="background:var(--accent);border:none;border-radius:var(--radius);padding:10px 24px;color:#fff;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Send message</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div id="view-notifications" style="display:none">
+      <h2 style="font-size:20px;font-weight:700;margin-bottom:20px">Notifications</h2>
+      <div id="notifList"></div>
+    </div>
+
+    <!-- Profile -->
+    <div id="view-profile" style="display:none">
+      <div class="profile-view-header">
+        <div class="profile-avatar-lg"><div class="profile-avatar-lg-inner" id="profileAvatarLg">U</div></div>
+        <div class="profile-info">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <h2 id="profileUsernameTitle" style="font-size:28px;font-weight:300">vibeduser</h2>
+            <button onclick="openEditProfile()" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px 18px;color:var(--text);font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px">Edit profile</button>
+          </div>
+          <div class="profile-stats-row">
+            <div class="profile-stat"><div class="profile-stat-num" id="postCount">0</div><div class="profile-stat-label">posts</div></div>
+            <div class="profile-stat"><div class="profile-stat-num">847</div><div class="profile-stat-label">followers</div></div>
+            <div class="profile-stat"><div class="profile-stat-num">312</div><div class="profile-stat-label">following</div></div>
+          </div>
+          <div class="profile-bio-text" id="profileBioText">✦ Building cool stuff.</div>
+        </div>
+      </div>
+      <div class="view-tabs">
+        <div class="view-tab active" id="ptab-posts" onclick="switchProfileTab('posts')">⊞ POSTS</div>
+        <div class="view-tab" id="ptab-reels" onclick="switchProfileTab('reels')">▶ REELS</div>
+        <div class="view-tab" id="ptab-tagged" onclick="switchProfileTab('tagged')">🏷 TAGGED</div>
+      </div>
+      <div class="profile-grid" id="profileGrid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── New Post Modal ── -->
+<div class="modal-overlay" id="newPostModal">
+  <div class="modal">
+    <div class="modal-header">Create new post <button class="close-btn" onclick="closeModal('newPostModal')">✕</button></div>
+    <div style="padding:16px">
+      <div class="post-type-tabs">
+        <div class="post-type-tab active" id="ptype-post" onclick="setPostType('post')">📷 Photo</div>
+        <div class="post-type-tab" id="ptype-reel" onclick="setPostType('reel')">🎬 Reel</div>
+        <div class="post-type-tab" id="ptype-story" onclick="setPostType('story')">⭕ Story</div>
+      </div>
+      <div class="upload-zone" onclick="showToast('Select your photo/video — real file upload supported in desktop app 📱')">
+        <div style="font-size:48px;margin-bottom:12px">📸</div>
+        <div style="font-size:17px;font-weight:600;margin-bottom:6px">Drag photos and videos here</div>
+        <div style="font-size:14px;color:var(--text3);margin-bottom:16px">Or click to select from your device</div>
+        <div style="font-size:18px;margin-bottom:8px">🎭 🌅 🌃 🎨 🍕 🌍 🎵 ✨</div>
+        <div style="font-size:13px;color:var(--text3)">Pick an emoji to represent your post!</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px" id="emojiPicker">
+          🎭🌅🌃🎨🍕🌍🎵✨🚀🌺🏆🎯🦋🌊🔥💫🎪🦄🌈🎸
+        </div>
+      </div>
+      <div id="emojiPreview" style="text-align:center;font-size:80px;margin-bottom:12px;display:none"></div>
+      <textarea class="caption-textarea" id="newPostCaption" placeholder="Write a caption..."></textarea>
+      <input type="text" id="newPostLocation" placeholder="📍 Add location" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;margin-bottom:12px"/>
+      <button class="share-btn" id="sharePostBtn" onclick="sharePost()">Share</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Story Viewer ── -->
+<div class="story-viewer" id="storyViewer">
+  <div class="story-viewer-inner">
+    <div class="story-progress" id="storyProgress"></div>
+    <div class="story-header">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f09433,#bc1888);padding:2px"><div style="width:100%;height:100%;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid var(--bg2)" id="storyAvatarViewer">U</div></div>
+      <span style="font-weight:700;font-size:15px;margin-left:8px" id="storyUsernameViewer">user</span>
+      <span style="font-size:12px;color:var(--text3);margin-left:8px" id="storyTimeViewer">3h</span>
+      <button class="story-close" onclick="closeStory()">✕</button>
+    </div>
+    <div class="story-content" id="storyContent">✨</div>
+    <div class="story-bottom">
+      <input type="text" id="storyReplyInput" placeholder="Send message" style="width:100%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.4);border-radius:var(--radius);padding:10px 16px;color:#fff;font-family:'Inter',sans-serif;font-size:14px;outline:none" onkeydown="if(event.key==='Enter')replyToStory()"/>
+    </div>
+    <button onclick="prevStory()" style="position:absolute;left:8px;top:50%;background:rgba(0,0,0,0.4);border:none;border-radius:50%;width:36px;height:36px;color:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">‹</button>
+    <button onclick="nextStory()" style="position:absolute;right:8px;top:50%;background:rgba(0,0,0,0.4);border:none;border-radius:50%;width:36px;height:36px;color:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">›</button>
+  </div>
+</div>
+
+<!-- ── Edit Profile Modal ── -->
+<div class="modal-overlay" id="editProfileModal">
+  <div class="modal">
+    <div class="modal-header">Edit Profile <button class="close-btn" onclick="closeModal('editProfileModal')">✕</button></div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+      <label style="font-size:13px;font-weight:600;color:var(--text3)">Username
+        <input id="editUsername" style="display:block;width:100%;margin-top:6px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 14px;font-family:'Inter',sans-serif;font-size:15px;outline:none"/>
+      </label>
+      <label style="font-size:13px;font-weight:600;color:var(--text3)">Name
+        <input id="editFullName" style="display:block;width:100%;margin-top:6px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 14px;font-family:'Inter',sans-serif;font-size:15px;outline:none"/>
+      </label>
+      <label style="font-size:13px;font-weight:600;color:var(--text3)">Bio
+        <textarea id="editBio" maxlength="150" style="display:block;width:100%;margin-top:6px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 14px;font-family:'Inter',sans-serif;font-size:15px;outline:none;resize:vertical;min-height:80px"></textarea>
+      </label>
+      <button onclick="saveProfile()" style="background:var(--gradient);border:none;border-radius:var(--radius);padding:12px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function timeAgo(ts){const d=(Date.now()-ts)/1e3;if(d<60)return Math.floor(d)+'s';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d'}
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function fmtNum(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(1)+'K';return String(n)}
+function hashCode(s){let h=0;for(let i=0;i<s.length;i++)h=((h<<5)-h)+s.charCodeAt(i)|0;return Math.abs(h)}
+
+/* ── Profile state ── */
+let profile = JSON.parse(localStorage.getItem('ig_profile')||'null')||{username:'vibeduser',fullName:'VibedUser',bio:'✦ Building cool stuff.'};
+let posts = JSON.parse(localStorage.getItem('ig_posts')||'null')||seedPosts();
+let currentStoryIndex = 0;
+let currentStoryUser = null;
+let selectedEmoji = '📷';
+let activePostType = 'post';
+
+const STORIES = [
+  {user:'vibeduser',emoji:'U',seen:false,time:'1h',content:'✨',emojis:['✨','🎯']},
+  {user:'elonmusk',emoji:'🚀',seen:false,time:'2h',content:'🚀',emojis:['🚀','🌟']},
+  {user:'designdaily',emoji:'🎨',seen:false,time:'3h',content:'🎨',emojis:['🎨','🖌️']},
+  {user:'foodielife',emoji:'🍕',seen:false,time:'4h',content:'🍕',emojis:['🍕','🌮']},
+  {user:'naturelove',emoji:'🌿',seen:false,time:'5h',content:'🌿',emojis:['🌿','🌺']},
+  {user:'techguru',emoji:'💻',seen:false,time:'6h',content:'💻',emojis:['💻','📱']},
+  {user:'traveler',emoji:'✈️',seen:false,time:'8h',content:'✈️',emojis:['✈️','🌍']},
+];
+
+const SUGGESTED_USERS = [
+  {username:'elonmusk',fullName:'Elon Musk',emoji:'🚀',reason:'Followed by nasa'},
+  {username:'openai',fullName:'OpenAI',emoji:'🤖',reason:'Popular on Instagram'},
+  {username:'designdaily',fullName:'Design Daily',emoji:'🎨',reason:'Suggested for you'},
+  {username:'foodielife',fullName:'Foodie Life',emoji:'🍕',reason:'New to Instagram'},
+  {username:'traveler',fullName:'World Traveler',emoji:'✈️',reason:'Suggested for you'},
+];
+
+const DM_CONTACTS = [
+  {username:'elonmusk',name:'Elon Musk',emoji:'🚀',lastMsg:'Let\'s go to Mars! 🚀',time:Date.now()-300000,unread:1},
+  {username:'designdaily',name:'Design Daily',emoji:'🎨',lastMsg:'Check out this design 🎨',time:Date.now()-7200000,unread:0},
+  {username:'openai',name:'OpenAI',emoji:'🤖',lastMsg:'Have you tried the new model?',time:Date.now()-86400000,unread:2},
+];
+
+function seedPosts(){
+  const data=[
+    {emoji:'🌅',caption:'Golden hour 🌅 Nothing beats this view. #photography #sunset #golden',likes:1240,userEmoji:'🌅',user:'naturelove',location:'Santorini, Greece'},
+    {emoji:'🍕',caption:'Pizza night 🍕 Homemade sourdough base, fresh mozzarella. Recipe in bio! #foodie #pizza #homemade',likes:892,userEmoji:'🍕',user:'foodielife',location:'Home Kitchen'},
+    {emoji:'🎨',caption:'New illustration series ✨ Exploring the intersection of nature and technology. DM for commissions 🎨',likes:3450,userEmoji:'🎨',user:'designdaily',location:'Studio'},
+    {emoji:'✈️',caption:'Landed in Tokyo 🇯🇵 The city is absolutely electric at night. Can\'t wait to explore! #travel #tokyo #japan',likes:5670,userEmoji:'✈️',user:'traveler',location:'Tokyo, Japan'},
+    {emoji:'💪',caption:'Consistency is key 💪 6 months into the journey and never felt better. Small wins every day! #fitness #gym',likes:2340,userEmoji:'💪',user:'fitnesslife',location:'City Gym'},
+  ];
+  return data.map((d,i)=>({
+    id:'p'+i,emoji:d.emoji,caption:d.caption,likes:d.likes,liked:false,
+    username:d.user,userEmoji:d.userEmoji,location:d.location,
+    comments:[],saved:false,ts:Date.now()-rnd(3600000,86400000*7),
+    userPost:false
+  }));
+}
+
+function init(){
+  updateProfileUI();
+  renderStories();
+  renderFeedPosts();
+  renderExplore();
+  renderReels();
+  renderDMs();
+  renderNotifs();
+  renderProfileGrid();
+  renderSuggested();
+}
+
+function updateProfileUI(){
+  const u=profile.username;
+  document.getElementById('sidebarUsername').textContent=u;
+  document.getElementById('sidebarAvatar').textContent=u[0].toUpperCase();
+  document.getElementById('profileUsernameTitle').textContent=u;
+  document.getElementById('profileBioText').textContent=profile.bio||'';
+  document.getElementById('profileAvatarLg').textContent=u[0].toUpperCase();
+  document.getElementById('profileAvatarWidget').textContent=u[0].toUpperCase();
+  document.getElementById('profileNameWidget').textContent=u;
+}
+
+/* ── Navigation ── */
+function showView(view){
+  document.querySelectorAll('[id^="view-"]').forEach(el=>el.style.display='none');
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById('view-'+view);
+  if(el)el.style.display='block';
+  const nav=document.getElementById('nav-'+view);
+  if(nav)nav.classList.add('active');
+  if(view==='profile')renderProfileGrid();
+}
+
+/* ── Stories ── */
+function renderStories(){
+  const row=document.getElementById('storiesRow');
+  let html=`<div class="story-item your-story" onclick="openNewPostModal()">
+    <div class="story-ring"><div class="story-avatar" style="position:relative">${escHtml(profile.username[0].toUpperCase())}<div class="story-add-btn">+</div></div></div>
+    <span class="story-name">Your story</span>
+  </div>`;
+  html+=STORIES.map((s,i)=>`
+    <div class="story-item" onclick="openStory(${i})">
+      <div class="story-ring ${s.seen?'seen':''}"><div class="story-avatar">${escHtml(s.emoji)}</div></div>
+      <span class="story-name">${escHtml(s.user)}</span>
+    </div>`).join('');
+  row.innerHTML=html;
+}
+
+function openStory(idx){
+  currentStoryIndex=idx;
+  currentStoryUser=STORIES[idx];
+  STORIES[idx].seen=true;
+  renderStories();
+  updateStoryViewer();
+  document.getElementById('storyViewer').classList.add('open');
+  startStoryProgress();
+}
+
+function updateStoryViewer(){
+  const s=STORIES[currentStoryIndex];
+  document.getElementById('storyAvatarViewer').textContent=s.emoji;
+  document.getElementById('storyUsernameViewer').textContent=s.user;
+  document.getElementById('storyTimeViewer').textContent=s.time;
+  document.getElementById('storyContent').textContent=s.content;
+  const prog=document.getElementById('storyProgress');
+  prog.innerHTML=STORIES.map((_,i)=>`<div class="story-progress-bar"><div class="story-progress-fill" id="spf_${i}" style="width:${i<currentStoryIndex?'100%':'0%'}"></div></div>`).join('');
+}
+
+let storyTimer=null;
+function startStoryProgress(){
+  clearTimeout(storyTimer);
+  const fill=document.getElementById('spf_'+currentStoryIndex);
+  if(fill){fill.style.transition='width 5s linear';fill.style.width='100%';}
+  storyTimer=setTimeout(nextStory,5100);
+}
+
+function nextStory(){if(currentStoryIndex<STORIES.length-1){currentStoryIndex++;updateStoryViewer();startStoryProgress();}else closeStory();}
+function prevStory(){if(currentStoryIndex>0){currentStoryIndex--;updateStoryViewer();startStoryProgress();}}
+function closeStory(){clearTimeout(storyTimer);document.getElementById('storyViewer').classList.remove('open');}
+function replyToStory(){const inp=document.getElementById('storyReplyInput');if(inp.value.trim()){showToast('Replied to story: '+inp.value.trim().slice(0,30));inp.value='';}}
+
+/* ── Feed Posts ── */
+function renderFeedPosts(){
+  const container=document.getElementById('feedPosts');
+  const feed=[...posts].sort((a,b)=>b.ts-a.ts);
+  container.innerHTML=feed.map(p=>postHTML(p)).join('');
+  attachPostEvents();
+}
+
+function postHTML(p){
+  const likeCount=p.likes+(p.liked?1:0);
+  const commentPrev=p.comments.slice(-2);
+  return`<div class="post-card" id="post_${escHtml(p.id)}">
+    <div class="post-header">
+      <div class="post-avatar" onclick="showToast('Viewing @${escHtml(p.username)} profile')"><div class="post-avatar-inner">${escHtml(p.userEmoji||p.username[0].toUpperCase())}</div></div>
+      <div>
+        <div class="post-username" onclick="showToast('Viewing @${escHtml(p.username)} profile')">${escHtml(p.username)}</div>
+        ${p.location?`<div class="post-location">${escHtml(p.location)}</div>`:''}
+      </div>
+      <button class="post-more" onclick="showToast('More options...')">···</button>
+    </div>
+    <div class="post-image-wrap" ondblclick="doubleTapLike('${escHtml(p.id)}')">
+      <div class="post-image-placeholder">${escHtml(p.emoji||'📷')}</div>
+    </div>
+    <div class="post-actions-row">
+      <button class="action-btn-ig ${p.liked?'liked':''}" data-action="like" data-id="${escHtml(p.id)}" title="Like">${p.liked?'❤️':'🤍'}</button>
+      <button class="action-btn-ig" data-action="comment" data-id="${escHtml(p.id)}" title="Comment">💬</button>
+      <button class="action-btn-ig" data-action="share" data-id="${escHtml(p.id)}" title="Share">📤</button>
+      <button class="action-btn-ig save-btn ${p.saved?'':''}" data-action="save" data-id="${escHtml(p.id)}" title="Save">${p.saved?'🔖':'📌'}</button>
+    </div>
+    <div class="like-count">${fmtNum(likeCount)} likes</div>
+    <div class="caption-row"><span class="caption-username">${escHtml(p.username)}</span>${escHtml(p.caption)}</div>
+    ${p.comments.length>2?`<div class="view-comments" onclick="viewPostComments('${escHtml(p.id)}')">View all ${p.comments.length} comments</div>`:''}
+    ${commentPrev.map(c=>`<div class="comment-preview"><span class="comment-preview-user">${escHtml(c.user)}</span><span>${escHtml(c.text)}</span></div>`).join('')}
+    <div class="post-time">${timeAgo(p.ts)} ago</div>
+    <div class="comment-input-bar">
+      <span style="font-size:22px;cursor:pointer" onclick="openEmojiForComment('${escHtml(p.id)}')">😊</span>
+      <input type="text" placeholder="Add a comment..." id="commentInput_${escHtml(p.id)}" oninput="this.nextElementSibling.disabled=!this.value.trim()" onkeydown="if(event.key==='Enter')addComment('${escHtml(p.id)}')"/>
+      <button disabled onclick="addComment('${escHtml(p.id)}')">Post</button>
+    </div>
+  </div>`;
+}
+
+function attachPostEvents(){
+  document.querySelectorAll('[data-action]').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const id=btn.dataset.id,action=btn.dataset.action;
+      if(action==='like')toggleLike(id);
+      else if(action==='comment'){const inp=document.getElementById('commentInput_'+id);if(inp)inp.focus();}
+      else if(action==='share')showToast('Link copied to clipboard 📋');
+      else if(action==='save')toggleSave(id);
+    });
+  });
+}
+
+function toggleLike(id){
+  const p=posts.find(x=>x.id===id);
+  if(!p)return;
+  p.liked=!p.liked;
+  savePosts();
+  renderFeedPosts();
+}
+
+function doubleTapLike(id){
+  const p=posts.find(x=>x.id===id);
+  if(!p||p.liked)return;
+  p.liked=true;
+  savePosts();
+  showToast('❤️ Liked!');
+  renderFeedPosts();
+}
+
+function toggleSave(id){
+  const p=posts.find(x=>x.id===id);
+  if(!p)return;
+  p.saved=!p.saved;
+  savePosts();
+  showToast(p.saved?'Post saved 🔖':'Removed from saved');
+  renderFeedPosts();
+}
+
+function addComment(id){
+  const input=document.getElementById('commentInput_'+id);
+  if(!input||!input.value.trim())return;
+  const p=posts.find(x=>x.id===id);
+  if(!p)return;
+  p.comments.push({user:profile.username,text:input.value.trim(),ts:Date.now()});
+  savePosts();
+  input.value='';
+  input.nextElementSibling.disabled=true;
+  renderFeedPosts();
+  showToast('Comment posted! 💬');
+}
+
+function viewPostComments(id){showToast('Viewing comments for post');}
+function openEmojiForComment(id){
+  const emojis=['😊','❤️','🔥','👍','🙏','😂','💯','✨','🎉'];
+  const input=document.getElementById('commentInput_'+id);
+  if(input){input.value+=(emojis[rnd(0,emojis.length-1)]);input.nextElementSibling.disabled=false;}
+}
+
+/* ── Explore ── */
+const EXPLORE_EMOJIS=['🌅','🍕','🎨','✈️','💪','🌿','🎵','🏆','🌊','🎭','🦋','🌺','🚀','💻','🎯','🌍','🎪','🦄','🌈','🎸','🍜','🎮','📸','🎬','🌙'];
+function renderExplore(){
+  const grid=document.getElementById('exploreGrid');
+  grid.innerHTML=EXPLORE_EMOJIS.map((e,i)=>`
+    <div class="explore-cell" onclick="showToast('Opening post...')">
+      <div class="explore-cell-img">${e}</div>
+      <div class="explore-overlay">
+        <span>❤️ ${rnd(100,50000)}</span>
+        <span>💬 ${rnd(10,5000)}</span>
+      </div>
+    </div>`).join('');
+}
+
+function filterExplore(q){
+  if(!q){renderExplore();return;}
+  const grid=document.getElementById('exploreGrid');
+  grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">🔍 Searching for "${escHtml(q)}"...</div>`;
+  setTimeout(()=>renderExplore(),500);
+}
+
+/* ── Reels ── */
+const REEL_DATA=[
+  {emoji:'🎭',user:'creator1',caption:'POV: When the code finally works 😂 #coding #developer',likes:45200,sound:'Trending Sound 🎵'},
+  {emoji:'🌊',user:'surfer_life',caption:'Best wave of the season 🌊 #surfing #ocean #vibes',likes:123000,sound:'Ocean Waves 🎵'},
+  {emoji:'🍜',user:'foodie_life',caption:'Making ramen from scratch 🍜 Full recipe on my profile! #cooking',likes:67800,sound:'Lo-fi Kitchen 🎵'},
+  {emoji:'🏋️',user:'gym_motivator',caption:'1 year transformation 💪 Consistency is everything. #fitness',likes:89400,sound:'Motivational Beat 🎵'},
+  {emoji:'🌸',user:'travel_diary',caption:'Cherry blossom season in Japan 🌸 I have no words. #japan #travel',likes:234000,sound:'Japanese Koto 🎵'},
+];
+
+function renderReels(){
+  const c=document.getElementById('reelsContainer');
+  c.innerHTML=REEL_DATA.map((r,i)=>`
+    <div class="reel-card" id="reel_${i}">
+      <div class="reel-content">${escHtml(r.emoji)}</div>
+      <div class="reel-overlay"></div>
+      <div class="reel-bottom">
+        <div class="reel-user">
+          <div class="reel-avatar">${escHtml(r.user[0].toUpperCase())}</div>
+          <span class="reel-username">${escHtml(r.user)}</span>
+          <button class="follow-sm" onclick="showToast('Following @${escHtml(r.user)} ✓')">Follow</button>
+        </div>
+        <div class="reel-caption">${escHtml(r.caption)}</div>
+        <div class="reel-sound">♪ ${escHtml(r.sound)}</div>
+      </div>
+      <div class="reel-actions">
+        <div class="reel-action" onclick="likeReel(${i},this)">
+          <div class="reel-action-icon" id="reelLike_${i}">🤍</div>
+          <div class="reel-action-count" id="reelLikeCount_${i}">${fmtNum(r.likes)}</div>
+        </div>
+        <div class="reel-action" onclick="showToast('Opening comments...')">
+          <div class="reel-action-icon">💬</div>
+          <div class="reel-action-count">${rnd(100,5000)}</div>
+        </div>
+        <div class="reel-action" onclick="showToast('Link copied! 📋')">
+          <div class="reel-action-icon">📤</div>
+          <div class="reel-action-count">Send</div>
+        </div>
+        <div class="reel-action" onclick="showToast('Saved to collection 🔖')">
+          <div class="reel-action-icon">🔖</div>
+          <div class="reel-action-count">Save</div>
+        </div>
+        <div class="reel-action">
+          <div class="reel-action-icon" style="font-size:32px;border-radius:50%;background:var(--bg3);width:40px;height:40px;display:flex;align-items:center;justify-content:center">${escHtml(r.user[0].toUpperCase())}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function likeReel(i,el){
+  const icon=document.getElementById('reelLike_'+i);
+  const count=document.getElementById('reelLikeCount_'+i);
+  if(icon.textContent==='🤍'){icon.textContent='❤️';icon.style.animation='heartPop .3s ease';REEL_DATA[i].likes++;}
+  else{icon.textContent='🤍';REEL_DATA[i].likes--;}
+  count.textContent=fmtNum(REEL_DATA[i].likes);
+}
+
+/* ── Messages ── */
+function renderDMs(){
+  const list=document.getElementById('dmList');
+  if(!list)return;
+  list.innerHTML=DM_CONTACTS.map(dm=>`
+    <div onclick="openDMChat('${escHtml(dm.username)}')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='none'">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;position:relative">${escHtml(dm.emoji)}
+        ${dm.unread?`<span style="position:absolute;top:-2px;right:-2px;background:var(--accent);border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center">${dm.unread}</span>`:''}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:15px">${escHtml(dm.name)}</div>
+        <div style="font-size:13px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(dm.lastMsg)}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text3)">${timeAgo(dm.time)}</div>
+    </div>`).join('');
+}
+
+function openDMChat(username){
+  const dm=DM_CONTACTS.find(d=>d.username===username);
+  if(!dm)return;
+  dm.unread=0;
+  renderDMs();
+  const chat=document.getElementById('dmChatArea');
+  const msgs=JSON.parse(localStorage.getItem('ig_msgs_'+username)||'[]');
+  chat.innerHTML=`
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700;display:flex;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px">${escHtml(dm.emoji)}</div>${escHtml(dm.name)}
+    </div>
+    <div id="igMsgList_${escHtml(username)}" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
+      ${msgs.map(m=>`<div style="align-self:${m.mine?'flex-end':'flex-start'};background:${m.mine?'var(--accent)':'var(--bg3)'};border-radius:18px;padding:10px 16px;max-width:70%;font-size:15px">${escHtml(m.text)}</div>`).join('')||'<div style="text-align:center;color:var(--text3)">Say hi to '+escHtml(dm.name)+' 👋</div>'}
+    </div>
+    <div style="display:flex;gap:10px;padding:12px 16px;border-top:1px solid var(--border)">
+      <input id="igMsgInput_${escHtml(username)}" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:10px 18px;font-size:15px;font-family:'Inter',sans-serif;outline:none" placeholder="Message..." onkeydown="if(event.key==='Enter')sendIgDM('${escHtml(username)}')"/>
+      <button onclick="sendIgDM('${escHtml(username)}')" style="background:none;border:none;color:var(--accent);font-size:22px;cursor:pointer">→</button>
+    </div>`;
+}
+
+function sendIgDM(username){
+  const input=document.getElementById('igMsgInput_'+username);
+  if(!input||!input.value.trim())return;
+  const msgs=JSON.parse(localStorage.getItem('ig_msgs_'+username)||'[]');
+  msgs.push({text:input.value.trim(),mine:true,ts:Date.now()});
+  localStorage.setItem('ig_msgs_'+username,JSON.stringify(msgs));
+  input.value='';
+  openDMChat(username);
+}
+
+/* ── Notifications ── */
+function renderNotifs(){
+  const list=document.getElementById('notifList');
+  if(!list)return;
+  const notifs=[
+    {emoji:'❤️',text:'<strong>elonmusk</strong> liked your photo',time:'2m'},
+    {emoji:'💬',text:'<strong>designdaily</strong> commented: "Stunning! 🔥"',time:'15m'},
+    {emoji:'👤',text:'<strong>traveler</strong> started following you',time:'1h'},
+    {emoji:'🔖',text:'<strong>openai</strong> saved your post',time:'3h'},
+    {emoji:'📍',text:'<strong>foodielife</strong> tagged you in a photo',time:'1d'},
+  ];
+  list.innerHTML=notifs.map(n=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='none'">
+      <span style="font-size:24px;flex-shrink:0">${n.emoji}</span>
+      <div style="flex:1;font-size:15px;line-height:1.5">${n.text}</div>
+      <div style="font-size:12px;color:var(--text3);flex-shrink:0">${n.time}</div>
+    </div>`).join('');
+}
+
+/* ── Profile ── */
+function renderProfileGrid(){
+  const grid=document.getElementById('profileGrid');
+  if(!grid)return;
+  const myPosts=posts.filter(p=>p.userPost);
+  document.getElementById('postCount').textContent=myPosts.length;
+  grid.innerHTML=(myPosts.length?myPosts:[...Array(9)].map((_,i)=>({id:'ph'+i,emoji:'📷',liked:false,likes:0,comments:[],ts:Date.now()}))).map(p=>`
+    <div class="profile-cell" onclick="showToast('Opening post...')">
+      ${escHtml(p.emoji||'📷')}
+      <div class="profile-cell-overlay">
+        <span>❤️ ${fmtNum(p.likes+(p.liked?1:0))}</span>
+        <span>💬 ${p.comments.length}</span>
+      </div>
+    </div>`).join('');
+}
+
+function switchProfileTab(tab){
+  document.querySelectorAll('[id^="ptab-"]').forEach(t=>t.classList.remove('active'));
+  document.getElementById('ptab-'+tab).classList.add('active');
+  if(tab==='reels'||tab==='tagged')showToast('Loading '+tab+'...');
+  else renderProfileGrid();
+}
+
+/* ── Suggested users ── */
+function renderSuggested(){
+  const el=document.getElementById('suggestedUsers');
+  if(!el)return;
+  el.innerHTML=SUGGESTED_USERS.map(u=>`
+    <div class="profile-suggest">
+      <div class="suggest-avatar"><div class="suggest-avatar-inner">${escHtml(u.emoji)}</div></div>
+      <div class="suggest-info">
+        <div class="suggest-name">${escHtml(u.username)}</div>
+        <div class="suggest-reason">${escHtml(u.reason)}</div>
+      </div>
+      <span class="follow-link" id="sugg_${escHtml(u.username)}" onclick="followUser('${escHtml(u.username)}')">Follow</span>
+    </div>`).join('');
+}
+
+function followUser(username){
+  const el=document.getElementById('sugg_'+username);
+  if(el){if(el.textContent==='Follow'){el.textContent='Following';el.style.color='var(--text3)';}else{el.textContent='Follow';el.style.color='var(--accent)';}}
+}
+
+/* ── New post ── */
+function openNewPostModal(){
+  document.getElementById('emojiPreview').style.display='none';
+  document.getElementById('newPostCaption').value='';
+  document.getElementById('newPostLocation').value='';
+  document.getElementById('newPostModal').classList.add('open');
+  // Set up emoji picker
+  const picker=document.getElementById('emojiPicker');
+  picker.innerHTML='🎭🌅🌃🎨🍕🌍🎵✨🚀🌺🏆🎯🦋🌊🔥💫🎪🦄🌈🎸'.split('').filter(c=>c.trim()).map(e=>`<span onclick="selectPostEmoji('${e}')" style="font-size:28px;cursor:pointer;padding:4px;border-radius:8px;transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='none'">${e}</span>`).join('');
+}
+
+function setPostType(type){
+  activePostType=type;
+  document.querySelectorAll('.post-type-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('ptype-'+type).classList.add('active');
+}
+
+function selectPostEmoji(emoji){
+  selectedEmoji=emoji;
+  const prev=document.getElementById('emojiPreview');
+  prev.textContent=emoji;
+  prev.style.display='block';
+}
+
+function sharePost(){
+  const caption=document.getElementById('newPostCaption').value.trim();
+  const location=document.getElementById('newPostLocation').value.trim();
+  const post={
+    id:'up'+Date.now(),emoji:selectedEmoji||'📷',caption:caption||'New post ✨',
+    likes:0,liked:false,username:profile.username,userEmoji:profile.username[0].toUpperCase(),
+    location,comments:[],saved:false,ts:Date.now(),userPost:true
+  };
+  posts.unshift(post);
+  savePosts();
+  closeModal('newPostModal');
+  if(document.getElementById('view-home').style.display!=='none')renderFeedPosts();
+  renderProfileGrid();
+  showToast('Post shared! 🎉');
+}
+
+/* ── Edit Profile ── */
+function openEditProfile(){
+  document.getElementById('editUsername').value=profile.username;
+  document.getElementById('editFullName').value=profile.fullName||'';
+  document.getElementById('editBio').value=profile.bio||'';
+  document.getElementById('editProfileModal').classList.add('open');
+}
+
+function saveProfile(){
+  profile.username=document.getElementById('editUsername').value.trim()||profile.username;
+  profile.fullName=document.getElementById('editFullName').value.trim();
+  profile.bio=document.getElementById('editBio').value.trim();
+  localStorage.setItem('ig_profile',JSON.stringify(profile));
+  closeModal('editProfileModal');
+  updateProfileUI();
+  showToast('Profile updated! ✓');
+}
+
+/* ── Modals ── */
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open')}));
+
+/* ── Save ── */
+function savePosts(){localStorage.setItem('ig_posts',JSON.stringify(posts));}
+
+/* ── Toast ── */
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+init();
+</script>
+</body>
+</html>
