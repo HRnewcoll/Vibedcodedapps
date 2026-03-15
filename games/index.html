@@ -1302,7 +1302,7 @@
 
         const avatar = document.createElement('div');
         avatar.className = 'activity-avatar';
-        avatar.textContent = escHtml(item.player.slice(0, 2).toUpperCase());
+        avatar.textContent = item.player.slice(0, 2).toUpperCase();
 
         const dot = document.createElement('div');
         dot.className = 'activity-dot';
@@ -1359,7 +1359,8 @@
       row.className = 'lb-row';
 
       const rank = document.createElement('div');
-      rank.className = 'lb-rank' + (rankClasses[e.rank - 1] ? ' ' + rankClasses[e.rank - 1] : '');
+      rank.className = 'lb-rank';
+      if (rankClasses[e.rank - 1]) rank.classList.add(rankClasses[e.rank - 1]);
       rank.textContent = e.rank;
 
       const info = document.createElement('div');
