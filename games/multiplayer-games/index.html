@@ -388,6 +388,7 @@ function saveStats(key, data) {
   const W = 700, H = 400, PW = 12, PH = 90, PSPD = 6, WIN = 7;
   const BALL_R = 7, TRAIL_LEN = 16;
 
+  const COUNTDOWN_DISPLAY_MS = 600; /* "GO!" visible duration before ball launches */
   const keys = {};
   let ball, p1, p2, s1, s2, gs, countVal, countTimer, trail;
   let pStats = loadStats('pong_stats', {played:0, p1w:0, p2w:0});
@@ -445,7 +446,7 @@ function saveStats(key, data) {
       const el = document.getElementById('pong-overlay');
       if (countVal <= 0) {
         el.textContent = 'GO!';
-        setTimeout(() => { el.style.opacity='0'; gs='playing'; launchBall(Math.random()<.5?1:2); }, 600);
+        setTimeout(() => { el.style.opacity='0'; gs='playing'; launchBall(Math.random()<.5?1:2); }, COUNTDOWN_DISPLAY_MS);
       } else {
         el.textContent = countVal;
       }
