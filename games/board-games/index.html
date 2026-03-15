@@ -461,9 +461,9 @@ function saveStats(key,val){ try{ localStorage.setItem(key,JSON.stringify(val));
     clearInterval(timerInterval);
     if(!timerLimit) return;
     timerInterval = setInterval(()=>{
-      if(gameState!=='playing') return clearInterval(timerInterval);
-      if(turn==='w'){ timerW--; if(timerW<=0){ timerW=0; endGame('timeout','w'); } }
-      else { timerB--; if(timerB<=0){ timerB=0; endGame('timeout','b'); } }
+      if(gameState!=='playing'){ clearInterval(timerInterval); return; }
+      if(turn==='w'){ timerW--; if(timerW<=0){ timerW=0; clearInterval(timerInterval); endGame('timeout','w'); return; } }
+      else { timerB--; if(timerB<=0){ timerB=0; clearInterval(timerInterval); endGame('timeout','b'); return; } }
       updateTimerDisplay();
     },1000);
   }

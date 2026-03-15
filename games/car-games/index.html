@@ -380,11 +380,15 @@ const ENEMY_COLORS = [
 ];
 
 // ─── state ────────────────────────────────────────────────────────────────────
-// Migrate legacy high score from old key if present and higher
-const _legacy = parseInt(localStorage.getItem(LS_KEY_LEGACY) || '0');
-const _current = parseInt(localStorage.getItem(LS_KEY) || '0');
-let best = Math.max(_legacy, _current);
-if (_legacy > 0) { localStorage.setItem(LS_KEY, best); localStorage.removeItem(LS_KEY_LEGACY); }
+// Migrate legacy high score from old key if present
+if (localStorage.getItem(LS_KEY_LEGACY) !== null) {
+  const _legacy = parseInt(localStorage.getItem(LS_KEY_LEGACY) || '0');
+  const _current = parseInt(localStorage.getItem(LS_KEY) || '0');
+  const best_merged = Math.max(_legacy, _current);
+  localStorage.setItem(LS_KEY, best_merged);
+  localStorage.removeItem(LS_KEY_LEGACY);
+}
+let best = parseInt(localStorage.getItem(LS_KEY) || '0');
 let currentTrack = 'highway';
 let difficulty   = 'normal';
 let showControls = true;

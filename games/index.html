@@ -1334,7 +1334,12 @@
 
     function refresh() { renderFeed(buildItems()); }
     refresh();
-    setInterval(refresh, 7000);
+    let feedInterval = setInterval(refresh, 7000);
+    // Pause refreshes when tab is hidden to avoid unnecessary DOM work
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { clearInterval(feedInterval); }
+      else { refresh(); feedInterval = setInterval(refresh, 7000); }
+    });
   })();
 
   /* ══════════════════════════════════════════

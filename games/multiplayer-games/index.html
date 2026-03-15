@@ -439,9 +439,12 @@ function saveStats(key, data) {
     el.textContent = countVal;
   }
 
+  // At 60 fps, ~60 frames ≈ 1 second. Using 60 gives clean 1s countdown steps.
+  const COUNTDOWN_FRAMES_PER_STEP = 60;
+
   function tickCountdown() {
     countTimer++;
-    if (countTimer % 55 === 0) {
+    if (countTimer % COUNTDOWN_FRAMES_PER_STEP === 0) {
       countVal--;
       const el = document.getElementById('pong-overlay');
       if (countVal <= 0) {
