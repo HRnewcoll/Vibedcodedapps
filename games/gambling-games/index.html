@@ -803,12 +803,9 @@ function buildBettingTable() {
     // Mid row (row 2): 2,5,8…35
     // Bot row (row 1): 1,4,7…34
     [col*3, col*3-1, col*3-2].forEach(n => {
-      const c = makeCell(n, numColor(n)===RED_NUMS?'red-n':numColor(n)==='black'?'black-n':'red-n', 'n'+n);
+      const cls = numColor(n) === 'red' ? 'red-n' : 'black-n';
+      const c = makeCell(n, cls, 'n'+n);
       c.style.minHeight = '26px';
-      c.className = 'bet-cell ' + (RED_SET.has(n)?'red-n':'black-n');
-      c.dataset.bet = 'n'+n;
-      c.onclick = () => placeBet('n'+n);
-      refreshChipOnCell(c, 'n'+n);
       colDiv.appendChild(c);
     });
     grid.appendChild(colDiv);
@@ -995,9 +992,6 @@ function rouletteMult(key, n, col) {
   if (key==='col3'  && n!==0 && n%3===0)          return 3;
   return 0;
 }
-
-// Unused variable guard — ensure numColor uses RED_SET not RED_NUMS
-const RED_NUMS = RED_SET;
 
 buildBettingTable();
 drawWheel(0);
