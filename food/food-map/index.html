@@ -366,7 +366,7 @@ var EMOJI_MAP={
   'Fast Food':'🍔','Vegan':'🥗','Pizza':'🍕','Burgers':'🍔','Sushi':'🍣',
   'Thai':'🍜','Greek':'🥙','Turkish':'🥙','French':'🥐','American':'🥩'
 };
-function cEmoji(c){return EMOJI_MAP[c]||'\ud83c\udf7d\ufe0f';}
+function cEmoji(c){return EMOJI_MAP[c]||'&#127869;&#65039;';}
 
 var BANNER_BG={
   'Italian':'#1a0a1a','Chinese':'#1a0a0a','Indian':'#1a100a','Mexican':'#0a1a0a',
@@ -662,7 +662,7 @@ function buildCuisineTiles(){
   return CUISINES.map(function(c){
     var n=counts[c.name]||0;
     var active=state.activeCuisine===c.name?' active':'';
-    return '<div class="cuisine-tile'+active+'" onclick="setCuisine(''+escHtml(c.name)+'')">'
+    return '<div class="cuisine-tile'+active+'" onclick="setCuisine(\''+escHtml(c.name)+'\')">'
       +'<div class="cuisine-emoji">'+cEmoji(c.name)+'</div>'
       +'<div class="cuisine-name">'+escHtml(c.name)+'</div>'
       +'<div class="cuisine-count">'+n+' places</div>'
@@ -687,12 +687,12 @@ function buildCard(r){
   }).join('');
   var statusClass=r.open?'status-open':'status-closed';
   var statusTxt=r.open?'Open':'Closed';
-  return '<div class="r-card" onclick="openDetail(''+r.id+'')">'
+  return '<div class="r-card" onclick="openDetail(\''+r.id+'\')">'
     +'<div class="r-card-banner" style="background:'+bannerBg(r.cuisine)+'">'+cEmoji(r.cuisine)+'</div>'
     +'<div class="r-card-body">'
     +'<div class="r-card-header">'
     +'<div class="r-name">'+escHtml(r.name)+'</div>'
-    +'<button class="fav-btn'+(isFav?' active':'')+'" onclick="event.stopPropagation();toggleFav(''+r.id+'')" title="Favourite">&#9829;</button>'
+    +'<button class="fav-btn'+(isFav?' active':'')+'" onclick="event.stopPropagation();toggleFav(\''+r.id+'\')" title="Favourite">&#9829;</button>'
     +'</div>'
     +'<div class="r-cuisine">'+escHtml(r.cuisine)+'</div>'
     +'<div class="r-meta">'
@@ -735,7 +735,7 @@ function renderExplore(){
   var vm=state.viewMode;
   var ac=state.activeCuisine;
   var activeChipHtml=ac
-    ?'<button class="chip active" onclick="setCuisine(''+escHtml(ac)+'')">'+escHtml(ac)+' &#10005;</button>'
+    ?'<button class="chip active" onclick="setCuisine(\''+escHtml(ac)+'\')">'+escHtml(ac)+' &#10005;</button>'
     :'';
   var cardsHtml=list.length
     ?list.map(buildCard).join('')
@@ -756,8 +756,8 @@ function renderExplore(){
     +'</div>'
     +'<div class="results-count">'+list.length+' result'+(list.length!==1?'s':'')+'</div>'
     +'<div class="view-toggle">'
-    +'<button class="view-btn'+(vm==='grid'?' active':'')+'" onclick="setView('grid')" title="Grid">&#8862;</button>'
-    +'<button class="view-btn'+(vm==='list'?' active':'')+'" onclick="setView('list')" title="List">&#9776;</button>'
+    +'<button class="view-btn'+(vm==='grid'?' active':'')+'" onclick="setView(\'grid\')" title="Grid">&#8862;</button>'
+    +'<button class="view-btn'+(vm==='list'?' active':'')+'" onclick="setView(\'list\')" title="List">&#9776;</button>'
     +'</div>'
     +'</div>'
     +'<div class="restaurant-grid'+(vm==='list'?' list-view':'')+'" id="restaurantGrid">'+cardsHtml+'</div>';
@@ -806,8 +806,8 @@ function openDetail(id){
     +'<span class="price-badge">'+escHtml(priceLabel(r.price))+'</span>'
     +'<span class="distance-badge">&#128205; '+r.distance+' mi</span>'
     +'<span class="status-badge '+(r.open?'status-open':'status-closed')+'">'+(r.open?'Open Now':'Closed')+'</span>'
-    +'<button class="fav-btn'+(isFav?' active':'')+'" style="font-size:1.3rem" onclick="toggleFav(''+id+'');openDetail(''+id+'')" title="Favourite">&#9829;</button>'
-    +'<button class="share-btn" onclick="shareRestaurant(''+id+'')">&#128203; Share</button>'
+    +'<button class="fav-btn'+(isFav?' active':'')+'" style="font-size:1.3rem" onclick="toggleFav(\''+id+'\');openDetail(\''+id+'\')" title="Favourite">&#9829;</button>'
+    +'<button class="share-btn" onclick="shareRestaurant(\''+id+'\')">&#128203; Share</button>'
     +'</div></div>'
     +'<div style="margin-top:1.2rem">'
     +'<div class="detail-section"><h3>&#128205; Address &amp; Notes</h3>'
@@ -821,7 +821,7 @@ function openDetail(id){
     +'</div></div>'
     +'<div class="detail-section"><h3>&#128172; Reviews ('+(r.reviews||[]).length+')</h3>'
     +(reviewsHtml||'<p style="color:var(--text3);font-size:.85rem">No reviews yet. Be the first!</p>')
-    +'<div style="margin-top:.8rem"><button class="btn btn-primary" onclick="openReviewModal(''+id+'')">&#9998; Write a Review</button></div>'
+    +'<div style="margin-top:.8rem"><button class="btn btn-primary" onclick="openReviewModal(\''+id+'\')">&#9998; Write a Review</button></div>'
     +'</div>'
     +'</div>';
 }
@@ -895,7 +895,7 @@ function renderHistory(){
     return;
   }
   var items=state.searchHistory.map(function(h,i){
-    return '<li class="history-item" onclick="searchFrom(''+escHtml(h)+'')">'
+    return '<li class="history-item" onclick="searchFromIndex('+i+')">'
       +'<span>&#128269; '+escHtml(h)+'</span>'
       +'<button class="history-del" onclick="event.stopPropagation();deleteHistory('+i+')">&#10005;</button>'
       +'</li>';
@@ -905,6 +905,10 @@ function renderHistory(){
     +'<div style="margin-top:1rem"><button class="btn btn-secondary" onclick="clearHistory()">Clear All History</button></div>';
 }
 
+function searchFromIndex(i){
+  var term=state.searchHistory[i];
+  if(term) searchFrom(term);
+}
 function searchFrom(term){
   document.getElementById('searchInput').value=term;
   var tab=document.querySelector('[data-tab="explore"]');
@@ -973,7 +977,7 @@ function buildSidebarCuisineChips(){
   if(!chips) return;
   chips.innerHTML=CUISINES.map(function(c){
     var active=state.filters.cuisines.indexOf(c.name)!==-1?' active':'';
-    return '<div class="chip'+active+'" onclick="toggleCuisineFilter(''+escHtml(c.name)+'')">'+cEmoji(c.name)+' '+escHtml(c.name)+'</div>';
+    return '<div class="chip'+active+'" onclick="toggleCuisineFilter(\''+escHtml(c.name)+'\')">'+cEmoji(c.name)+' '+escHtml(c.name)+'</div>';
   }).join('');
 }
 
