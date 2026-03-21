@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Market Analyser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#020b18; --accent:#3b82f6; --accent2:#2563eb; --accent3:#60a5fa;
+  --border:rgba(59,130,246,0.2); --glass:rgba(59,130,246,0.08);
+  --text:#e0f2fe; --text2:#93c5fd; --text3:rgba(224,242,254,0.6);
+  --green:#22c55e; --red:#ef4444; --yellow:#eab308;
+}
+body { font-family:'Inter',sans-serif; background:linear-gradient(135deg,#020b18,#041525,#020f1e); min-height:100vh; color:var(--text); }
+.back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--glass); border:1px solid var(--border); border-radius:8px; color:var(--text2); text-decoration:none; font-size:13px; }
+.back-btn:hover { background:rgba(59,130,246,0.16); color:var(--text); }
+.disclaimer { background:rgba(234,179,8,0.12); border:1px solid rgba(234,179,8,0.35); border-radius:8px; padding:12px 18px; color:#fde68a; font-size:13px; font-weight:500; margin-bottom:20px; }
+.header { padding:16px 24px; display:flex; align-items:center; gap:16px; border-bottom:1px solid var(--border); }
+.header h1 { font-size:20px; font-weight:700; color:var(--accent3); }
+.app-body { padding:20px 24px; max-width:1100px; margin:0 auto; }
+.search-row { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+.sym-btn { padding:8px 18px; border-radius:8px; border:1px solid var(--border); background:var(--glass); color:var(--text2); font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.sym-btn:hover,.sym-btn.active { background:var(--accent2); color:#fff; border-color:var(--accent); }
+.cards-row { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:20px; }
+.stat-card { background:var(--glass); border:1px solid var(--border); border-radius:10px; padding:14px; }
+.stat-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:6px; }
+.stat-value { font-size:17px; font-weight:700; font-variant-numeric:tabular-nums; }
+.panel { background:var(--glass); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px; }
+.panel-title { font-size:11px; font-weight:700; color:var(--text2); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:12px; }
+canvas { display:block; width:100%; }
+.signal-badge { display:inline-flex; align-items:center; gap:8px; padding:10px 22px; border-radius:10px; font-size:18px; font-weight:700; margin-bottom:14px; }
+.signal-bull { background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.4); color:#4ade80; }
+.signal-bear { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#f87171; }
+.signal-neu { background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.4); color:#fbbf24; }
+.conf-bar-wrap { background:rgba(0,0,0,0.3); border-radius:4px; height:8px; margin:6px 0 14px; overflow:hidden; }
+.conf-bar { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--accent2),var(--accent3)); transition:width 0.6s ease; }
+.ind-row { display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid rgba(59,130,246,0.08); font-size:13px; }
+.ind-row:last-child { border-bottom:none; }
+.ind-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const SYM_PRICES = { AAPL:182, GOOGL:142, MSFT:415, TSLA:248, AMZN:178, BTC:42000, ETH:2300, EURUSD:1.085, GBPUSD:1.27, USDJPY:149.5 };
+const SYMBOLS = Object.keys(SYM_PRICES);
+
+function generatePriceData(symbol, days=90) {
+  let price = SYM_PRICES[symbol] || 100;
+  const data = [];
+  const now = new Date();
+  for (let i = days-1; i >= 0; i--) {
+    const d = new Date(now); d.setDate(d.getDate()-i);
+    const open = price;
+    const change = (Math.random()-0.48) * price * 0.02;
+    const close = Math.max(0.001, open+change);
+    const high = Math.max(open,close) * (1+Math.random()*0.01);
+    const low  = Math.min(open,close) * (1-Math.random()*0.01);
+    const vol  = Math.floor(1e6+Math.random()*1e7);
+    data.push({ date:d, open, high, low, close, vol });
+    price = close;
+  }
+  return data;
+}
+
+function calcSMA(closes, period) {
+  return closes.map((_, i) => {
+    if (i < period-1) return null;
+    const slice = closes.slice(i-period+1, i+1);
+    return slice.reduce((a,b)=>a+b,0)/period;
+  });
+}
+
+function calcBollinger(closes, period=20, k=2) {
+  const sma = calcSMA(closes, period);
+  return closes.map((_, i) => {
+    if (i < period-1) return { upper:null, lower:null, mid:null };
+    const slice = closes.slice(i-period+1, i+1);
+    const mean = sma[i];
+    const std = Math.sqrt(slice.reduce((a,b)=>a+(b-mean)**2,0)/period);
+    return { upper: mean+k*std, lower: mean-k*std, mid: mean };
+  });
+}
+
+function calcRSI(closes, period=14) {
+  const rsi = [];
+  for (let i=0; i<closes.length; i++) {
+    if (i < period) { rsi.push(null); continue; }
+    let gains=0, losses=0;
+    for (let j=i-period+1; j<=i; j++) {
+      const d = closes[j]-closes[j-1];
+      if (d>0) gains+=d; else losses-=d;
+    }
+    const rs = losses===0 ? 100 : gains/losses;
+    rsi.push(100 - 100/(1+rs));
+  }
+  return rsi;
+}
+
+function PriceChart({ data }) {
+  const ref = useRef();
+  useEffect(() => {
+    if (!data.length) return;
+    const canvas = ref.current;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+    const closes = data.map(d=>d.close);
+    const sma20 = calcSMA(closes, 20);
+    const boll  = calcBollinger(closes, 20, 2);
+    const allVals = [...closes, ...sma20.filter(Boolean), ...boll.map(b=>b.upper).filter(Boolean), ...boll.map(b=>b.lower).filter(Boolean)];
+    const minV = Math.min(...allVals)*0.998, maxV = Math.max(...allVals)*1.002;
+    const range = maxV - minV;
+    const toY = v => H - (v-minV)/range*(H-20) - 10;
+    const toX = i => i/(data.length-1)*(W-60)+30;
+
+    // Grid
+    ctx.strokeStyle = 'rgba(59,130,246,0.08)'; ctx.lineWidth=1;
+    for (let i=0;i<=4;i++) { const y=H/4*i; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+    // Bollinger band fill
+    ctx.beginPath();
+    const firstValid = boll.findIndex(b=>b.upper!==null);
+    boll.forEach((b,i) => {
+      if (!b.upper) return;
+      if (i===firstValid) ctx.moveTo(toX(i), toY(b.upper));
+      else ctx.lineTo(toX(i), toY(b.upper));
+    });
+    for (let i=boll.length-1;i>=0;i--) {
+      if (!boll[i].lower) continue;
+      ctx.lineTo(toX(i), toY(boll[i].lower));
+    }
+    ctx.closePath();
+    ctx.fillStyle='rgba(96,165,250,0.07)'; ctx.fill();
+
+    // Price area fill
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(closes[0]));
+    closes.forEach((c,i) => ctx.lineTo(toX(i), toY(c)));
+    ctx.lineTo(toX(closes.length-1), H);
+    ctx.lineTo(toX(0), H);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'rgba(59,130,246,0.3)');
+    grad.addColorStop(1,'rgba(59,130,246,0.01)');
+    ctx.fillStyle = grad; ctx.fill();
+
+    // Price line
+    ctx.beginPath();
+    closes.forEach((c,i) => i===0 ? ctx.moveTo(toX(i),toY(c)) : ctx.lineTo(toX(i),toY(c)));
+    ctx.strokeStyle='#3b82f6'; ctx.lineWidth=2; ctx.stroke();
+
+    // SMA20
+    ctx.beginPath();
+    let first=true;
+    sma20.forEach((v,i) => {
+      if (!v) return;
+      if (first) { ctx.moveTo(toX(i),toY(v)); first=false; } else ctx.lineTo(toX(i),toY(v));
+    });
+    ctx.strokeStyle='#f97316'; ctx.lineWidth=1.5; ctx.stroke();
+
+    // Y-axis labels
+    ctx.fillStyle='rgba(224,242,254,0.5)'; ctx.font='10px Inter';
+    for (let i=0;i<=4;i++) { const v=minV+(range/4*i); ctx.fillText(v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(2), W-58, H-(H/4*i)-6); }
+
+    // X-axis date labels
+    ctx.fillStyle='rgba(224,242,254,0.4)'; ctx.font='10px Inter';
+    [0,15,30,45,59].forEach(i => {
+      const d=data[i].date;
+      const lbl=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+      ctx.fillText(lbl, toX(i)-14, H-2);
+    });
+  }, [data]);
+  return <canvas ref={ref} width={640} height={260} style={{borderRadius:'6px'}}/>;
+}
+
+function RSIChart({ data }) {
+  const ref = useRef();
+  useEffect(() => {
+    if (!data.length) return;
+    const canvas = ref.current;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+    const closes = data.map(d=>d.close);
+    const rsi = calcRSI(closes);
+    const toY = v => H - v/100*(H-10) - 5;
+    const toX = i => i/(data.length-1)*(W-60)+30;
+
+    // Fill oversold/overbought
+    ctx.fillStyle='rgba(34,197,94,0.08)';
+    ctx.fillRect(0, toY(30), W, toY(0)-toY(30));
+    ctx.fillStyle='rgba(239,68,68,0.08)';
+    ctx.fillRect(0, toY(100), W, toY(70)-toY(100));
+
+    // Dashed lines
+    ctx.setLineDash([4,4]);
+    ctx.strokeStyle='rgba(34,197,94,0.5)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,toY(30)); ctx.lineTo(W,toY(30)); ctx.stroke();
+    ctx.strokeStyle='rgba(239,68,68,0.5)';
+    ctx.beginPath(); ctx.moveTo(0,toY(70)); ctx.lineTo(W,toY(70)); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.fillStyle='rgba(34,197,94,0.8)'; ctx.font='9px Inter'; ctx.fillText('Oversold 30', 2, toY(30)-2);
+    ctx.fillStyle='rgba(239,68,68,0.8)'; ctx.fillText('Overbought 70', 2, toY(70)-2);
+
+    // RSI line
+    ctx.beginPath();
+    let first=true;
+    rsi.forEach((v,i) => {
+      if (v===null) return;
+      if (first) { ctx.moveTo(toX(i),toY(v)); first=false; } else ctx.lineTo(toX(i),toY(v));
+    });
+    ctx.strokeStyle='#a855f7'; ctx.lineWidth=2; ctx.stroke();
+  }, [data]);
+  return <canvas ref={ref} width={640} height={100} style={{borderRadius:'6px'}}/>;
+}
+
+function SignalPanel({ data }) {
+  if (!data.length) return null;
+  const closes = data.map(d=>d.close);
+  const rsi = calcRSI(closes);
+  const sma20 = calcSMA(closes, 20);
+  const lastRSI = rsi.filter(Boolean).slice(-1)[0] || 50;
+  const lastClose = closes[closes.length-1];
+  const lastSMA = sma20.filter(Boolean).slice(-1)[0] || lastClose;
+  const trend10 = closes[closes.length-1] > closes[closes.length-10] ? 'up' : 'down';
+  let signal = 'NEUTRAL';
+  let confidence = 65;
+  let bullPoints = 0;
+  if (lastRSI < 45) bullPoints++;
+  if (lastRSI < 35) bullPoints++;
+  if (lastClose > lastSMA) bullPoints++;
+  if (trend10 === 'up') bullPoints++;
+  if (bullPoints >= 3) { signal='BULLISH'; confidence=70+Math.floor(Math.random()*15); }
+  else if (bullPoints <= 1) { signal='BEARISH'; confidence=65+Math.floor(Math.random()*20); }
+  else { confidence=60+Math.floor(Math.random()*15); }
+  const badgeClass = signal==='BULLISH'?'signal-bull':signal==='BEARISH'?'signal-bear':'signal-neu';
+  const icon = signal==='BULLISH'?'📈':signal==='BEARISH'?'📉':'➡️';
+  const indicators = [
+    { label:'RSI(14)', status: lastRSI<30?'Oversold':lastRSI>70?'Overbought':'Neutral', color: lastRSI<30?'#22c55e':lastRSI>70?'#ef4444':'#eab308' },
+    { label:'Price vs SMA20', status: lastClose>lastSMA?'Above (Bullish)':'Below (Bearish)', color: lastClose>lastSMA?'#22c55e':'#ef4444' },
+    { label:'10-Day Trend', status: trend10==='up'?'Uptrend':'Downtrend', color: trend10==='up'?'#22c55e':'#ef4444' }
+  ];
+  return (
+    <div>
+      <div className={`signal-badge ${badgeClass}`}>{icon} {signal}</div>
+      <div style={{fontSize:'12px',color:'var(--text3)',marginBottom:'4px'}}>Confidence: {confidence}%</div>
+      <div className="conf-bar-wrap"><div className="conf-bar" style={{width:`${confidence}%`}}/></div>
+      {indicators.map(ind=>(
+        <div key={ind.label} className="ind-row">
+          <div className="ind-dot" style={{background:ind.color}}/>
+          <span style={{color:'var(--text3)',flex:1}}>{ind.label}</span>
+          <span style={{color:ind.color,fontWeight:600,fontSize:12}}>{ind.status}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SummaryCards({ data }) {
+  if (!data.length) return null;
+  const closes = data.map(d=>d.close);
+  const highs  = data.map(d=>d.high);
+  const lows   = data.map(d=>d.low);
+  const vols   = data.map(d=>d.vol);
+  const last = closes[closes.length-1];
+  const high52 = Math.max(...highs);
+  const low52  = Math.min(...lows);
+  const returns = closes.slice(1).map((c,i)=>(c-closes[i])/closes[i]);
+  const vol = Math.sqrt(returns.reduce((a,b)=>a+b*b,0)/returns.length)*Math.sqrt(252)*100;
+  const avgVol = vols.reduce((a,b)=>a+b,0)/vols.length;
+  const fmt = v => v >= 1000 ? v.toLocaleString('en-US',{maximumFractionDigits:2}) : v.toFixed(4);
+  const cards = [
+    { label:'Current Price', value:fmt(last) },
+    { label:'52W High', value:fmt(high52) },
+    { label:'52W Low', value:fmt(low52) },
+    { label:'Volatility', value:`${vol.toFixed(1)}%` },
+    { label:'Avg Volume', value:avgVol>=1e6?(avgVol/1e6).toFixed(1)+'M':(avgVol/1e3).toFixed(0)+'K' }
+  ];
+  return (
+    <div className="cards-row">
+      {cards.map(c=>(
+        <div key={c.label} className="stat-card">
+          <div className="stat-label">{c.label}</div>
+          <div className="stat-value">{c.value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SearchBar({ selected, onSelect }) {
+  return (
+    <div className="search-row">
+      {SYMBOLS.map(s=>(
+        <button key={s} className={`sym-btn${selected===s?' active':''}`} onClick={()=>onSelect(s)}>{s}</button>
+      ))}
+    </div>
+  );
+}
+
+function App() {
+  const [symbol, setSymbol] = useState('AAPL');
+  const [data, setData] = useState([]);
+  useEffect(() => { setData(generatePriceData(symbol,90)); }, [symbol]);
+  return (
+    <div>
+      <div className="header">
+        <a href="../../index.html" className="back-btn">← Back</a>
+        <h1>📊 Market Analyser</h1>
+      </div>
+      <div className="app-body">
+        <div className="disclaimer">⚠️ SIMULATED DATA — For educational use only. Not financial advice. All prices are randomly generated.</div>
+        <SearchBar selected={symbol} onSelect={setSymbol}/>
+        <SummaryCards data={data}/>
+        <div className="grid2">
+          <div>
+            <div className="panel">
+              <div className="panel-title">Price Chart — {symbol} (90 Days) · <span style={{color:'#f97316'}}>─ SMA20</span> · <span style={{color:'#60a5fa'}}>Bollinger</span></div>
+              <PriceChart data={data}/>
+            </div>
+            <div className="panel">
+              <div className="panel-title">RSI (14)</div>
+              <RSIChart data={data}/>
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel-title">Signal Analysis</div>
+            <SignalPanel data={data}/>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

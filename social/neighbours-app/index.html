@@ -1,544 +1,355 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NeighbourNet – Local Community App</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Neighbours Community App</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg1: #0f0c29; --bg2: #302b63; --accent: #f43f5e;
-    --glass: rgba(255,255,255,0.06); --glass-border: rgba(255,255,255,0.12);
-    --text: #f1f5f9; --subtext: #94a3b8;
-    --cat-lost: #3b82f6; --cat-event: #10b981; --cat-service: #f59e0b; --cat-safety: #ef4444;
-  }
-
-  body {
-    font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 50%, #24243e 100%);
-    min-height: 100vh; color: var(--text);
-  }
-
-  /* ── NAV ── */
-  .nav {
-    position: sticky; top: 0; z-index: 50;
-    display: flex; align-items: center; gap: 12px; padding: 14px 24px;
-    background: rgba(0,0,0,0.4); backdrop-filter: blur(24px);
-    border-bottom: 1px solid var(--glass-border);
-  }
-  .back-btn {
-    display: flex; align-items: center; gap: 6px; color: var(--accent);
-    text-decoration: none; font-size: 14px; font-weight: 500;
-    padding: 6px 12px; border-radius: 8px;
-    background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3); transition: all .2s;
-  }
-  .back-btn:hover { background: rgba(244,63,94,0.2); transform: translateX(-2px); }
-  .nav-title { font-size: 18px; font-weight: 800; flex: 1; }
-  .nav-area {
-    font-size: 13px; color: var(--subtext); display: flex; align-items: center; gap: 6px;
-    background: var(--glass); border: 1px solid var(--glass-border);
-    padding: 6px 12px; border-radius: 20px; cursor: pointer; transition: all .2s;
-  }
-  .nav-area:hover { background: rgba(255,255,255,0.1); }
-
-  /* ── SETUP MODAL ── */
-  .modal-overlay {
-    position: fixed; inset: 0; z-index: 200;
-    background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-  }
-  .modal-overlay.hidden { display: none; }
-  .modal-card {
-    background: linear-gradient(135deg,rgba(15,12,41,0.95),rgba(48,43,99,0.95));
-    border: 1px solid var(--glass-border); border-radius: 24px;
-    padding: 36px 32px; max-width: 420px; width: 100%;
-    animation: fadeUp .4s ease;
-  }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-  .modal-icon { font-size: 44px; text-align: center; margin-bottom: 16px; }
-  .modal-card h2 { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 8px; }
-  .modal-card p { font-size: 14px; color: var(--subtext); text-align: center; margin-bottom: 24px; line-height: 1.6; }
-  .form-group { margin-bottom: 16px; }
-  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--subtext); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 7px; }
-  .form-input {
-    width: 100%; padding: 13px 15px;
-    background: rgba(255,255,255,0.07); border: 1px solid var(--glass-border);
-    border-radius: 12px; color: var(--text); font-family: 'Inter', sans-serif;
-    font-size: 14px; outline: none; transition: border-color .2s;
-  }
-  .form-input:focus { border-color: var(--accent); }
-  .btn-primary {
-    width: 100%; padding: 13px; border-radius: 12px;
-    background: linear-gradient(135deg,var(--accent),#e11d48);
-    border: none; color: #fff; font-family: 'Inter', sans-serif;
-    font-size: 15px; font-weight: 700; cursor: pointer; transition: all .2s; margin-top: 4px;
-  }
-  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(244,63,94,.4); }
-
-  /* ── HERO AREA ── */
-  .area-hero {
-    padding: 28px 24px 0; max-width: 800px; margin: 0 auto;
-    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  }
-  .area-pill {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.3);
-    padding: 8px 16px; border-radius: 20px;
-  }
-  .area-pill .pin { font-size: 20px; }
-  .area-pill .area-name { font-size: 16px; font-weight: 700; color: var(--accent); }
-  .area-pill .change-btn { font-size: 12px; color: var(--subtext); cursor: pointer; text-decoration: underline; margin-left: 4px; }
-  .post-count-hero { font-size: 13px; color: var(--subtext); }
-
-  /* ── CATEGORY TABS ── */
-  .cat-tabs { max-width: 800px; margin: 20px auto 0; padding: 0 20px; display: flex; gap: 8px; overflow-x: auto; }
-  .cat-tabs::-webkit-scrollbar { display: none; }
-  .cat-tab {
-    display: flex; align-items: center; gap: 7px;
-    padding: 9px 18px; border-radius: 20px; font-size: 13px; font-weight: 600;
-    white-space: nowrap; cursor: pointer; transition: all .2s;
-    border: 1.5px solid;
-  }
-  .cat-tab.all { background: rgba(244,63,94,.12); border-color: rgba(244,63,94,.3); color: var(--accent); }
-  .cat-tab.lost { background: rgba(59,130,246,.1); border-color: rgba(59,130,246,.25); color: var(--cat-lost); }
-  .cat-tab.event { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.25); color: var(--cat-event); }
-  .cat-tab.service { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.25); color: var(--cat-service); }
-  .cat-tab.safety { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.25); color: var(--cat-safety); }
-  .cat-tab.active { opacity: 1; } .cat-tab:not(.active) { opacity: .6; }
-  .cat-tab.active:hover { opacity: 1; } .cat-tab:not(.active):hover { opacity: .85; }
-
-  /* ── NEW POST ── */
-  .new-post-wrap { max-width: 800px; margin: 20px auto 0; padding: 0 20px; }
-  .compose-card {
-    background: var(--glass); backdrop-filter: blur(30px);
-    border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px;
-    transition: border-color .2s;
-  }
-  .compose-card:focus-within { border-color: rgba(244,63,94,0.4); }
-  .compose-top { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-  .compose-textarea {
-    width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
-    border-radius: 12px; color: var(--text); font-family: 'Inter', sans-serif;
-    font-size: 14px; padding: 13px 15px; resize: none; min-height: 80px;
-    outline: none; transition: border-color .2s; line-height: 1.6;
-  }
-  .compose-textarea:focus { border-color: rgba(244,63,94,.4); }
-  .cat-select {
-    flex: 1; min-width: 160px; padding: 10px 14px;
-    background: rgba(255,255,255,0.07); border: 1px solid var(--glass-border);
-    border-radius: 12px; color: var(--text); font-family: 'Inter', sans-serif;
-    font-size: 13px; outline: none; cursor: pointer;
-  }
-  .cat-select option { background: #1a1a2e; }
-  .compose-title-input {
-    flex: 2; min-width: 200px; padding: 10px 14px;
-    background: rgba(255,255,255,0.07); border: 1px solid var(--glass-border);
-    border-radius: 12px; color: var(--text); font-family: 'Inter', sans-serif;
-    font-size: 13px; outline: none; transition: border-color .2s;
-  }
-  .compose-title-input:focus { border-color: rgba(244,63,94,.4); }
-  .compose-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; gap: 10px; }
-  .from-badge { font-size: 12px; color: var(--subtext); display: flex; align-items: center; gap: 5px; }
-  .from-badge strong { color: var(--text); }
-  .post-btn {
-    padding: 10px 22px; border-radius: 10px;
-    background: linear-gradient(135deg,var(--accent),#e11d48);
-    border: none; color: #fff; font-family: 'Inter', sans-serif;
-    font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s;
-  }
-  .post-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(244,63,94,.4); }
-  .post-btn:disabled { opacity: .5; pointer-events: none; }
-
-  /* ── FEED ── */
-  .feed { max-width: 800px; margin: 20px auto 60px; padding: 0 20px; display: flex; flex-direction: column; gap: 14px; }
-  .post-card {
-    background: var(--glass); backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border); border-radius: 18px; overflow: hidden;
-    animation: cardIn .35s ease; transition: border-color .2s, transform .2s;
-  }
-  .post-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.18); }
-  @keyframes cardIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-
-  .post-cat-bar { height: 3px; }
-  .post-cat-bar.lost { background: var(--cat-lost); }
-  .post-cat-bar.event { background: var(--cat-event); }
-  .post-cat-bar.service { background: var(--cat-service); }
-  .post-cat-bar.safety { background: var(--cat-safety); }
-
-  .post-body { padding: 16px 18px; }
-  .post-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-  .post-cat-icon { font-size: 22px; }
-  .post-info { flex: 1; }
-  .post-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
-  .post-meta { font-size: 12px; color: var(--subtext); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .cat-label { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 8px; }
-  .cat-label.lost { background: rgba(59,130,246,.2); color: var(--cat-lost); }
-  .cat-label.event { background: rgba(16,185,129,.2); color: var(--cat-event); }
-  .cat-label.service { background: rgba(245,158,11,.2); color: var(--cat-service); }
-  .cat-label.safety { background: rgba(239,68,68,.2); color: var(--cat-safety); }
-
-  .post-text { font-size: 14px; line-height: 1.65; color: var(--text); margin-bottom: 14px; word-break: break-word; }
-
-  /* ── COMMENTS ── */
-  .comments-section { border-top: 1px solid var(--glass-border); }
-  .comments-toggle {
-    padding: 10px 18px; font-size: 13px; color: var(--subtext);
-    cursor: pointer; transition: color .2s; display: flex; align-items: center; gap: 6px;
-    user-select: none;
-  }
-  .comments-toggle:hover { color: var(--text); }
-  .comments-list { padding: 0 18px 14px; display: flex; flex-direction: column; gap: 8px; }
-  .comment {
-    display: flex; gap: 10px; align-items: flex-start;
-    background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
-    border-radius: 12px; padding: 10px 12px;
-  }
-  .comment-avatar { font-size: 18px; flex-shrink: 0; }
-  .comment-body { flex: 1; }
-  .comment-author { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
-  .comment-text { font-size: 13px; line-height: 1.5; color: var(--text); }
-  .comment-time { font-size: 11px; color: var(--subtext); margin-top: 3px; }
-  .comment-del { background: none; border: none; color: rgba(255,255,255,0.15); cursor: pointer; font-size: 13px; padding: 2px; transition: color .2s; flex-shrink: 0; }
-  .comment-del:hover { color: var(--accent); }
-
-  .comment-input-row { display: flex; gap: 8px; padding: 0 18px 14px; }
-  .comment-input {
-    flex: 1; padding: 9px 14px; background: rgba(255,255,255,0.06);
-    border: 1px solid var(--glass-border); border-radius: 20px;
-    color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px;
-    outline: none; transition: border-color .2s;
-  }
-  .comment-input:focus { border-color: rgba(244,63,94,.4); }
-  .comment-submit {
-    padding: 9px 16px; border-radius: 20px;
-    background: rgba(244,63,94,.15); border: 1px solid rgba(244,63,94,.35);
-    color: var(--accent); font-size: 13px; font-weight: 600;
-    cursor: pointer; transition: all .2s; white-space: nowrap;
-  }
-  .comment-submit:hover { background: rgba(244,63,94,.25); }
-
-  .post-actions { display: flex; align-items: center; gap: 8px; padding: 0 0 2px; }
-  .del-post-btn { margin-left: auto; background: none; border: none; color: rgba(255,255,255,0.15); cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: 6px; transition: color .2s; }
-  .del-post-btn:hover { color: var(--accent); }
-
-  .empty { text-align: center; padding: 60px 20px; color: var(--subtext); }
-  .empty .icon { font-size: 52px; opacity: .4; margin-bottom: 16px; }
-  .empty h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
-
-  #toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
-    background: rgba(34,197,94,.9); color: #fff; padding: 12px 24px;
-    border-radius: 12px; font-size: 14px; font-weight: 500;
-    transition: transform .3s; z-index: 999; pointer-events: none;
-  }
-  #toast.show { transform: translateX(-50%) translateY(0); }
-
-  @media(max-width:560px) { .compose-top { flex-direction: column; } .compose-footer { flex-wrap: wrap; } }
+:root{--bg:#040f0c;--accent:#10b981;--accent2:#059669;--border:rgba(16,185,129,0.2);--text:#e2fdf3;--card:rgba(16,185,129,0.06);--input:rgba(16,185,129,0.1)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+button{cursor:pointer;border:none;outline:none}
+input,textarea,select{outline:none;font-family:inherit}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:3px}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
+<div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect,useMemo,useCallback}=React;
+const LS={get:(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+const now=()=>Date.now();
+const uid=()=>Math.random().toString(36).slice(2,10);
+const timeAgo=ts=>{const s=Math.floor((now()-ts)/1000);if(s<60)return'just now';if(s<3600)return`${Math.floor(s/60)}m ago`;if(s<86400)return`${Math.floor(s/3600)}h ago`;return`${Math.floor(s/86400)}d ago`;};
+const EMOJIS=['👋','🌳','🏡','🐾','🔔','⚠️','🎉','❤️','👍','🌿'];
+const iS={width:'100%',background:'var(--input)',border:'1px solid var(--border)',borderRadius:8,padding:'10px 14px',color:'var(--text)',fontSize:15};
+const bP={background:'var(--accent)',color:'#fff',padding:'10px 22px',borderRadius:10,fontWeight:700,fontSize:14};
+const bS={background:'var(--input)',color:'var(--accent)',padding:'6px 13px',borderRadius:7,fontSize:13,fontWeight:600,border:'1px solid var(--border)'};
+const lS={display:'block',marginBottom:5,color:'var(--accent)',fontWeight:600,fontSize:13};
 
-<!-- Setup Modal -->
-<div class="modal-overlay" id="setup-modal">
-  <div class="modal-card">
-    <div class="modal-icon">🏘️</div>
-    <h2>Welcome to NeighbourNet</h2>
-    <p>Your local community hub. Set your name and area to get started connecting with your neighbours.</p>
-    <div class="form-group">
-      <label>Your Name</label>
-      <input class="form-input" id="setup-name" type="text" placeholder="e.g. Sarah, Mike, Mrs. Johnson…" maxlength="25">
+const SEED_POSTS=[
+  {id:uid(),author:'GardenGuru',text:'Anyone know a good plumber in the area? My kitchen tap has been dripping for days 🔧',likes:[],comments:[],ts:now()-7200000,emoji:'👋'},
+  {id:uid(),author:'ParkWalker',text:'The park on Elm Street looks amazing after the council cleanup! Great to see our neighbourhood improving.',likes:[],comments:[{id:uid(),author:'SunshineNan',text:'Agreed! Been walking there every morning.',ts:now()-3600000}],ts:now()-86400000,emoji:'🌳'},
+  {id:uid(),author:'BakeryBob',text:'Just baked sourdough – leaving a loaf on my doorstep at 14 Maple Ave for anyone who wants it! First come first served 🍞',likes:[],comments:[],ts:now()-3600000,emoji:'🏡'},
+  {id:uid(),author:'TechTina',text:'Heads up – there\'s a pothole on the corner of Oak Rd and High St. Already reported to council but watch your tyres!',likes:[],comments:[],ts:now()-10800000,emoji:'⚠️'},
+  {id:uid(),author:'CyclingChris',text:'Starting a casual Saturday morning bike ride group – meet at the fountain at 9am! All welcome 🚴',likes:[],comments:[{id:uid(),author:'FitnessFred',text:'Count me in!',ts:now()-1800000}],ts:now()-43200000,emoji:'🎉'},
+  {id:uid(),author:'GardenGuru',text:'Free courgettes from my allotment! I have way too many. Drop me a message 🥒',likes:[],comments:[],ts:now()-21600000,emoji:'🌿'},
+  {id:uid(),author:'MumOfThree',text:'Any recommendations for a good babysitter in the neighbourhood? Need someone for Friday evenings.',likes:[],comments:[],ts:now()-32400000,emoji:'👋'},
+  {id:uid(),author:'RetiredRon',text:'Spotted a beautiful fox family in the back garden this morning! Three cubs playing 🦊',likes:[],comments:[{id:uid(),author:'NatureLover',text:'Oh how lovely!',ts:now()-900000}],ts:now()-54000000,emoji:'🐾'},
+  {id:uid(),author:'NewNeighbour',text:'Just moved into Birch Close last week – hello everyone! Loving the community so far 😊',likes:[],comments:[],ts:now()-14400000,emoji:'❤️'},
+  {id:uid(),author:'LocalLisa',text:'The community garden project is looking for volunteers this weekend. Even an hour helps! DM me for details 🌱',likes:[],comments:[],ts:now()-5400000,emoji:'🌿'},
+];
+const SEED_EVENTS=[
+  {id:uid(),title:'Summer Street Party',date:'2025-08-15',time:'14:00',location:'Elm Street cul-de-sac',description:'Annual neighbourhood street party! Bring a dish to share. Music, games, and fun for all ages.',rsvp:{going:12,maybe:5,notgoing:2},myRsvp:null,author:'LocalLisa',ts:now()-86400000},
+  {id:uid(),title:'Community Clean-Up Day',date:'2025-07-20',time:'10:00',location:'Riverside Park entrance',description:'Join us for the quarterly litter pick. Equipment provided. All ages welcome.',rsvp:{going:8,maybe:3,notgoing:0},myRsvp:null,author:'GreenTeam',ts:now()-172800000},
+  {id:uid(),title:'Neighbourhood Watch Meeting',date:'2025-07-25',time:'19:00',location:'Village Hall, Main St',description:'Monthly update on local security matters. All residents welcome.',rsvp:{going:15,maybe:7,notgoing:1},myRsvp:null,author:'WatchCoord',ts:now()-259200000},
+  {id:uid(),title:'Kids Summer Reading Club',date:'2025-07-22',time:'11:00',location:'Local Library',description:'Weekly reading sessions for ages 5-12. Free to join, registration required.',rsvp:{going:6,maybe:4,notgoing:0},myRsvp:null,author:'LibraryTeam',ts:now()-345600000},
+  {id:uid(),title:'Outdoor Movie Night',date:'2025-08-01',time:'20:30',location:'Community Centre grounds',description:'Screening of a family-friendly film under the stars. Bring blankets and snacks!',rsvp:{going:22,maybe:9,notgoing:3},myRsvp:null,author:'CyclingChris',ts:now()-432000000},
+];
+const SEED_LNF=[
+  {id:uid(),type:'Lost',title:'Black Labrador – Biscuit',description:'Friendly black lab, 4 years old. Wearing red collar with tag. Last seen near Elm Park.',contact:'07700 900123',date:'2025-07-10',location:'Elm Park area',status:'active',author:'DogOwnerDave',ts:now()-86400000},
+  {id:uid(),type:'Found',title:'Set of House Keys',description:'Found a set of 3 keys on a blue keyring near the post office on High Street.',contact:'Leave note at Post Office',date:'2025-07-11',location:'High Street',status:'active',author:'HelpfulHelen',ts:now()-43200000},
+  {id:uid(),type:'Lost',title:"Child's Pink Scooter",description:'Pink scooter with stickers, left outside the library on Tuesday afternoon.',contact:'MumOfThree via app',date:'2025-07-09',location:'Library area',status:'resolved',author:'MumOfThree',ts:now()-172800000},
+  {id:uid(),type:'Found',title:'Tortoiseshell Cat',description:'Friendly tortoiseshell cat appeared in our garden. No collar. Well-fed and sociable.',contact:'07700 900456',date:'2025-07-12',location:'Birch Close',status:'active',author:'NewNeighbour',ts:now()-21600000},
+];
+const SEED_ALERTS=[
+  {id:uid(),severity:'High',description:'Attempted break-in reported on Oak Road last night. Please check your locks and report anything suspicious to 101.',location:'Oak Road',ts:now()-7200000,author:'WatchCoord'},
+  {id:uid(),severity:'Medium',description:'Suspicious vehicle (white van, no plates) circling the estate. Reported to police. Ref: 2025-7821.',location:'Maple Estate',ts:now()-86400000,author:'RetiredRon'},
+  {id:uid(),severity:'Low',description:'Several garden sheds broken into on Birch Close. Please ensure sheds are properly locked. Police aware.',location:'Birch Close',ts:now()-259200000,author:'LocalLisa'},
+];
+const SEED_NOTICES=[
+  {id:uid(),text:'🗑️ Bin collection moved to THURSDAY this week due to bank holiday',author:'Council Rep',ts:now()-3600000},
+  {id:uid(),text:'📶 BT Openreach working on cables – possible internet disruptions Wed 9am–1pm',author:'Admin',ts:now()-86400000},
+  {id:uid(),text:'🚧 Road closure: High Street north end, 21–23 July for resurfacing',author:'Council Rep',ts:now()-172800000},
+];
+const SEED_NEIGHBOURS=[
+  {id:uid(),name:'GardenGuru',online:true},{id:uid(),name:'ParkWalker',online:false},{id:uid(),name:'BakeryBob',online:true},
+  {id:uid(),name:'TechTina',online:true},{id:uid(),name:'CyclingChris',online:false},{id:uid(),name:'MumOfThree',online:true},
+  {id:uid(),name:'RetiredRon',online:false},{id:uid(),name:'LocalLisa',online:true},{id:uid(),name:'NewNeighbour',online:true},{id:uid(),name:'WatchCoord',online:false},
+];
+
+function useToasts(){
+  const[toasts,setToasts]=useState([]);
+  const add=useCallback(msg=>{const id=uid();setToasts(p=>[...p,{id,msg}]);setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)),3000);},[]);
+  return{toasts,add};
+}
+
+function Toast({toasts}){
+  return <div style={{position:'fixed',bottom:24,right:24,zIndex:9999,display:'flex',flexDirection:'column',gap:10}}>
+    {toasts.map(t=><div key={t.id} style={{background:'var(--accent2)',color:'#fff',padding:'10px 18px',borderRadius:10,fontWeight:600,boxShadow:'0 4px 20px rgba(0,0,0,0.4)',animation:'fadein .3s ease',maxWidth:300}}>{t.msg}</div>)}
+  </div>;
+}
+
+function Onboarding({onDone}){
+  const[name,setName]=useState('');
+  const[hood,setHood]=useState('');
+  return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+    <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:16,padding:40,maxWidth:400,width:'100%',textAlign:'center'}}>
+      <div style={{fontSize:48,marginBottom:12}}>🏡</div>
+      <h1 style={{color:'var(--accent)',fontSize:26,marginBottom:8}}>Welcome to NeighbourHub</h1>
+      <p style={{color:'#9de8c8',marginBottom:28,lineHeight:1.6}}>Connect with your local community. Share updates, find lost items, stay safe together.</p>
+      <form onSubmit={e=>{e.preventDefault();if(name.trim()&&hood.trim())onDone(name.trim(),hood.trim());}}>
+        <div style={{marginBottom:14}}><label style={lS}>Your Display Name</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. GardenGuru" style={iS} required/></div>
+        <div style={{marginBottom:24}}><label style={lS}>Your Neighbourhood</label><input value={hood} onChange={e=>setHood(e.target.value)} placeholder="e.g. Elmwood Village" style={iS} required/></div>
+        <button type="submit" style={{...bP,width:'100%'}}>Join Community →</button>
+      </form>
     </div>
-    <div class="form-group">
-      <label>Your Street / Area</label>
-      <input class="form-input" id="setup-area" type="text" placeholder="e.g. Oak Street, Riverside, Mapleton…" maxlength="30">
-    </div>
-    <button class="btn-primary" onclick="setupProfile()">Join Community →</button>
-  </div>
-</div>
+  </div>;
+}
 
-<!-- Change area modal -->
-<div class="modal-overlay hidden" id="change-modal">
-  <div class="modal-card">
-    <div class="modal-icon">📍</div>
-    <h2>Change Your Area</h2>
-    <p>Update your name or area.</p>
-    <div class="form-group">
-      <label>Your Name</label>
-      <input class="form-input" id="change-name" type="text" maxlength="25">
-    </div>
-    <div class="form-group">
-      <label>Your Street / Area</label>
-      <input class="form-input" id="change-area" type="text" maxlength="30">
-    </div>
-    <button class="btn-primary" onclick="saveChange()">Save Changes</button>
-    <div style="text-align:center;margin-top:12px">
-      <span style="font-size:13px;color:var(--subtext);cursor:pointer;text-decoration:underline" onclick="closeChangeModal()">Cancel</span>
-    </div>
-  </div>
-</div>
-
-<nav class="nav">
-  <a href="../../index.html" class="back-btn">← Back</a>
-  <div class="nav-title">🏘️ NeighbourNet</div>
-  <div class="nav-area" id="nav-area" onclick="openChangeModal()">📍 <span id="nav-area-name">—</span></div>
-</nav>
-
-<div class="area-hero" id="area-hero"></div>
-
-<!-- Category tabs -->
-<div class="cat-tabs">
-  <div class="cat-tab all active" onclick="setFilter('all',this)">🏘️ All Posts</div>
-  <div class="cat-tab lost" onclick="setFilter('lost',this)">🔍 Lost &amp; Found</div>
-  <div class="cat-tab event" onclick="setFilter('event',this)">📅 Events</div>
-  <div class="cat-tab service" onclick="setFilter('service',this)">🔧 Services</div>
-  <div class="cat-tab safety" onclick="setFilter('safety',this)">⚠️ Safety</div>
-</div>
-
-<!-- New post -->
-<div class="new-post-wrap">
-  <div class="compose-card">
-    <div class="compose-top">
-      <input class="compose-title-input" id="post-title-input" placeholder="Post title…" maxlength="80">
-      <select class="cat-select" id="cat-select">
-        <option value="lost">🔍 Lost &amp; Found</option>
-        <option value="event">📅 Event</option>
-        <option value="service">🔧 Service / Recommendation</option>
-        <option value="safety">⚠️ Safety / Warning</option>
-      </select>
-    </div>
-    <textarea class="compose-textarea" id="compose-textarea" placeholder="Tell your neighbours what's happening…" maxlength="600"></textarea>
-    <div class="compose-footer">
-      <div class="from-badge">📍 Posting as <strong id="from-name-badge">You</strong></div>
-      <button class="post-btn" id="post-btn" onclick="submitPost()" disabled>Post to Community</button>
-    </div>
-  </div>
-</div>
-
-<!-- Feed -->
-<div class="feed" id="feed"></div>
-
-<div id="toast"></div>
-
-<script>
-  const STORAGE_KEY = 'neighbournet_v2';
-  const CAT_ICONS = { lost:'🔍', event:'📅', service:'🔧', safety:'⚠️' };
-  const CAT_LABELS = { lost:'Lost & Found', event:'Event', service:'Service', safety:'Safety' };
-  let posts = [], myName = '', myArea = '', currentFilter = 'all';
-  let openComments = new Set();
-
-  function load() {
-    try {
-      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      posts = d.posts || [];
-      myName = d.myName || '';
-      myArea = d.myArea || '';
-    } catch(e) { posts = []; }
-  }
-
-  function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ posts, myName, myArea }));
-  }
-
-  function setupProfile() {
-    const name = document.getElementById('setup-name').value.trim();
-    const area = document.getElementById('setup-area').value.trim();
-    if (!name || !area) return;
-    myName = name; myArea = area;
-    save();
-    document.getElementById('setup-modal').classList.add('hidden');
-    initUI();
-  }
-
-  function openChangeModal() {
-    document.getElementById('change-name').value = myName;
-    document.getElementById('change-area').value = myArea;
-    document.getElementById('change-modal').classList.remove('hidden');
-  }
-
-  function closeChangeModal() { document.getElementById('change-modal').classList.add('hidden'); }
-
-  function saveChange() {
-    const name = document.getElementById('change-name').value.trim();
-    const area = document.getElementById('change-area').value.trim();
-    if (!name || !area) return;
-    myName = name; myArea = area;
-    save(); closeChangeModal(); initUI();
-  }
-
-  function initUI() {
-    document.getElementById('nav-area-name').textContent = myArea;
-    document.getElementById('from-name-badge').textContent = myName;
-    document.getElementById('area-hero').innerHTML = `
-      <div class="area-pill"><div class="pin">📍</div><div class="area-name">${escHtml(myArea)}</div><span class="change-btn" onclick="openChangeModal()">change</span></div>
-      <div class="post-count-hero">${posts.length} post${posts.length!==1?'s':''} in your community</div>
-    `;
-    renderFeed();
-  }
-
-  function submitPost() {
-    const title = document.getElementById('post-title-input').value.trim();
-    const text = document.getElementById('compose-textarea').value.trim();
-    const cat = document.getElementById('cat-select').value;
-    if (!title || !text) return;
-
-    posts.unshift({
-      id: Date.now().toString() + Math.random().toString(36).slice(2),
-      title, text, cat, author: myName, area: myArea,
-      time: Date.now(), comments: []
-    });
-    save();
-    document.getElementById('post-title-input').value = '';
-    document.getElementById('compose-textarea').value = '';
-    updatePostBtn();
-    renderFeed();
-    updateAreaHero();
-    showToast('📢 Posted to your community!');
-  }
-
-  function addComment(postId) {
-    const input = document.getElementById('ci_' + postId);
-    const text = input.value.trim();
-    if (!text) return;
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
-    post.comments = post.comments || [];
-    post.comments.push({ id: Date.now().toString(), author: myName, text, time: Date.now() });
-    input.value = '';
-    save(); renderFeed();
-  }
-
-  function deleteComment(postId, commentId) {
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
-    post.comments = post.comments.filter(c => c.id !== commentId);
-    save(); renderFeed();
-  }
-
-  function deletePost(id) {
-    posts = posts.filter(p => p.id !== id);
-    openComments.delete(id);
-    save(); renderFeed(); updateAreaHero();
-  }
-
-  function toggleComments(id) {
-    if (openComments.has(id)) openComments.delete(id);
-    else openComments.add(id);
-    renderFeed();
-  }
-
-  function setFilter(f, el) {
-    currentFilter = f;
-    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    renderFeed();
-  }
-
-  function getFiltered() {
-    if (currentFilter === 'all') return posts;
-    return posts.filter(p => p.cat === currentFilter);
-  }
-
-  function timeAgo(ts) {
-    const s = Math.floor((Date.now()-ts)/1000);
-    if (s < 60) return 'just now';
-    if (s < 3600) return Math.floor(s/60)+'m ago';
-    if (s < 86400) return Math.floor(s/3600)+'h ago';
-    return Math.floor(s/86400)+'d ago';
-  }
-
-  function renderFeed() {
-    const feed = document.getElementById('feed');
-    const filtered = getFiltered();
-    if (filtered.length === 0) {
-      feed.innerHTML = `<div class="empty"><div class="icon">🏘️</div><h3>Nothing here yet</h3><p>Be the first to post in this category!</p></div>`;
-      return;
-    }
-
-    feed.innerHTML = filtered.map(p => {
-      const commentsOpen = openComments.has(p.id);
-      const commentCount = (p.comments || []).length;
-      const commentsHtml = commentsOpen ? `
-        <div class="comments-list">
-          ${(p.comments||[]).map(c => `
-            <div class="comment">
-              <div class="comment-avatar">💬</div>
-              <div class="comment-body">
-                <div class="comment-author">${escHtml(c.author)}</div>
-                <div class="comment-text">${escHtml(c.text)}</div>
-                <div class="comment-time">${timeAgo(c.time)}</div>
-              </div>
-              <button class="comment-del" onclick="deleteComment('${p.id}','${c.id}')">✕</button>
-            </div>
-          `).join('')}
+function PostsTab({user,posts,setPosts,toast,search}){
+  const[text,setText]=useState('');
+  const[emoji,setEmoji]=useState('👋');
+  const[showC,setShowC]=useState({});
+  const[cText,setCText]=useState({});
+  const filtered=useMemo(()=>{if(!search)return posts;const q=search.toLowerCase();return posts.filter(p=>p.text.toLowerCase().includes(q)||p.author.toLowerCase().includes(q));},[posts,search]);
+  const addPost=e=>{e.preventDefault();if(!text.trim())return;setPosts(p=>[{id:uid(),author:user,text:text.trim(),likes:[],comments:[],ts:now(),emoji},...p]);setText('');toast('Post shared!');};
+  const toggleLike=useCallback(id=>{setPosts(p=>p.map(post=>post.id!==id?post:{...post,likes:post.likes.includes(user)?post.likes.filter(u=>u!==user):[...post.likes,user]}));},[user,setPosts]);
+  const del=useCallback(id=>{setPosts(p=>p.filter(x=>x.id!==id));toast('Post deleted.');},[setPosts,toast]);
+  const addComment=useCallback((pid)=>{const t=(cText[pid]||'').trim();if(!t)return;setPosts(p=>p.map(post=>post.id===pid?{...post,comments:[...post.comments,{id:uid(),author:user,text:t,ts:now()}]}:post));setCText(p=>({...p,[pid]:''}));},[user,setPosts,cText]);
+  return <div>
+    <form onSubmit={addPost} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:14,padding:18,marginBottom:20}}>
+      <div style={{display:'flex',gap:10,marginBottom:10}}>
+        <select value={emoji} onChange={e=>setEmoji(e.target.value)} style={{...iS,width:60,padding:'10px 4px'}}>{EMOJIS.map(em=><option key={em}>{em}</option>)}</select>
+        <textarea value={text} onChange={e=>setText(e.target.value)} placeholder={`What's happening, ${user}?`} rows={3} style={{...iS,resize:'vertical',flex:1}}/>
+      </div>
+      <button type="submit" style={{...bP}}>Post to Community</button>
+    </form>
+    {filtered.length===0&&<p style={{color:'#9de8c8',textAlign:'center',padding:32}}>No posts found.</p>}
+    {filtered.map(post=><div key={post.id} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:14,padding:18,marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+          <div style={{width:38,height:38,borderRadius:'50%',background:'var(--accent2)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>{post.author[0]}</div>
+          <div><div style={{fontWeight:700,color:'var(--accent)'}}>{post.author}</div><div style={{fontSize:12,color:'#9de8c8'}}>{timeAgo(post.ts)}</div></div>
         </div>
-        <div class="comment-input-row">
-          <input class="comment-input" id="ci_${p.id}" placeholder="Add a comment…" maxlength="200"
-            onkeydown="if(event.key==='Enter')addComment('${p.id}')">
-          <button class="comment-submit" onclick="addComment('${p.id}')">Reply</button>
+        <div style={{display:'flex',gap:6,alignItems:'center'}}>
+          <span style={{fontSize:20}}>{post.emoji}</span>
+          {post.author===user&&<button onClick={()=>del(post.id)} style={{...bS,background:'rgba(239,68,68,0.15)',color:'#f87171'}}>Delete</button>}
         </div>
-      ` : '';
+      </div>
+      <p style={{lineHeight:1.65,marginBottom:14}}>{post.text}</p>
+      <div style={{display:'flex',gap:10}}>
+        <button onClick={()=>toggleLike(post.id)} style={{...bS,color:post.likes.includes(user)?'#f87171':'var(--accent)'}}>{post.likes.includes(user)?'❤️':'🤍'} {post.likes.length}</button>
+        <button onClick={()=>setShowC(p=>({...p,[post.id]:!p[post.id]}))} style={bS}>💬 {post.comments.length}</button>
+      </div>
+      {showC[post.id]&&<div style={{marginTop:12,borderTop:'1px solid var(--border)',paddingTop:12}}>
+        {post.comments.map(c=><div key={c.id} style={{marginBottom:8,padding:'8px 12px',background:'rgba(16,185,129,0.05)',borderRadius:8}}>
+          <span style={{fontWeight:600,color:'var(--accent)',fontSize:13}}>{c.author}</span><span style={{fontSize:12,color:'#9de8c8',marginLeft:8}}>{timeAgo(c.ts)}</span>
+          <p style={{fontSize:14,marginTop:3}}>{c.text}</p>
+        </div>)}
+        <div style={{display:'flex',gap:8,marginTop:8}}>
+          <input value={cText[post.id]||''} onChange={e=>setCText(p=>({...p,[post.id]:e.target.value}))} placeholder="Add a comment…" style={{...iS,flex:1,padding:'8px 12px',fontSize:13}} onKeyDown={e=>e.key==='Enter'&&addComment(post.id)}/>
+          <button onClick={()=>addComment(post.id)} style={{...bS,background:'var(--accent)',color:'#fff'}}>Send</button>
+        </div>
+      </div>}
+    </div>)}
+  </div>;
+}
 
-      return `
-        <div class="post-card">
-          <div class="post-cat-bar ${p.cat}"></div>
-          <div class="post-body">
-            <div class="post-header">
-              <div class="post-cat-icon">${CAT_ICONS[p.cat]}</div>
-              <div class="post-info">
-                <div class="post-title">${escHtml(p.title)}</div>
-                <div class="post-meta">
-                  <span class="cat-label ${p.cat}">${CAT_LABELS[p.cat]}</span>
-                  <span>📍 ${escHtml(p.area)}</span>
-                  <span>👤 ${escHtml(p.author)}</span>
-                  <span>${timeAgo(p.time)}</span>
-                </div>
-              </div>
+function EventsTab({user,events,setEvents,toast,search}){
+  const[showF,setShowF]=useState(false);
+  const[f,setF]=useState({title:'',date:'',time:'',location:'',description:''});
+  const sf=k=>e=>setF(p=>({...p,[k]:e.target.value}));
+  const filtered=useMemo(()=>{if(!search)return events;const q=search.toLowerCase();return events.filter(e=>e.title.toLowerCase().includes(q)||e.description.toLowerCase().includes(q));},[events,search]);
+  const add=e=>{e.preventDefault();if(!f.title.trim()||!f.date)return;setEvents(p=>[{id:uid(),...f,rsvp:{going:0,maybe:0,notgoing:0},myRsvp:null,author:user,ts:now()},...p]);setF({title:'',date:'',time:'',location:'',description:''});setShowF(false);toast('Event added!');};
+  const rsvp=useCallback((eid,choice)=>{setEvents(p=>p.map(ev=>{if(ev.id!==eid)return ev;const prev=ev.myRsvp;const r={...ev.rsvp};if(prev)r[prev]=Math.max(0,r[prev]-1);if(choice!==prev){r[choice]++;return{...ev,rsvp:r,myRsvp:choice};}return{...ev,rsvp:r,myRsvp:null};}));},[setEvents]);
+  const rc={going:'var(--accent)',maybe:'#f59e0b',notgoing:'#f87171'};
+  return <div>
+    <button onClick={()=>setShowF(s=>!s)} style={{...bP,marginBottom:18}}>{showF?'Cancel':'+ Add Event'}</button>
+    {showF&&<form onSubmit={add} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:14,padding:18,marginBottom:20}}>
+      <h3 style={{color:'var(--accent)',marginBottom:14}}>New Community Event</h3>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+        <div><label style={lS}>Title</label><input value={f.title} onChange={sf('title')} style={iS} required placeholder="Event title"/></div>
+        <div><label style={lS}>Location</label><input value={f.location} onChange={sf('location')} style={iS} placeholder="Venue or address"/></div>
+        <div><label style={lS}>Date</label><input type="date" value={f.date} onChange={sf('date')} style={iS} required/></div>
+        <div><label style={lS}>Time</label><input type="time" value={f.time} onChange={sf('time')} style={iS}/></div>
+      </div>
+      <label style={lS}>Description</label>
+      <textarea value={f.description} onChange={sf('description')} rows={3} style={{...iS,resize:'vertical',marginBottom:12}} placeholder="Describe your event…"/>
+      <button type="submit" style={bP}>Create Event</button>
+    </form>}
+    {filtered.length===0&&<p style={{color:'#9de8c8',textAlign:'center',padding:32}}>No events found.</p>}
+    {filtered.map(ev=><div key={ev.id} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:14,padding:18,marginBottom:14}}>
+      <h3 style={{color:'var(--accent)',fontSize:18,marginBottom:4}}>{ev.title}</h3>
+      <div style={{fontSize:13,color:'#9de8c8',marginBottom:10}}>📅 {ev.date} {ev.time&&`at ${ev.time}`} · 📍 {ev.location} · By {ev.author} · {timeAgo(ev.ts)}</div>
+      <p style={{lineHeight:1.65,marginBottom:14,fontSize:14}}>{ev.description}</p>
+      <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+        {['going','maybe','notgoing'].map(r=><button key={r} onClick={()=>rsvp(ev.id,r)}
+          style={{...bS,background:ev.myRsvp===r?rc[r]:'var(--input)',color:ev.myRsvp===r?'#fff':'var(--text)',border:ev.myRsvp===r?`1px solid ${rc[r]}`:'1px solid var(--border)'}}>
+          {r==='going'?'✅':r==='maybe'?'🤔':'❌'} {r.charAt(0).toUpperCase()+r.slice(1)} ({ev.rsvp[r]})
+        </button>)}
+      </div>
+    </div>)}
+  </div>;
+}
+
+function LostFoundTab({user,items,setItems,toast,search}){
+  const[filter,setFilter]=useState('All');
+  const[showF,setShowF]=useState(false);
+  const[f,setF]=useState({title:'',type:'Lost',description:'',contact:'',date:'',location:''});
+  const sf=k=>e=>setF(p=>({...p,[k]:e.target.value}));
+  const filtered=useMemo(()=>{let l=items;if(filter==='Resolved')l=l.filter(i=>i.status==='resolved');else if(filter!=='All')l=l.filter(i=>i.type===filter&&i.status!=='resolved');if(search){const q=search.toLowerCase();l=l.filter(i=>i.title.toLowerCase().includes(q)||i.description.toLowerCase().includes(q));}return l;},[items,filter,search]);
+  const add=e=>{e.preventDefault();if(!f.title.trim())return;setItems(p=>[{id:uid(),...f,status:'active',author:user,ts:now()},...p]);setF({title:'',type:'Lost',description:'',contact:'',date:'',location:''});setShowF(false);toast(`${f.type} item posted!`);};
+  const resolve=id=>{setItems(p=>p.map(i=>i.id===id?{...i,status:'resolved'}:i));toast('Marked as resolved!');};
+  return <div>
+    <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:18,alignItems:'center'}}>
+      <button onClick={()=>setShowF(s=>!s)} style={bP}>{showF?'Cancel':'+ Post Item'}</button>
+      {['All','Lost','Found','Resolved'].map(fl=><button key={fl} onClick={()=>setFilter(fl)} style={{...bS,background:filter===fl?'var(--accent)':'var(--input)',color:filter===fl?'#fff':'var(--text)'}}>{fl}</button>)}
+    </div>
+    {showF&&<form onSubmit={add} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:14,padding:18,marginBottom:20}}>
+      <h3 style={{color:'var(--accent)',marginBottom:14}}>New Lost &amp; Found Post</h3>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+        <div><label style={lS}>Title</label><input value={f.title} onChange={sf('title')} style={iS} required placeholder="What is it?"/></div>
+        <div><label style={lS}>Type</label><select value={f.type} onChange={sf('type')} style={iS}><option>Lost</option><option>Found</option></select></div>
+        <div><label style={lS}>Location Area</label><input value={f.location} onChange={sf('location')} style={iS} placeholder="Where?"/></div>
+        <div><label style={lS}>Date</label><input type="date" value={f.date} onChange={sf('date')} style={iS}/></div>
+        <div style={{gridColumn:'1/-1'}}><label style={lS}>Contact Method</label><input value={f.contact} onChange={sf('contact')} style={iS} placeholder="Phone / email / app message"/></div>
+      </div>
+      <label style={lS}>Description</label>
+      <textarea value={f.description} onChange={sf('description')} rows={3} style={{...iS,resize:'vertical',marginBottom:12}} placeholder="Describe the item…"/>
+      <button type="submit" style={bP}>Submit</button>
+    </form>}
+    {filtered.length===0&&<p style={{color:'#9de8c8',textAlign:'center',padding:32}}>No items found.</p>}
+    {filtered.map(item=>{const tc=item.type==='Lost'?'#f87171':'#34d399';const res=item.status==='resolved';return(
+      <div key={item.id} style={{background:'var(--card)',border:`1px solid ${res?'var(--border)':tc}`,borderRadius:14,padding:18,marginBottom:14,opacity:res?.7:1}}>
+        <div style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:8,marginBottom:8}}>
+          <div>
+            <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:4}}>
+              <span style={{background:res?'#6b7280':tc,color:'#fff',padding:'2px 10px',borderRadius:20,fontSize:12,fontWeight:700}}>{res?'RESOLVED':item.type}</span>
+              <h3 style={{fontSize:17}}>{item.title}</h3>
             </div>
-            <div class="post-text">${escHtml(p.text)}</div>
-            <div class="post-actions">
-              <button class="comment-submit" style="font-size:12px;padding:6px 14px" onclick="toggleComments('${p.id}')">
-                💬 ${commentCount} Comment${commentCount!==1?'s':''}
-              </button>
-              <button class="del-post-btn" onclick="deletePost('${p.id}')">✕ Remove</button>
-            </div>
+            <div style={{fontSize:12,color:'#9de8c8'}}>📍 {item.location} · 📅 {item.date} · By {item.author}</div>
           </div>
-          <div class="comments-section">
-            ${commentsOpen ? commentsHtml : `<div class="comments-toggle" onclick="toggleComments('${p.id}')">💬 ${commentCount} comment${commentCount!==1?'s':''} — click to ${commentsOpen?'hide':'view'}</div>`}
-          </div>
+          {item.author===user&&!res&&<button onClick={()=>resolve(item.id)} style={{...bS,background:'rgba(52,211,153,0.15)',color:'#34d399'}}>Mark Resolved</button>}
         </div>
-      `;
-    }).join('');
-  }
+        <p style={{fontSize:14,lineHeight:1.6,marginBottom:8}}>{item.description}</p>
+        <div style={{fontSize:13,color:'var(--accent)'}}>📞 {item.contact}</div>
+      </div>
+    );})}
+  </div>;
+}
 
-  function updateAreaHero() {
-    if (!myName) return;
-    document.querySelector('.post-count-hero').textContent = posts.length + ' post' + (posts.length!==1?'s':'') + ' in your community';
-  }
+function SafetyTab({user,alerts,setAlerts,toast,search}){
+  const[showF,setShowF]=useState(false);
+  const[f,setF]=useState({severity:'Medium',description:'',location:''});
+  const sf=k=>e=>setF(p=>({...p,[k]:e.target.value}));
+  const filtered=useMemo(()=>{if(!search)return alerts;const q=search.toLowerCase();return alerts.filter(a=>a.description.toLowerCase().includes(q)||a.location.toLowerCase().includes(q));},[alerts,search]);
+  const add=e=>{e.preventDefault();if(!f.description.trim())return;setAlerts(p=>[{id:uid(),...f,ts:now(),author:user},...p]);setF({severity:'Medium',description:'',location:''});setShowF(false);toast('Safety alert posted!');};
+  const sb={High:'#f87171',Medium:'#f59e0b',Low:'#34d399'};
+  const sk={High:'🔴',Medium:'🟡',Low:'🟢'};
+  return <div>
+    <button onClick={()=>setShowF(s=>!s)} style={{...bP,marginBottom:18}}>{showF?'Cancel':'+ Post Alert'}</button>
+    {showF&&<form onSubmit={add} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:14,padding:18,marginBottom:20}}>
+      <h3 style={{color:'#f87171',marginBottom:14}}>⚠️ New Safety Alert</h3>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+        <div><label style={lS}>Severity</label><select value={f.severity} onChange={sf('severity')} style={iS}><option>Low</option><option>Medium</option><option>High</option></select></div>
+        <div><label style={lS}>Location</label><input value={f.location} onChange={sf('location')} style={iS} placeholder="Street or area"/></div>
+      </div>
+      <label style={lS}>Description</label>
+      <textarea value={f.description} onChange={sf('description')} rows={3} style={{...iS,resize:'vertical',marginBottom:12}} placeholder="Describe the safety concern…" required/>
+      <button type="submit" style={{...bP,background:'#dc2626'}}>Post Alert</button>
+    </form>}
+    {filtered.length===0&&<p style={{color:'#9de8c8',textAlign:'center',padding:32}}>No alerts found.</p>}
+    {filtered.map(alert=><div key={alert.id} style={{background:`rgba(0,0,0,0.3)`,border:`2px solid ${sb[alert.severity]}`,borderRadius:14,padding:18,marginBottom:14}}>
+      <div style={{display:'flex',gap:10,alignItems:'center',marginBottom:10}}>
+        <span style={{fontSize:22}}>{sk[alert.severity]}</span>
+        <div>
+          <span style={{background:sb[alert.severity],color:'#fff',padding:'2px 10px',borderRadius:20,fontSize:12,fontWeight:700}}>{alert.severity.toUpperCase()} SEVERITY</span>
+          <div style={{fontSize:12,color:'#9de8c8',marginTop:3}}>📍 {alert.location} · {timeAgo(alert.ts)} · By {alert.author}</div>
+        </div>
+      </div>
+      <p style={{lineHeight:1.65}}>{alert.description}</p>
+    </div>)}
+  </div>;
+}
 
-  function updatePostBtn() {
-    const title = document.getElementById('post-title-input').value.trim();
-    const text = document.getElementById('compose-textarea').value.trim();
-    document.getElementById('post-btn').disabled = !title || !text;
-  }
-  ['post-title-input','compose-textarea'].forEach(id => document.getElementById(id).addEventListener('input', updatePostBtn));
+function Sidebar({neighbours,notices,setNotices,user,toast}){
+  const[noteText,setNoteText]=useState('');
+  const online=neighbours.filter(n=>n.online).length;
+  const addN=e=>{e.preventDefault();if(!noteText.trim())return;setNotices(p=>[{id:uid(),text:noteText.trim(),author:user,ts:now()},...p]);setNoteText('');toast('Notice pinned!');};
+  return <div style={{display:'flex',flexDirection:'column',gap:16}}>
+    <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:14,padding:16}}>
+      <h3 style={{color:'var(--accent)',marginBottom:12}}>📌 Notice Board</h3>
+      {notices.map(n=><div key={n.id} style={{background:'rgba(245,158,11,0.1)',border:'1px solid rgba(245,158,11,0.3)',borderRadius:8,padding:'8px 10px',marginBottom:8,position:'relative'}}>
+        <p style={{fontSize:13,lineHeight:1.5,paddingRight:18}}>{n.text}</p>
+        <div style={{fontSize:11,color:'#9de8c8',marginTop:2}}>— {n.author}</div>
+        <button onClick={()=>setNotices(p=>p.filter(x=>x.id!==n.id))} style={{position:'absolute',top:6,right:8,background:'none',color:'#9de8c8',fontSize:15,padding:0}}>×</button>
+      </div>)}
+      <form onSubmit={addN} style={{marginTop:10}}>
+        <input value={noteText} onChange={e=>setNoteText(e.target.value)} placeholder="Add a notice…" style={{...iS,fontSize:13,padding:'7px 10px',marginBottom:6}}/>
+        <button type="submit" style={{...bS,width:'100%',background:'rgba(245,158,11,0.2)',color:'#f59e0b',border:'1px solid rgba(245,158,11,0.3)'}}>Pin Notice</button>
+      </form>
+    </div>
+    <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:14,padding:16}}>
+      <h3 style={{color:'var(--accent)',marginBottom:4}}>👥 Neighbours</h3>
+      <p style={{fontSize:12,color:'#9de8c8',marginBottom:12}}><span style={{color:'#34d399',fontWeight:700}}>{online}</span> online · {neighbours.length} registered</p>
+      {neighbours.map(n=><div key={n.id} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',borderBottom:'1px solid var(--border)'}}>
+        <div style={{width:8,height:8,borderRadius:'50%',background:n.online?'#34d399':'#6b7280',flexShrink:0}}/>
+        <span style={{fontSize:13,fontWeight:n.name===user?700:400,color:n.name===user?'var(--accent)':'var(--text)'}}>{n.name}{n.name===user?' (you)':''}</span>
+      </div>)}
+    </div>
+  </div>;
+}
 
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2800);
-  }
-
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  load();
-  if (myName && myArea) {
-    document.getElementById('setup-modal').classList.add('hidden');
-    initUI();
-  }
+function App(){
+  const[profile,setProfile]=useState(()=>LS.get('nh_profile',null));
+  const[tab,setTab]=useState('Posts');
+  const[posts,setPosts]=useState(()=>LS.get('nh_posts',SEED_POSTS));
+  const[events,setEvents]=useState(()=>LS.get('nh_events',SEED_EVENTS));
+  const[lnf,setLnf]=useState(()=>LS.get('nh_lnf',SEED_LNF));
+  const[alerts,setAlerts]=useState(()=>LS.get('nh_alerts',SEED_ALERTS));
+  const[notices,setNotices]=useState(()=>LS.get('nh_notices',SEED_NOTICES));
+  const[neighbours]=useState(()=>LS.get('nh_neighbours',SEED_NEIGHBOURS));
+  const[search,setSearch]=useState('');
+  const{toasts,add:toast}=useToasts();
+  useEffect(()=>{LS.set('nh_posts',posts)},[posts]);
+  useEffect(()=>{LS.set('nh_events',events)},[events]);
+  useEffect(()=>{LS.set('nh_lnf',lnf)},[lnf]);
+  useEffect(()=>{LS.set('nh_alerts',alerts)},[alerts]);
+  useEffect(()=>{LS.set('nh_notices',notices)},[notices]);
+  const onboard=(name,hood)=>{const p={name,hood};setProfile(p);LS.set('nh_profile',p);toast(`Welcome to ${hood}, ${name}!`);};
+  if(!profile)return <Onboarding onDone={onboard}/>;
+  const TABS=['Posts','Events','Lost & Found','Safety Alerts'];
+  const counts={Posts:posts.length,Events:events.length,'Lost & Found':lnf.filter(i=>i.status!=='resolved').length,'Safety Alerts':alerts.length};
+  return <div style={{minHeight:'100vh'}}>
+    <header style={{background:'rgba(4,15,12,0.95)',borderBottom:'1px solid var(--border)',padding:'0 20px',position:'sticky',top:0,zIndex:100,backdropFilter:'blur(10px)'}}>
+      <div style={{maxWidth:1200,margin:'0 auto',display:'flex',alignItems:'center',gap:14,height:58,flexWrap:'wrap'}}>
+        <a href="../../index.html" style={{color:'#9de8c8',fontSize:13}}>← Back</a>
+        <div style={{display:'flex',alignItems:'center',gap:8,flex:1}}>
+          <span style={{fontSize:22}}>🏡</span>
+          <div><div style={{fontWeight:800,fontSize:17,color:'var(--accent)'}}>NeighbourHub</div><div style={{fontSize:11,color:'#9de8c8'}}>{profile.hood}</div></div>
+        </div>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" style={{...iS,width:180,padding:'7px 12px',fontSize:13}}/>
+        <div style={{display:'flex',alignItems:'center',gap:8,fontSize:13}}>
+          <div style={{width:28,height:28,borderRadius:'50%',background:'var(--accent2)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>{profile.name[0]}</div>
+          <span style={{color:'var(--accent)',fontWeight:600}}>{profile.name}</span>
+        </div>
+      </div>
+    </header>
+    <div style={{maxWidth:1200,margin:'0 auto',padding:'22px 16px',display:'grid',gridTemplateColumns:'1fr 290px',gap:22}}>
+      <main>
+        <div style={{display:'flex',gap:4,marginBottom:20,flexWrap:'wrap'}}>
+          {TABS.map(t=><button key={t} onClick={()=>setTab(t)} style={{...bS,padding:'9px 15px',fontSize:13,background:tab===t?'var(--accent)':'var(--card)',color:tab===t?'#fff':'var(--text)',border:tab===t?'1px solid var(--accent)':'1px solid var(--border)'}}>
+            {t}{counts[t]>0&&<span style={{marginLeft:5,background:tab===t?'rgba(255,255,255,0.25)':'var(--accent2)',color:'#fff',borderRadius:10,padding:'1px 6px',fontSize:11}}>{counts[t]}</span>}
+          </button>)}
+        </div>
+        {tab==='Posts'&&<PostsTab user={profile.name} posts={posts} setPosts={setPosts} toast={toast} search={search}/>}
+        {tab==='Events'&&<EventsTab user={profile.name} events={events} setEvents={setEvents} toast={toast} search={search}/>}
+        {tab==='Lost & Found'&&<LostFoundTab user={profile.name} items={lnf} setItems={setLnf} toast={toast} search={search}/>}
+        {tab==='Safety Alerts'&&<SafetyTab user={profile.name} alerts={alerts} setAlerts={setAlerts} toast={toast} search={search}/>}
+      </main>
+      <aside><Sidebar neighbours={neighbours} notices={notices} setNotices={setNotices} user={profile.name} toast={toast}/></aside>
+    </div>
+    <Toast toasts={toasts}/>
+    <style>{`select option{background:#040f0c}@media(max-width:768px){.main-grid{grid-template-columns:1fr!important}}`}</style>
+  </div>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>

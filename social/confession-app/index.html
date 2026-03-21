@@ -1,377 +1,655 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Confess – Anonymous Confession Board</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Anonymous Confession App</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg1: #0f0c29; --bg2: #302b63; --accent: #f43f5e;
-    --glass: rgba(255,255,255,0.06); --glass-border: rgba(255,255,255,0.12);
-    --text: #f1f5f9; --subtext: #94a3b8;
-  }
-
-  body {
-    font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 50%, #24243e 100%);
-    min-height: 100vh; color: var(--text);
-  }
-
-  /* ── NAV ── */
-  .nav {
-    position: sticky; top: 0; z-index: 50;
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 24px;
-    background: rgba(0,0,0,0.4); backdrop-filter: blur(24px);
-    border-bottom: 1px solid var(--glass-border);
-  }
-  .back-btn {
-    display: flex; align-items: center; gap: 6px;
-    color: var(--accent); text-decoration: none; font-size: 14px; font-weight: 500;
-    padding: 6px 12px; border-radius: 8px;
-    background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3);
-    transition: all .2s;
-  }
-  .back-btn:hover { background: rgba(244,63,94,0.2); transform: translateX(-2px); }
-  .nav-title { font-size: 18px; font-weight: 700; flex: 1; }
-  .nav-count { font-size: 13px; color: var(--subtext); }
-
-  /* ── HERO ── */
-  .hero {
-    text-align: center; padding: 48px 24px 32px;
-  }
-  .hero-icon { font-size: 52px; margin-bottom: 16px; }
-  .hero h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; }
-  .hero p { color: var(--subtext); font-size: 15px; max-width: 480px; margin: 0 auto; line-height: 1.7; }
-
-  /* ── COMPOSE BOX ── */
-  .compose-wrap { max-width: 680px; margin: 0 auto 40px; padding: 0 20px; }
-  .compose-card {
-    background: var(--glass); backdrop-filter: blur(30px);
-    border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px;
-    transition: border-color .2s;
-  }
-  .compose-card:focus-within { border-color: rgba(244,63,94,0.5); }
-  .compose-textarea {
-    width: 100%; background: rgba(255,255,255,0.05);
-    border: 1px solid var(--glass-border); border-radius: 12px;
-    color: var(--text); font-family: 'Inter', sans-serif;
-    font-size: 15px; padding: 14px 16px; resize: none;
-    min-height: 100px; outline: none; transition: border-color .2s; line-height: 1.6;
-  }
-  .compose-textarea:focus { border-color: rgba(244,63,94,0.4); }
-  .compose-footer {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-top: 14px; gap: 12px;
-  }
-  .char-count { font-size: 12px; color: var(--subtext); }
-  .char-count.warn { color: #f59e0b; }
-  .char-count.over { color: var(--accent); }
-  .anon-badge {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 12px; color: #22c55e; font-weight: 500;
-  }
-  .post-btn {
-    padding: 10px 24px; border-radius: 10px;
-    background: linear-gradient(135deg, var(--accent), #e11d48);
-    border: none; color: #fff; font-family: 'Inter', sans-serif;
-    font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s;
-  }
-  .post-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(244,63,94,.4); }
-  .post-btn:disabled { opacity: .5; pointer-events: none; }
-
-  /* ── FILTERS ── */
-  .filters { max-width: 680px; margin: 0 auto 24px; padding: 0 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-  .filter-btn {
-    padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 500;
-    background: var(--glass); border: 1px solid var(--glass-border);
-    color: var(--subtext); cursor: pointer; transition: all .2s;
-  }
-  .filter-btn.active { background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.4); color: var(--accent); }
-  .filter-btn:hover:not(.active) { background: rgba(255,255,255,0.1); color: var(--text); }
-  .confession-count { margin-left: auto; font-size: 13px; color: var(--subtext); }
-
-  /* ── CARDS ── */
-  .confessions-wrap { max-width: 680px; margin: 0 auto 60px; padding: 0 20px; display: flex; flex-direction: column; gap: 16px; }
-  .confession-card {
-    background: var(--glass); backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border); border-radius: 18px; padding: 20px 22px;
-    animation: cardIn .4s ease; position: relative; overflow: hidden;
-    transition: border-color .25s, transform .2s;
-  }
-  .confession-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2); }
-  @keyframes cardIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-  .card-shimmer {
-    position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
-    background: linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent);
-    animation: shimmer 3s infinite;
-  }
-  @keyframes shimmer { to{left:150%} }
-
-  .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-  .anon-avatar {
-    width: 38px; height: 38px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; font-weight: 700; flex-shrink: 0;
-  }
-  .card-meta { flex: 1; }
-  .anon-name { font-size: 13px; font-weight: 600; }
-  .card-time { font-size: 11px; color: var(--subtext); margin-top: 2px; }
-  .card-delete {
-    background: none; border: none; color: rgba(255,255,255,0.2);
-    cursor: pointer; font-size: 16px; padding: 4px; border-radius: 6px;
-    transition: color .2s;
-  }
-  .card-delete:hover { color: var(--accent); }
-
-  .card-text { font-size: 15px; line-height: 1.7; color: var(--text); margin-bottom: 16px; word-break: break-word; }
-
-  .card-reactions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .reaction-btn {
-    display: flex; align-items: center; gap: 5px;
-    padding: 6px 12px; border-radius: 20px;
-    background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border);
-    cursor: pointer; transition: all .2s; font-size: 16px; color: var(--text);
-  }
-  .reaction-btn:hover { background: rgba(255,255,255,0.14); transform: scale(1.05); }
-  .reaction-btn.reacted { background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.4); }
-  .reaction-count { font-size: 13px; font-weight: 600; }
-
-  /* ── EMPTY ── */
-  .empty-state {
-    text-align: center; padding: 60px 20px; color: var(--subtext);
-  }
-  .empty-state .icon { font-size: 52px; margin-bottom: 16px; opacity: .4; }
-  .empty-state h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
-
-  /* Toast */
-  #toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
-    background: rgba(34,197,94,0.9); color: #fff; padding: 12px 24px;
-    border-radius: 12px; font-size: 14px; font-weight: 500;
-    transition: transform .3s; z-index: 999; pointer-events: none; backdrop-filter: blur(10px);
-  }
-  #toast.show { transform: translateX(-50%) translateY(0); }
-
-  @media(max-width:480px) {
-    .hero h1 { font-size: 24px; } .compose-footer { flex-wrap: wrap; }
+  :root{--bg:#0d0308;--accent:#f43f5e;--border:rgba(244,63,94,0.2);--text:#fff1f2;--card:#1a0510;--muted:#9f5566;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;}
+  a{color:var(--accent);text-decoration:none;}
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-track{background:#1a0510;}
+  ::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px;}
+  .app{max-width:800px;margin:0 auto;padding:16px;}
+  .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;margin-bottom:16px;transition:color .2s;}
+  .back-link:hover{color:var(--accent);}
+  .header{text-align:center;padding:24px 0 32px;}
+  .header h1{font-size:2rem;font-weight:800;color:var(--accent);letter-spacing:-0.5px;}
+  .header p{color:var(--muted);margin-top:6px;font-size:14px;}
+  .stats-bar{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:24px;}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 20px;text-align:center;flex:1;min-width:120px;}
+  .stat-val{font-size:1.4rem;font-weight:700;color:var(--accent);}
+  .stat-label{font-size:11px;color:var(--muted);margin-top:2px;}
+  .compose{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:24px;}
+  .compose h2{font-size:1rem;font-weight:700;margin-bottom:14px;color:var(--accent);}
+  textarea{width:100%;background:#0d0308;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px;font-size:14px;resize:vertical;min-height:100px;font-family:inherit;transition:border-color .2s;}
+  textarea:focus{outline:none;border-color:var(--accent);}
+  .char-counter{text-align:right;font-size:12px;margin-top:4px;color:var(--muted);}
+  .char-counter.warn{color:#fb923c;}
+  .char-counter.over{color:#f43f5e;}
+  .compose-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center;}
+  select{background:#0d0308;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;}
+  select:focus{outline:none;border-color:var(--accent);}
+  .mood-row{display:flex;gap:6px;flex-wrap:wrap;}
+  .mood-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:18px;transition:all .2s;}
+  .mood-btn:hover{border-color:var(--accent);transform:scale(1.1);}
+  .mood-btn.selected{border-color:var(--accent);background:rgba(244,63,94,0.15);}
+  .btn{padding:9px 20px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:#e11d48;transform:translateY(-1px);}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+  .btn-ghost{background:none;border:1px solid var(--border);color:var(--muted);font-size:12px;}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+  .search-wrap{position:relative;flex:1;min-width:180px;}
+  .search-wrap input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px 9px 36px;font-size:13px;}
+  .search-wrap input:focus{outline:none;border-color:var(--accent);}
+  .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none;}
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .filter-chip{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;}
+  .filter-chip:hover{border-color:var(--accent);color:var(--accent);}
+  .filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px;transition:border-color .2s;}
+  .card:hover{border-color:rgba(244,63,94,0.4);}
+  .card-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .card-meta{flex:1;}
+  .card-id{font-size:12px;font-weight:600;}
+  .card-time{font-size:11px;color:var(--muted);}
+  .card-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .tag-badge{padding:2px 10px;border-radius:20px;font-size:11px;background:rgba(244,63,94,0.15);color:var(--accent);border:1px solid var(--border);}
+  .mood-badge{font-size:14px;}
+  .card-text{font-size:14px;line-height:1.6;color:var(--text);word-break:break-word;}
+  .card-text.truncated{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+  .read-more{color:var(--accent);font-size:12px;cursor:pointer;margin-top:4px;display:inline-block;}
+  .card-footer{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  .reactions{display:flex;gap:4px;flex-wrap:wrap;}
+  .reaction-btn{background:rgba(244,63,94,0.08);border:1px solid var(--border);border-radius:20px;padding:4px 10px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px;transition:all .2s;}
+  .reaction-btn:hover{border-color:var(--accent);background:rgba(244,63,94,0.18);}
+  .reaction-btn.reacted{border-color:var(--accent);background:rgba(244,63,94,0.25);}
+  .reaction-count{font-size:11px;color:var(--muted);}
+  .action-btns{display:flex;gap:6px;margin-left:auto;align-items:center;}
+  .icon-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:4px 8px;border-radius:6px;transition:all .2s;display:flex;align-items:center;gap:4px;}
+  .icon-btn:hover{color:var(--accent);background:rgba(244,63,94,0.1);}
+  .icon-btn.reported{color:#fb923c;cursor:default;}
+  .comments-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+  .comments-section h4{font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:600;}
+  .comment{background:rgba(244,63,94,0.05);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .comment-text{flex:1;line-height:1.5;word-break:break-word;}
+  .comment-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px;transition:color .2s;flex-shrink:0;}
+  .comment-del:hover{color:var(--accent);}
+  .comment-input-row{display:flex;gap:8px;margin-top:8px;}
+  .comment-input-row input{flex:1;background:#0d0308;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;font-size:13px;}
+  .comment-input-row input:focus{outline:none;border-color:var(--accent);}
+  .empty{text-align:center;padding:48px 20px;color:var(--muted);}
+  .empty-icon{font-size:48px;margin-bottom:12px;}
+  .load-more{display:block;margin:0 auto 24px;padding:10px 32px;background:none;border:1px solid var(--border);color:var(--muted);border-radius:10px;cursor:pointer;font-size:14px;transition:all .2s;}
+  .load-more:hover{border-color:var(--accent);color:var(--accent);}
+  .char-info{font-size:11px;color:var(--muted);}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#f43f5e;color:#fff;padding:10px 24px;border-radius:12px;font-weight:600;font-size:14px;z-index:999;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(244,63,94,0.4);}
+  .sort-wrap{display:flex;gap:6px;align-items:center;}
+  .sort-wrap span{font-size:12px;color:var(--muted);}
+  @media(max-width:600px){
+    .compose-row{flex-direction:column;}
+    .controls{flex-direction:column;}
+    .action-btns{margin-left:0;flex-wrap:wrap;}
+    .reactions{gap:3px;}
+    .reaction-btn{padding:3px 7px;font-size:12px;}
   }
 </style>
 </head>
 <body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
-<nav class="nav">
-  <a href="../../index.html" class="back-btn">← Back</a>
-  <div class="nav-title">🤫 Confess</div>
-  <div class="nav-count" id="nav-count">0 confessions</div>
-</nav>
+const TAGS = ['General','Relationships','School','Work','Family','Health'];
+const MOODS = ['😊','😢','😡','😰','😮'];
+const REACTIONS = ['❤️','🔥','😢','😲','😂','🤝'];
+const SORTS = [{v:'newest',l:'Newest'},{v:'reacted',l:'Most Reacted'},{v:'trending',l:'Trending'}];
+const PAGE_SIZE = 10;
+const AVATARS = ['🐺','🦊','🐱','🐻','🦁','🐯','🦝','🐼','🐨','🦉','🦚','🦋','��','🦄','🐬','🐸','🦀','🦎','🐙','🦈'];
+const AVATAR_COLORS = ['#7c3aed','#db2777','#0891b2','#059669','#d97706','#dc2626','#4f46e5','#0d9488','#b45309','#be185d','#1d4ed8','#065f46'];
 
-<div class="hero">
-  <div class="hero-icon">🎭</div>
-  <h1>Anonymous Confessions</h1>
-  <p>Say what's on your mind. No names, no judgement — completely anonymous. Your secrets are safe here.</p>
-</div>
+function escHtml(s){
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
 
-<!-- Compose -->
-<div class="compose-wrap">
-  <div class="compose-card">
-    <textarea class="compose-textarea" id="compose-textarea" placeholder="What's on your mind? Confess anonymously… (max 500 characters)" maxlength="500"></textarea>
-    <div class="compose-footer">
-      <div class="anon-badge">🔒 100% Anonymous</div>
-      <div class="char-count" id="char-count">0 / 500</div>
-      <button class="post-btn" id="post-btn" onclick="postConfession()" disabled>Post</button>
+function hashCode(str){
+  let h = 0;
+  for(let i = 0; i < str.length; i++){
+    h = ((h << 5) - h) + str.charCodeAt(i);
+    h |= 0;
+  }
+  return Math.abs(h);
+}
+
+function getAvatar(id){
+  const h = hashCode(id);
+  return {
+    emoji: AVATARS[h % AVATARS.length],
+    bg: AVATAR_COLORS[h % AVATAR_COLORS.length]
+  };
+}
+
+function timeAgo(ts){
+  const diff = (Date.now() - ts) / 1000;
+  if(diff < 60) return 'just now';
+  if(diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if(diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if(diff < 604800) return Math.floor(diff/86400) + 'd ago';
+  return new Date(ts).toLocaleDateString();
+}
+
+const SEED_CONFESSIONS = [
+  {
+    id:'c001',
+    text:'I told my boss I had a family emergency to skip a meeting, but I was actually just watching a movie marathon. I have zero regrets but the guilt is eating me alive now.',
+    tag:'Work',mood:'😢',ts:Date.now()-3600000*2,
+    reactions:{'❤️':12,'🔥':5,'😢':8,'😲':2,'😂':18,'🤝':3},
+    comments:[{id:'cm1',text:"We've all been there, don't worry!",ts:Date.now()-3500000,own:false}],
+    reported:false
+  },
+  {
+    id:'c002',
+    text:'I still sleep with a stuffed animal my grandma gave me when I was 7. I am 26 years old and I do not think I could ever throw it away. It smells like her house and I cannot let that go.',
+    tag:'Family',mood:'😊',ts:Date.now()-3600000*5,
+    reactions:{'❤️':45,'🔥':2,'😢':5,'😲':1,'😂':3,'🤝':22},
+    comments:[{id:'cm2',text:"This is the purest thing I've read today.",ts:Date.now()-3000000,own:false}],
+    reported:false
+  },
+  {
+    id:'c003',
+    text:"I have been in a relationship for 3 years and I genuinely do not know if I love my partner or if I am just scared to be alone. I smile and say everything is fine every single day while feeling hollow inside.",
+    tag:'Relationships',mood:'😰',ts:Date.now()-86400000,
+    reactions:{'❤️':33,'🔥':0,'😢':40,'😲':15,'😂':0,'🤝':28},
+    comments:[
+      {id:'cm3',text:'Therapy helped me figure this out. Please consider it.',ts:Date.now()-80000000,own:false},
+      {id:'cm4',text:'I felt exactly this way for 2 years. It gets better.',ts:Date.now()-70000000,own:false}
+    ],
+    reported:false
+  },
+  {
+    id:'c004',
+    text:"I got a perfect score on my exam by memorizing answers I found online the night before. I did not study at all this semester and my parents think I am a genius. I feel like a fraud.",
+    tag:'School',mood:'😡',ts:Date.now()-86400000*2,
+    reactions:{'❤️':8,'🔥':20,'😢':2,'😲':12,'😂':30,'🤝':5},
+    comments:[],
+    reported:false
+  },
+  {
+    id:'c005',
+    text:"I secretly donated half my annual bonus to a local cat shelter and told my wife I got a smaller raise this year. I know that was wrong. But those cats needed food more than we needed a new sofa.",
+    tag:'Family',mood:'😊',ts:Date.now()-86400000*3,
+    reactions:{'❤️':90,'🔥':10,'😢':0,'😲':5,'😂':4,'🤝':40},
+    comments:[{id:'cm5',text:'You are a good person deep down.',ts:Date.now()-86400000*2,own:false}],
+    reported:false
+  },
+  {
+    id:'c006',
+    text:"I have not spoken to my best friend in 6 months after a small argument neither of us can even remember properly now. I miss them every single day but my pride will not let me text first.",
+    tag:'Relationships',mood:'😢',ts:Date.now()-86400000*4,
+    reactions:{'❤️':55,'🔥':1,'😢':60,'😲':3,'😂':0,'🤝':35},
+    comments:[],
+    reported:false
+  },
+  {
+    id:'c007',
+    text:"I burned out so badly at my last job that I spent three months pretending to apply for new roles while actually just sitting at my kitchen table playing video games in my pyjamas. I finally got help last month.",
+    tag:'Health',mood:'😰',ts:Date.now()-86400000*5,
+    reactions:{'❤️':70,'🔥':3,'😢':45,'😲':8,'😂':0,'🤝':55},
+    comments:[{id:'cm6',text:'Burnout is real. So glad you got help.',ts:Date.now()-86400000*4,own:false}],
+    reported:false
+  },
+  {
+    id:'c008',
+    text:"I laughed at a really dark joke my coworker made and felt terrible about it for an entire week. It was not even that funny. I think I was just nervous and did not know how to react. The guilt feels disproportionate.",
+    tag:'Work',mood:'😮',ts:Date.now()-86400000*6,
+    reactions:{'❤️':10,'🔥':2,'😢':3,'😲':5,'😂':25,'🤝':14},
+    comments:[],
+    reported:false
+  },
+];
+
+function loadData(){
+  try{
+    const d = localStorage.getItem('confessions_v3');
+    if(d) return JSON.parse(d);
+  }catch(e){}
+  const seed = SEED_CONFESSIONS.map(c => ({...c}));
+  localStorage.setItem('confessions_v3', JSON.stringify(seed));
+  return seed;
+}
+
+function saveData(d){
+  try{ localStorage.setItem('confessions_v3', JSON.stringify(d)); }catch(e){}
+}
+
+function loadMyReactions(){
+  try{ const d = localStorage.getItem('my_reactions_v3'); if(d) return JSON.parse(d); }catch(e){}
+  return {};
+}
+function saveMyReactions(d){
+  try{ localStorage.setItem('my_reactions_v3', JSON.stringify(d)); }catch(e){}
+}
+
+function loadMyComments(){
+  try{ const d = localStorage.getItem('my_comment_ids_v3'); if(d) return JSON.parse(d); }catch(e){}
+  return [];
+}
+function saveMyComments(d){
+  try{ localStorage.setItem('my_comment_ids_v3', JSON.stringify(d)); }catch(e){}
+}
+
+// ─── Stats Bar ────────────────────────────────────────────────────────────────
+function StatsBar({ confessions }){
+  const total = confessions.length;
+  const todayStart = Date.now() - 86400000;
+  const todayReactions = confessions
+    .filter(c => c.ts > todayStart)
+    .reduce((s,c) => s + Object.values(c.reactions).reduce((a,b)=>a+b,0), 0);
+  const moodCounts = {};
+  confessions.forEach(c => { moodCounts[c.mood] = (moodCounts[c.mood]||0) + 1; });
+  const topMood = Object.entries(moodCounts).sort((a,b)=>b[1]-a[1])[0];
+  const totalReactionsAll = confessions.reduce((s,c) => s + Object.values(c.reactions).reduce((a,b)=>a+b,0), 0);
+  return (
+    <div className="stats-bar">
+      <div className="stat">
+        <div className="stat-val">{total}</div>
+        <div className="stat-label">Confessions</div>
+      </div>
+      <div className="stat">
+        <div className="stat-val">{totalReactionsAll}</div>
+        <div className="stat-label">Total Reactions</div>
+      </div>
+      <div className="stat">
+        <div className="stat-val">{todayReactions}</div>
+        <div className="stat-label">Reactions Today</div>
+      </div>
+      <div className="stat">
+        <div className="stat-val">{topMood ? topMood[0] : '—'}</div>
+        <div className="stat-label">Top Mood</div>
+      </div>
     </div>
-  </div>
-</div>
+  );
+}
 
-<!-- Filters -->
-<div class="filters">
-  <button class="filter-btn active" data-filter="newest" onclick="setFilter('newest', this)">🕐 Most Recent</button>
-  <button class="filter-btn" data-filter="reacted" onclick="setFilter('reacted', this)">🔥 Most Reacted</button>
-  <div class="confession-count" id="confession-count"></div>
-</div>
+// ─── Compose ──────────────────────────────────────────────────────────────────
+function Compose({ onSubmit }){
+  const [text, setText] = useState('');
+  const [tag, setTag] = useState('General');
+  const [mood, setMood] = useState('😊');
+  const len = text.length;
+  const warnClass = len > 500 ? ' over' : len > 450 ? ' warn' : '';
 
-<!-- Feed -->
-<div class="confessions-wrap" id="confessions-wrap"></div>
+  const handle = () => {
+    if(!text.trim() || len > 500) return;
+    onSubmit({ text: text.trim(), tag, mood });
+    setText(''); setTag('General'); setMood('😊');
+  };
 
-<div id="toast">✅ Confession posted!</div>
+  return (
+    <div className="compose">
+      <h2>🤫 Share Anonymously</h2>
+      <textarea
+        maxLength={520}
+        placeholder="What's on your chest? No one will know it's you. This is a safe space."
+        value={text}
+        onChange={e => setText(e.target.value)}
+      />
+      <div className={'char-counter' + warnClass}>{len} / 500 characters</div>
+      <div className="compose-row">
+        <select value={tag} onChange={e => setTag(e.target.value)}>
+          {TAGS.map(t => <option key={t}>{t}</option>)}
+        </select>
+        <span style={{fontSize:13, color:'var(--muted)', whiteSpace:'nowrap'}}>Mood:</span>
+        <div className="mood-row">
+          {MOODS.map(m => (
+            <button
+              key={m}
+              className={'mood-btn' + (mood === m ? ' selected' : '')}
+              onClick={() => setMood(m)}
+            >{m}</button>
+          ))}
+        </div>
+        <button
+          className="btn btn-primary"
+          style={{marginLeft:'auto'}}
+          disabled={!text.trim() || len > 500}
+          onClick={handle}
+        >Confess 🤫</button>
+      </div>
+    </div>
+  );
+}
 
-<script>
-  const STORAGE_KEY = 'confess_v2';
-  const EMOJIS = ['❤️','😮','😂','😢'];
-  const AVATARS = [
-    {emoji:'🎭',color:'rgba(244,63,94,0.3)'},{emoji:'🌸',color:'rgba(236,72,153,0.3)'},
-    {emoji:'🌊',color:'rgba(59,130,246,0.3)'},{emoji:'🍃',color:'rgba(34,197,94,0.3)'},
-    {emoji:'🔥',color:'rgba(249,115,22,0.3)'},{emoji:'⭐',color:'rgba(234,179,8,0.3)'},
-    {emoji:'🌙',color:'rgba(139,92,246,0.3)'},{emoji:'🌈',color:'rgba(20,184,166,0.3)'}
-  ];
+// ─── Comment Section ──────────────────────────────────────────────────────────
+function CommentSection({ confession, onAddComment, onDeleteComment, myCommentIds }){
+  const [val, setVal] = useState('');
 
-  let confessions = [];
-  let currentFilter = 'newest';
-  let myReactions = {}; // confessionId -> Set of emoji
+  const add = () => {
+    if(!val.trim() || val.length > 200) return;
+    onAddComment(confession.id, val.trim());
+    setVal('');
+  };
 
-  function load() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const d = JSON.parse(raw);
-        confessions = d.confessions || [];
-        myReactions = d.myReactions || {};
-        // Convert myReactions arrays back to sets
-        for (const k in myReactions) myReactions[k] = new Set(myReactions[k]);
-      }
-    } catch(e) { confessions = []; myReactions = {}; }
-  }
+  return (
+    <div className="comments-section">
+      <h4>💬 Comments ({confession.comments.length})</h4>
+      {confession.comments.length === 0 && (
+        <p style={{fontSize:12, color:'var(--muted)', marginBottom:8}}>No comments yet. Be the first.</p>
+      )}
+      {confession.comments.map(cm => (
+        <div className="comment" key={cm.id}>
+          <span className="comment-text">{cm.text}</span>
+          {myCommentIds.includes(cm.id) && (
+            <button className="comment-del" onClick={() => onDeleteComment(confession.id, cm.id)} title="Delete">✕</button>
+          )}
+        </div>
+      ))}
+      <div className="comment-input-row">
+        <input
+          type="text"
+          maxLength={200}
+          placeholder="Add an anonymous comment… (max 200 chars)"
+          value={val}
+          onChange={e => setVal(e.target.value)}
+          onKeyDown={e => { if(e.key === 'Enter') add(); }}
+        />
+        <button className="btn btn-ghost" onClick={add} disabled={!val.trim()}>Post</button>
+      </div>
+    </div>
+  );
+}
 
-  function save() {
-    const mr = {};
-    for (const k in myReactions) mr[k] = [...myReactions[k]];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ confessions, myReactions: mr }));
-  }
+// ─── Confession Card ──────────────────────────────────────────────────────────
+function ConfessionCard({ confession, myReactions, onReact, onAddComment, onDeleteComment, myCommentIds, onReport, onShare }){
+  const [showComments, setShowComments] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const av = getAvatar(confession.id);
+  const totalReactions = Object.values(confession.reactions).reduce((a,b) => a+b, 0);
+  const isLong = confession.text.length > 240;
+  const myRxForThis = myReactions[confession.id] || [];
 
-  function postConfession() {
-    const ta = document.getElementById('compose-textarea');
-    const text = ta.value.trim();
-    if (!text || text.length > 500) return;
+  return (
+    <div className="card">
+      <div className="card-header">
+        <div className="avatar" style={{background: av.bg}}>{av.emoji}</div>
+        <div className="card-meta">
+          <div className="card-id" style={{color: av.bg}}>Anonymous #{confession.id.slice(-4).toUpperCase()}</div>
+          <div className="card-time">{timeAgo(confession.ts)} · {confession.text.length} chars</div>
+        </div>
+        <div className="card-badges">
+          <span className="tag-badge">{confession.tag}</span>
+          <span className="mood-badge" title="Mood">{confession.mood}</span>
+        </div>
+      </div>
 
-    const av = AVATARS[Math.floor(Math.random() * AVATARS.length)];
-    const anons = ['Anonymous Fox','Mysterious Star','Secret Moon','Hidden Wave','Quiet Storm','Shadow Wolf','Silent Owl','Masked Rose'];
-    const conf = {
-      id: Date.now().toString() + Math.random().toString(36).slice(2),
-      text,
-      time: Date.now(),
-      anonName: anons[Math.floor(Math.random() * anons.length)],
-      avatarEmoji: av.emoji,
-      avatarColor: av.color,
-      reactions: { '❤️': 0, '😮': 0, '😂': 0, '😢': 0 }
+      <div className={'card-text' + (isLong && !expanded ? ' truncated' : '')}>
+        {confession.text}
+      </div>
+      {isLong && (
+        <span className="read-more" onClick={() => setExpanded(v => !v)}>
+          {expanded ? '↑ Show less' : '↓ Read more'}
+        </span>
+      )}
+
+      <div className="card-footer">
+        <div className="reactions">
+          {REACTIONS.map(r => {
+            const count = confession.reactions[r] || 0;
+            const reacted = myRxForThis.includes(r);
+            return (
+              <button
+                key={r}
+                className={'reaction-btn' + (reacted ? ' reacted' : '')}
+                onClick={() => onReact(confession.id, r)}
+                title={reacted ? 'Remove reaction' : 'React'}
+              >
+                {r}
+                {count > 0 && <span className="reaction-count">{count}</span>}
+              </button>
+            );
+          })}
+        </div>
+        <div className="action-btns">
+          <span className="char-info">{totalReactions} reactions</span>
+          <button className="icon-btn" onClick={() => setShowComments(v => !v)} title="Comments">
+            💬 {confession.comments.length}
+          </button>
+          <button className="icon-btn" onClick={() => onShare(confession.id)} title="Copy link">🔗</button>
+          <button
+            className={'icon-btn' + (confession.reported ? ' reported' : '')}
+            onClick={() => !confession.reported && onReport(confession.id)}
+            title={confession.reported ? 'Reported' : 'Report this confession'}
+          >
+            {confession.reported ? '🚩 Reported' : '🚩'}
+          </button>
+        </div>
+      </div>
+
+      {showComments && (
+        <CommentSection
+          confession={confession}
+          onAddComment={onAddComment}
+          onDeleteComment={onDeleteComment}
+          myCommentIds={myCommentIds}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Main App ─────────────────────────────────────────────────────────────────
+function App(){
+  const [confessions, setConfessions] = useState(() => loadData());
+  const [myReactions, setMyReactions] = useState(() => loadMyReactions());
+  const [myCommentIds, setMyCommentIds] = useState(() => loadMyComments());
+  const [search, setSearch] = useState('');
+  const [filterTag, setFilterTag] = useState('All');
+  const [filterMood, setFilterMood] = useState('All');
+  const [sort, setSort] = useState('newest');
+  const [page, setPage] = useState(1);
+  const [toast, setToast] = useState('');
+  const toastRef = useRef(null);
+
+  useEffect(() => { saveData(confessions); }, [confessions]);
+  useEffect(() => { saveMyReactions(myReactions); }, [myReactions]);
+  useEffect(() => { saveMyComments(myCommentIds); }, [myCommentIds]);
+
+  const showToast = useCallback((msg) => {
+    setToast(msg);
+    if(toastRef.current) clearTimeout(toastRef.current);
+    toastRef.current = setTimeout(() => setToast(''), 2500);
+  }, []);
+
+  const addConfession = useCallback(({ text, tag, mood }) => {
+    const id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+    const nc = {
+      id, text, tag, mood,
+      ts: Date.now(),
+      reactions: {'❤️':0,'🔥':0,'😢':0,'😲':0,'😂':0,'🤝':0},
+      comments: [],
+      reported: false
     };
-    confessions.unshift(conf);
-    save();
-    ta.value = '';
-    updateCharCount();
-    renderAll();
-    showToast('🎭 Confession posted anonymously!');
-  }
+    setConfessions(prev => [nc, ...prev]);
+    setPage(1);
+    showToast('🤫 Confession posted anonymously!');
+  }, [showToast]);
 
-  function react(id, emoji) {
-    const conf = confessions.find(c => c.id === id);
-    if (!conf) return;
-    if (!myReactions[id]) myReactions[id] = new Set();
-    if (myReactions[id].has(emoji)) {
-      myReactions[id].delete(emoji);
-      conf.reactions[emoji] = Math.max(0, (conf.reactions[emoji] || 0) - 1);
-    } else {
-      myReactions[id].add(emoji);
-      conf.reactions[emoji] = (conf.reactions[emoji] || 0) + 1;
-    }
-    save();
-    renderAll();
-  }
+  const react = useCallback((confId, emoji) => {
+    setMyReactions(prev => {
+      const cur = prev[confId] || [];
+      const adding = !cur.includes(emoji);
+      const next = adding ? [...cur, emoji] : cur.filter(e => e !== emoji);
+      const updated = {...prev, [confId]: next};
+      setConfessions(cs => cs.map(c => {
+        if(c.id !== confId) return c;
+        const newCount = Math.max(0, (c.reactions[emoji]||0) + (adding ? 1 : -1));
+        return {...c, reactions: {...c.reactions, [emoji]: newCount}};
+      }));
+      return updated;
+    });
+  }, []);
 
-  function deleteConfession(id) {
-    confessions = confessions.filter(c => c.id !== id);
-    save();
-    renderAll();
-  }
+  const addComment = useCallback((confId, text) => {
+    const id = 'cm' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+    setMyCommentIds(prev => [...prev, id]);
+    setConfessions(prev => prev.map(c => {
+      if(c.id !== confId) return c;
+      return {...c, comments: [...c.comments, {id, text, ts: Date.now(), own: true}]};
+    }));
+    showToast('💬 Comment added!');
+  }, [showToast]);
 
-  function setFilter(f, el) {
-    currentFilter = f;
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    el.classList.add('active');
-    renderAll();
-  }
+  const deleteComment = useCallback((confId, cmId) => {
+    setConfessions(prev => prev.map(c => {
+      if(c.id !== confId) return c;
+      return {...c, comments: c.comments.filter(cm => cm.id !== cmId)};
+    }));
+    setMyCommentIds(prev => prev.filter(id => id !== cmId));
+    showToast('🗑️ Comment deleted.');
+  }, [showToast]);
 
-  function getSorted() {
+  const report = useCallback((confId) => {
+    setConfessions(prev => prev.map(c => c.id === confId ? {...c, reported: true} : c));
+    showToast('🚩 Confession reported. Thank you.');
+  }, [showToast]);
+
+  const share = useCallback((confId) => {
+    const url = window.location.href.split('?')[0] + '?c=' + confId;
+    navigator.clipboard.writeText(url)
+      .then(() => showToast('🔗 Link copied to clipboard!'))
+      .catch(() => showToast('🔗 ' + url));
+  }, [showToast]);
+
+  const filtered = useMemo(() => {
     let list = [...confessions];
-    if (currentFilter === 'reacted') {
-      list.sort((a, b) => {
-        const ra = Object.values(a.reactions).reduce((s, v) => s + v, 0);
-        const rb = Object.values(b.reactions).reduce((s, v) => s + v, 0);
-        return rb - ra;
+    if(search.trim()){
+      const q = search.toLowerCase();
+      list = list.filter(c => c.text.toLowerCase().includes(q));
+    }
+    if(filterTag !== 'All') list = list.filter(c => c.tag === filterTag);
+    if(filterMood !== 'All') list = list.filter(c => c.mood === filterMood);
+    if(sort === 'newest'){
+      list.sort((a,b) => b.ts - a.ts);
+    } else if(sort === 'reacted'){
+      list.sort((a,b) => {
+        const sa = Object.values(a.reactions).reduce((x,y)=>x+y,0);
+        const sb = Object.values(b.reactions).reduce((x,y)=>x+y,0);
+        return sb - sa;
       });
-    } else {
-      list.sort((a, b) => b.time - a.time);
+    } else if(sort === 'trending'){
+      const now = Date.now();
+      list.sort((a,b) => {
+        const ageA = ((now - a.ts) / 3600000) + 1;
+        const ageB = ((now - b.ts) / 3600000) + 1;
+        const sa = Object.values(a.reactions).reduce((x,y)=>x+y,0) / ageA;
+        const sb = Object.values(b.reactions).reduce((x,y)=>x+y,0) / ageB;
+        return sb - sa;
+      });
     }
     return list;
-  }
+  }, [confessions, search, filterTag, filterMood, sort]);
 
-  function timeAgo(ts) {
-    const sec = Math.floor((Date.now() - ts) / 1000);
-    if (sec < 60) return 'just now';
-    if (sec < 3600) return Math.floor(sec/60) + 'm ago';
-    if (sec < 86400) return Math.floor(sec/3600) + 'h ago';
-    return Math.floor(sec/86400) + 'd ago';
-  }
+  const displayed = filtered.slice(0, page * PAGE_SIZE);
+  const hasMore = displayed.length < filtered.length;
 
-  function totalReactions(conf) {
-    return Object.values(conf.reactions).reduce((s, v) => s + v, 0);
-  }
+  const handleSearch = useCallback((v) => { setSearch(v); setPage(1); }, []);
+  const handleTag = useCallback((t) => { setFilterTag(t); setPage(1); }, []);
+  const handleMood = useCallback((m) => { setFilterMood(m); setPage(1); }, []);
 
-  function renderAll() {
-    const wrap = document.getElementById('confessions-wrap');
-    const sorted = getSorted();
+  return (
+    <div className="app">
+      <a href="../../index.html" className="back-link">← Back to Apps</a>
 
-    document.getElementById('nav-count').textContent = confessions.length + ' confession' + (confessions.length !== 1 ? 's' : '');
-    document.getElementById('confession-count').textContent = confessions.length + ' total';
+      <div className="header">
+        <h1>🤫 Confessions</h1>
+        <p>Share anonymously. React honestly. No judgement here — your identity is never revealed.</p>
+      </div>
 
-    if (sorted.length === 0) {
-      wrap.innerHTML = `<div class="empty-state"><div class="icon">🤫</div><h3>No confessions yet</h3><p>Be the first to share something anonymous!</p></div>`;
-      return;
-    }
+      <StatsBar confessions={confessions} />
+      <Compose onSubmit={addConfession} />
 
-    wrap.innerHTML = sorted.map(c => {
-      const myR = myReactions[c.id] || new Set();
-      const reactionHTML = EMOJIS.map(e => `
-        <button class="reaction-btn ${myR.has(e)?'reacted':''}" onclick="react('${c.id}','${e}')">
-          ${e} <span class="reaction-count">${c.reactions[e] || 0}</span>
-        </button>
-      `).join('');
-
-      return `
-        <div class="confession-card">
-          <div class="card-shimmer"></div>
-          <div class="card-header">
-            <div class="anon-avatar" style="background:${c.avatarColor}">${c.avatarEmoji}</div>
-            <div class="card-meta">
-              <div class="anon-name">${escHtml(c.anonName)}</div>
-              <div class="card-time">${timeAgo(c.time)} · ${totalReactions(c)} reaction${totalReactions(c)!==1?'s':''}</div>
-            </div>
-            <button class="card-delete" onclick="deleteConfession('${c.id}')" title="Remove">✕</button>
-          </div>
-          <div class="card-text">${escHtml(c.text)}</div>
-          <div class="card-reactions">${reactionHTML}</div>
+      <div className="controls">
+        <div className="search-wrap">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Search confessions…"
+            value={search}
+            onChange={e => handleSearch(e.target.value)}
+          />
         </div>
-      `;
-    }).join('');
-  }
+        <div className="sort-wrap">
+          <span>Sort:</span>
+          <select value={sort} onChange={e => setSort(e.target.value)}>
+            {SORTS.map(s => <option key={s.v} value={s.v}>{s.l}</option>)}
+          </select>
+        </div>
+      </div>
 
-  function updateCharCount() {
-    const ta = document.getElementById('compose-textarea');
-    const len = ta.value.trim().length;
-    const cc = document.getElementById('char-count');
-    cc.textContent = ta.value.length + ' / 500';
-    cc.className = 'char-count' + (ta.value.length > 450 ? ' warn' : '') + (ta.value.length >= 500 ? ' over' : '');
-    document.getElementById('post-btn').disabled = len === 0 || ta.value.length > 500;
-  }
+      <div className="filter-row">
+        <span style={{fontSize:12,color:'var(--muted)',alignSelf:'center'}}>Tag:</span>
+        <button className={'filter-chip' + (filterTag==='All'?' active':'')} onClick={() => handleTag('All')}>All</button>
+        {TAGS.map(t => (
+          <button key={t} className={'filter-chip' + (filterTag===t?' active':'')} onClick={() => handleTag(t)}>{t}</button>
+        ))}
+      </div>
 
-  document.getElementById('compose-textarea').addEventListener('input', updateCharCount);
+      <div className="filter-row" style={{marginBottom:20}}>
+        <span style={{fontSize:12,color:'var(--muted)',alignSelf:'center'}}>Mood:</span>
+        <button className={'filter-chip' + (filterMood==='All'?' active':'')} onClick={() => handleMood('All')}>All</button>
+        {MOODS.map(m => (
+          <button key={m} className={'filter-chip' + (filterMood===m?' active':'')} onClick={() => handleMood(m)}>{m}</button>
+        ))}
+      </div>
 
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2800);
-  }
+      {filtered.length === 0 && (
+        <div className="empty">
+          <div className="empty-icon">🤷</div>
+          <p>No confessions match your current filters.</p>
+          <p style={{marginTop:8,fontSize:13}}>Try clearing a filter or searching something else.</p>
+        </div>
+      )}
 
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
+      {displayed.map(c => (
+        <ConfessionCard
+          key={c.id}
+          confession={c}
+          myReactions={myReactions}
+          onReact={react}
+          onAddComment={addComment}
+          onDeleteComment={deleteComment}
+          myCommentIds={myCommentIds}
+          onReport={report}
+          onShare={share}
+        />
+      ))}
 
-  // Init
-  load();
-  renderAll();
+      {hasMore && (
+        <button className="load-more" onClick={() => setPage(p => p + 1)}>
+          Load More ({filtered.length - displayed.length} remaining)
+        </button>
+      )}
+
+      {toast && <div className="toast">{toast}</div>}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
 </script>
 </body>
 </html>

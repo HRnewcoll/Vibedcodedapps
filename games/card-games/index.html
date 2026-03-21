@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Card Games — VibedApps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --amber:#f59e0b;--amber3:#fbbf24;
+      --border:rgba(245,158,11,.25);--glass:rgba(245,158,11,.08);
+      --text:#fef3c7;--text3:rgba(254,243,199,.6);
+      --red:#ef4444;--green:#22c55e;
+    }
+    body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0d0500,#1a0a00,#2d1600);min-height:100vh;color:var(--text)}
+    nav{position:sticky;top:0;background:rgba(13,5,0,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;z-index:100}
+    .back-btn{color:var(--amber);text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+    .back-btn:hover{color:var(--amber3)}
+    nav h1{font-size:18px;font-weight:700;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    nav .spacer{width:80px}
+    .disc{background:rgba(220,38,38,.12);border-bottom:1px solid rgba(220,38,38,.35);color:#fca5a5;padding:8px 24px;text-align:center;font-size:12px;font-weight:600}
+    .tabs{display:flex;justify-content:center;gap:8px;padding:16px 24px 0;flex-wrap:wrap}
+    .tab-btn{background:var(--glass);border:1px solid var(--border);color:var(--amber3);padding:10px 26px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
+    .tab-btn:hover{background:rgba(245,158,11,.18);border-color:var(--amber)}
+    .tab-btn.active{background:rgba(245,158,11,.22);border-color:var(--amber);box-shadow:0 0 12px rgba(245,158,11,.25)}
+    .tab-panel{display:none;padding:18px 12px 32px}
+    .tab-panel.active{display:block}
+    .glass{background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:18px}
+    .glass-sm{background:var(--glass);border:1px solid var(--border);border-radius:10px;padding:12px}
+    .btn{background:var(--glass);border:1px solid var(--border);color:var(--amber);padding:9px 20px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap}
+    .btn:hover:not(:disabled){background:rgba(245,158,11,.22);border-color:var(--amber);transform:translateY(-1px)}
+    .btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+    .btn-green{border-color:rgba(34,197,94,.5);color:#86efac;background:rgba(34,197,94,.08)}
+    .btn-green:hover:not(:disabled){background:rgba(34,197,94,.18)}
+    .btn-red{border-color:rgba(239,68,68,.5);color:#fca5a5;background:rgba(239,68,68,.08)}
+    .btn-red:hover:not(:disabled){background:rgba(239,68,68,.18)}
+    .btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+    .card{width:62px;height:88px;border-radius:8px;border:2px solid #cbd5e1;background:#fffef5;display:flex;flex-direction:column;justify-content:space-between;padding:4px 5px;font-family:'Inter',sans-serif;font-weight:800;font-size:14px;line-height:1.1;user-select:none;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.8);cursor:default;transition:transform .1s,box-shadow .1s,border-color .1s}
+    .card.red-suit{color:#dc2626}
+    .card.black-suit{color:#1e293b}
+    .card .c-top{display:flex;flex-direction:column;align-items:flex-start}
+    .card .c-mid{text-align:center;font-size:18px;line-height:1}
+    .card .c-bot{display:flex;flex-direction:column;align-items:flex-end;transform:rotate(180deg)}
+    .card.back{background:repeating-linear-gradient(45deg,#1e3a5f,#1e3a5f 4px,#0f2040 4px,#0f2040 8px);border-color:#2d5a8e;cursor:pointer}
+    .card.back::after{content:'';display:block}
+    .card.empty-slot{background:rgba(245,158,11,.04);border:2px dashed rgba(245,158,11,.2);color:rgba(245,158,11,.3);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .card.selected{border-color:#fbbf24!important;box-shadow:0 0 16px rgba(251,191,36,.6)!important;transform:translateY(-5px)}
+    .card.clickable{cursor:pointer}
+    .card.clickable:hover{border-color:rgba(251,191,36,.55);box-shadow:0 0 10px rgba(251,191,36,.3);transform:translateY(-2px)}
+    .hand{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:96px;align-items:flex-end}
+    .hand-label{font-size:12px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;text-align:center}
+    .status-bar{text-align:center;min-height:32px;font-size:15px;font-weight:700;padding:6px 12px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+    .s-win{color:#86efac;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25)}
+    .s-lose{color:#fca5a5;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25)}
+    .s-push{color:var(--amber3);background:rgba(245,158,11,.12);border:1px solid var(--border)}
+    .s-info{color:var(--text3);background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.1)}
+    .s-war{color:#c084fc;background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.3)}
+    .chips-display{font-size:22px;font-weight:800;color:var(--amber3);text-align:center}
+    .chips-display span{font-size:12px;color:var(--text3);font-weight:500;display:block;margin-top:2px}
+    .stat-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+    .stat-box{background:rgba(245,158,11,.06);border:1px solid var(--border);border-radius:10px;padding:8px 14px;text-align:center;min-width:64px}
+    .stat-box .sv{font-size:18px;font-weight:800;color:var(--amber3)}
+    .stat-box .sl{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+    .bet-row{display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap}
+    .bet-input{background:rgba(245,158,11,.08);border:1px solid var(--border);color:var(--amber3);padding:8px 10px;border-radius:8px;font-size:16px;font-weight:700;width:86px;text-align:center;font-family:'Inter',sans-serif}
+    .bet-input:focus{outline:none;border-color:var(--amber);box-shadow:0 0 8px rgba(245,158,11,.2)}
+    .chip-btn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--amber3);padding:6px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:background .1s}
+    .chip-btn:hover{background:rgba(245,158,11,.22)}
+    .tag{display:inline-block;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--amber3);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;margin-left:4px}
+    .section-title{font-size:16px;font-weight:800;color:var(--amber3);text-align:center;margin-bottom:10px}
+    .divider{border:none;border-top:1px solid rgba(245,158,11,.12);margin:12px 0}
+    .rules-box{margin-top:8px;background:rgba(245,158,11,.03);border:1px solid rgba(245,158,11,.14);border-radius:12px;padding:14px 18px}
+    .rules-box h3{font-size:12px;font-weight:700;color:var(--amber3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.6px}
+    .rules-box ul{list-style:none;display:flex;flex-direction:column;gap:4px}
+    .rules-box li{font-size:12px;color:var(--text3);padding-left:14px;position:relative;line-height:1.5}
+    .rules-box li::before{content:'›';position:absolute;left:0;color:var(--amber);font-weight:700}
+    .mt8{margin-top:8px}
+    .mt12{margin-top:12px}
+    .mt16{margin-top:16px}
+    .center{text-align:center}
+    /* WAR */
+    .war-arena{display:flex;gap:12px;justify-content:center;align-items:flex-start;flex-wrap:wrap;padding:4px 0}
+    .war-side{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:80px}
+    .war-side-label{font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+    .war-vs{font-size:22px;font-weight:800;color:var(--amber3);align-self:center;padding:0 8px;margin-top:30px}
+    .war-face-down-row{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:4px}
+    .war-result-banner{font-size:15px;font-weight:800;padding:8px 14px;border-radius:10px;text-align:center;min-height:36px;display:flex;align-items:center;justify-content:center}
+    /* SOLITAIRE */
+    #sol-area{width:100%;overflow-x:auto;padding-bottom:8px}
+    .sol-top-row{display:flex;gap:6px;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding:0 2px;flex-wrap:nowrap}
+    .sol-top-left{display:flex;gap:6px;align-items:flex-start}
+    .sol-top-right{display:flex;gap:6px;align-items:flex-start}
+    .sol-tableau{display:flex;gap:6px;justify-content:center;align-items:flex-start}
+    .sol-col-wrapper{display:flex;flex-direction:column;align-items:center;position:relative;min-width:66px}
+    .sol-col-wrapper .card+.card{margin-top:-66px}
+    .sol-col-wrapper .card.face-down+.card.face-up{margin-top:-66px}
+    .sol-col-wrapper .card.face-up+.card.face-up{margin-top:-58px}
+    .sol-col-wrapper .card:first-child{margin-top:0}
+    .sol-moves{font-size:12px;color:var(--text3);font-weight:600;text-align:center}
+    .sol-msg{font-size:14px;font-weight:700;color:var(--amber3);text-align:center;min-height:24px}
+    @media(max-width:520px){
+      .sol-top-row,.sol-tableau{gap:3px}
+      .sol-col-wrapper{min-width:46px}
+      .card{width:46px;height:66px;font-size:11px;padding:3px 3px}
+      .card .c-mid{font-size:13px}
+      .sol-col-wrapper .card+.card{margin-top:-50px}
+      .sol-col-wrapper .card.face-up+.card.face-up{margin-top:-44px}
+      .sol-col-wrapper .card.face-down+.card.face-up{margin-top:-50px}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="back-btn" href="../index.html">&#8592; Back</a>
+  <h1>&#127921; Card Games</h1>
+  <div class="spacer"></div>
+</nav>
+
+<div class="disc">&#127920; Virtual chips only &mdash; no real money involved. For entertainment purposes only.</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('blackjack',this)">&#9824; Blackjack</button>
+  <button class="tab-btn" onclick="switchTab('war',this)">&#9876;&#65039; War</button>
+  <button class="tab-btn" onclick="switchTab('solitaire',this)">&#127136; Solitaire</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     BLACKJACK
+════════════════════════════════════════════════════════════ -->
+<div id="tab-blackjack" class="tab-panel active">
+  <div style="max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:12px">
+
+    <div class="glass" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div class="chips-display" id="bj-chips">$1000<span>Chips</span></div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="sv" id="bj-wins">0</div><div class="sl">Wins</div></div>
+        <div class="stat-box"><div class="sv" id="bj-losses">0</div><div class="sl">Losses</div></div>
+        <div class="stat-box"><div class="sv" id="bj-pushes">0</div><div class="sl">Pushes</div></div>
+      </div>
+    </div>
+
+    <div class="glass">
+      <div class="hand-label">Dealer <span class="tag" id="bj-dealer-value">&nbsp;</span></div>
+      <div class="hand" id="bj-dealer-hand"></div>
+    </div>
+
+    <div class="status-bar s-info" id="bj-status">Place your bet and press Deal!</div>
+
+    <div class="glass">
+      <div class="hand-label">You <span class="tag" id="bj-player-value">&nbsp;</span></div>
+      <div class="hand" id="bj-player-hand"></div>
+    </div>
+
+    <div class="glass-sm">
+      <div style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:8px;font-weight:600">BET AMOUNT</div>
+      <div class="bet-row">
+        <button class="chip-btn" onclick="bjAdjBet(-25)">-25</button>
+        <button class="chip-btn" onclick="bjAdjBet(-10)">-10</button>
+        <button class="chip-btn" onclick="bjAdjBet(-5)">-5</button>
+        <input class="bet-input" id="bj-bet-input" type="number" value="25" min="5" max="10000"/>
+        <button class="chip-btn" onclick="bjAdjBet(5)">+5</button>
+        <button class="chip-btn" onclick="bjAdjBet(10)">+10</button>
+        <button class="chip-btn" onclick="bjAdjBet(25)">+25</button>
+      </div>
+      <div class="btn-row mt12">
+        <button class="btn btn-green" id="bj-deal-btn" onclick="bjDeal()">Deal &#9654;</button>
+        <button class="btn" id="bj-hit-btn" onclick="bjHit()" disabled>Hit</button>
+        <button class="btn" id="bj-stand-btn" onclick="bjStand()" disabled>Stand</button>
+        <button class="btn" id="bj-double-btn" onclick="bjDouble()" disabled>Double Down</button>
+      </div>
+    </div>
+
+    <div class="rules-box">
+      <h3>Blackjack Rules</h3>
+      <ul>
+        <li>Goal: beat the dealer by getting closer to 21 without going over (bust)</li>
+        <li>Aces count as 1 or 11 — whichever keeps your hand valid</li>
+        <li>Face cards (J, Q, K) are worth 10 points</li>
+        <li>Blackjack: Ace + 10-value card on deal — pays 1.5&times; bet (1.5x)</li>
+        <li>Dealer reveals hole card after you stand; must hit on 16 or less, stand on 17+</li>
+        <li>Double Down: doubles your bet and gives you exactly one final card</li>
+        <li>Push (tie): your bet is returned, no win or loss</li>
+        <li>Minimum bet is $5; you start with $1000 in virtual chips</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     WAR
+════════════════════════════════════════════════════════════ -->
+<div id="tab-war" class="tab-panel">
+  <div style="max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:12px">
+
+    <div class="glass" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div class="chips-display">War<span>Card Game</span></div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="sv" id="war-pw">0</div><div class="sl">You Won</div></div>
+        <div class="stat-box"><div class="sv" id="war-dw">0</div><div class="sl">Dealer</div></div>
+        <div class="stat-box"><div class="sv" id="war-wars">0</div><div class="sl">Wars</div></div>
+        <div class="stat-box"><div class="sv" id="war-total-wins">0</div><div class="sl">Games Won</div></div>
+      </div>
+    </div>
+
+    <div class="glass" style="display:flex;justify-content:space-around;align-items:center;flex-wrap:wrap;gap:10px">
+      <div class="center">
+        <div class="hand-label">Your Deck</div>
+        <div class="chips-display" id="war-p-count" style="font-size:28px">26<span>cards remaining</span></div>
+      </div>
+      <div class="center">
+        <div class="hand-label">Dealer Deck</div>
+        <div class="chips-display" id="war-d-count" style="font-size:28px">26<span>cards remaining</span></div>
+      </div>
+    </div>
+
+    <div class="glass">
+      <div class="section-title">Battlefield</div>
+      <div class="war-arena">
+        <div class="war-side">
+          <div class="war-side-label">You</div>
+          <div id="war-p-card"></div>
+          <div class="war-face-down-row" id="war-p-fd"></div>
+        </div>
+        <div class="war-vs" id="war-vs-icon">&#9876;&#65039;</div>
+        <div class="war-side">
+          <div class="war-side-label">Dealer</div>
+          <div id="war-d-card"></div>
+          <div class="war-face-down-row" id="war-d-fd"></div>
+        </div>
+      </div>
+      <div class="war-result-banner s-info mt8" id="war-result">Press "Draw Card" to start!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-green" id="war-draw-btn" onclick="warDraw()">Draw Card &#9654;</button>
+      <button class="btn" onclick="warNewGame()">New Game</button>
+    </div>
+
+    <div class="rules-box">
+      <h3>War Rules</h3>
+      <ul>
+        <li>A standard 52-card deck is shuffled and split equally between you and the dealer</li>
+        <li>Each round, both players flip their top card — higher card wins both cards</li>
+        <li>Card ranks (low to high): 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K, Ace (highest)</li>
+        <li>On a tie it's WAR: each player puts 3 cards face-down, then flips 1 face-up</li>
+        <li>The winner of the war battle claims all cards on the table</li>
+        <li>If a player doesn't have enough cards for war, they lose immediately</li>
+        <li>Game ends when one player has all 52 cards or the other runs out of cards</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SOLITAIRE
+════════════════════════════════════════════════════════════ -->
+<div id="tab-solitaire" class="tab-panel">
+  <div style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:10px">
+
+    <div class="glass" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div class="chips-display">Solitaire<span>Klondike</span></div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="sv" id="sol-moves">0</div><div class="sl">Moves</div></div>
+        <div class="stat-box"><div class="sv" id="sol-total-wins">0</div><div class="sl">Wins</div></div>
+      </div>
+    </div>
+
+    <div class="glass-sm center">
+      <div class="sol-msg" id="sol-msg">Click a card to select it, then click the destination.</div>
+    </div>
+
+    <div class="glass" id="sol-area">
+      <!-- Top row: stock, waste, spacer, foundations -->
+      <div class="sol-top-row">
+        <div class="sol-top-left">
+          <div id="sol-stock"></div>
+          <div id="sol-waste"></div>
+        </div>
+        <div class="sol-top-right">
+          <div id="sol-f0"></div>
+          <div id="sol-f1"></div>
+          <div id="sol-f2"></div>
+          <div id="sol-f3"></div>
+        </div>
+      </div>
+      <!-- Tableau -->
+      <div class="sol-tableau" id="sol-tableau"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="solNewGame()">New Game</button>
+      <button class="btn" id="sol-autocomplete-btn" onclick="solAutoComplete()" style="display:none">Auto-Complete &#9654;</button>
+    </div>
+
+    <div class="rules-box">
+      <h3>Klondike Solitaire Rules</h3>
+      <ul>
+        <li>Build 4 foundation piles (&#9824;&#9827;&#9829;&#9830;) from Ace up to King in the same suit</li>
+        <li>Tableau: place cards in descending order (K&#8594;A), alternating red and black suits</li>
+        <li>Only a King (or a stack starting with King) can be placed in an empty tableau column</li>
+        <li>Click the stock pile to draw one card to the waste pile</li>
+        <li>When stock is empty, click it to recycle the waste pile back to stock</li>
+        <li>Click a card to select it (highlighted gold), then click a destination to move it</li>
+        <li>You can move entire stacks of face-up cards between tableau columns</li>
+        <li>Face-down cards auto-flip when they become the top card of a column</li>
+        <li>Win by moving all 52 cards to the four foundation piles</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// UTILITIES
+// ─────────────────────────────────────────────
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+const SUITS=['♠','♣','♥','♦'];
+const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
+function makeDeck(){
+  const d=[];
+  for(const s of SUITS) for(const r of RANKS) d.push({suit:s,rank:r});
+  return d;
+}
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){const j=Math.random()*i|0;[arr[i],arr[j]]=[arr[j],arr[i]];}
+  return arr;
+}
+function isRed(suit){return suit==='♥'||suit==='♦'}
+
+function cardEl(card,faceDown,extra){
+  const d=document.createElement('div');
+  if(faceDown){
+    d.className='card back';
+    return d;
+  }
+  const red=isRed(card.suit);
+  d.className='card '+(red?'red-suit':'black-suit');
+  if(extra) d.className+=' '+extra;
+  d.innerHTML=
+    '<div class="c-top"><span class="c-rank">'+escHtml(card.rank)+'</span><span class="c-suit">'+escHtml(card.suit)+'</span></div>'+
+    '<div class="c-mid">'+escHtml(card.suit)+'</div>'+
+    '<div class="c-bot"><span class="c-rank">'+escHtml(card.rank)+'</span><span class="c-suit">'+escHtml(card.suit)+'</span></div>';
+  return d;
+}
+
+function emptySlotEl(label){
+  const d=document.createElement('div');
+  d.className='card empty-slot';
+  d.textContent=label||'';
+  return d;
+}
+
+// ─────────────────────────────────────────────
+// BLACKJACK
+// ─────────────────────────────────────────────
+const BJ={
+  deck:[],
+  playerHand:[],
+  dealerHand:[],
+  bet:25,
+  chips:1000,
+  wins:0,losses:0,pushes:0,
+  inRound:false,
+  doubled:false
+};
+
+function bjInit(){
+  BJ.chips=parseInt(localStorage.getItem('cards_blackjack_chips'))||1000;
+  BJ.wins=parseInt(localStorage.getItem('cards_bj_wins'))||0;
+  BJ.losses=parseInt(localStorage.getItem('cards_bj_losses'))||0;
+  BJ.pushes=parseInt(localStorage.getItem('cards_bj_pushes'))||0;
+  bjUpdateUI();
+}
+
+function bjSave(){
+  localStorage.setItem('cards_blackjack_chips',BJ.chips);
+  localStorage.setItem('cards_bj_wins',BJ.wins);
+  localStorage.setItem('cards_bj_losses',BJ.losses);
+  localStorage.setItem('cards_bj_pushes',BJ.pushes);
+}
+
+function bjAdjBet(amt){
+  const inp=document.getElementById('bj-bet-input');
+  let v=(parseInt(inp.value)||25)+amt;
+  v=Math.max(5,Math.min(BJ.chips,v));
+  inp.value=v;
+  BJ.bet=v;
+}
+
+function bjCardVal(card){
+  if(['J','Q','K'].includes(card.rank)) return 10;
+  if(card.rank==='A') return 11;
+  return parseInt(card.rank);
+}
+
+function bjHandValue(hand){
+  let total=0,aces=0;
+  for(const c of hand){
+    const v=bjCardVal(c);
+    total+=v;
+    if(c.rank==='A') aces++;
+  }
+  while(total>21&&aces>0){total-=10;aces--;}
+  return total;
+}
+
+function bjHandDisplay(hand){
+  const v=bjHandValue(hand);
+  return v;
+}
+
+function bjDeal(){
+  if(BJ.inRound) return;
+  const betVal=parseInt(document.getElementById('bj-bet-input').value)||25;
+  BJ.bet=Math.max(5,Math.min(BJ.chips,betVal));
+  document.getElementById('bj-bet-input').value=BJ.bet;
+
+  BJ.deck=shuffle(makeDeck());
+  BJ.playerHand=[BJ.deck.pop(),BJ.deck.pop()];
+  BJ.dealerHand=[BJ.deck.pop(),BJ.deck.pop()];
+  BJ.inRound=true;
+  BJ.doubled=false;
+
+  bjRenderHands(true);
+  bjSetBtns(false);
+
+  const pv=bjHandValue(BJ.playerHand);
+  const dv=bjHandValue(BJ.dealerHand);
+
+  // Check natural blackjack
+  if(pv===21){
+    if(dv===21){
+      bjEndRound('push','Push — Both have Blackjack!');
+    } else {
+      bjEndRound('blackjack','Blackjack! You win 1.5x!');
+    }
+    return;
+  }
+  bjSetStatus('Your turn — Hit, Stand, or Double Down','s-info');
+  // Enable double only if first 2 cards and sufficient chips
+  document.getElementById('bj-double-btn').disabled=(BJ.chips<BJ.bet*2);
+}
+
+function bjHit(){
+  if(!BJ.inRound) return;
+  BJ.playerHand.push(BJ.deck.pop());
+  bjRenderHands(true);
+  const v=bjHandValue(BJ.playerHand);
+  document.getElementById('bj-double-btn').disabled=true;
+  if(v>21){
+    bjEndRound('bust','Bust! You went over 21.');
+  } else if(v===21){
+    bjStand();
+  } else {
+    bjSetStatus('Hand value: '+v+' — Hit or Stand?','s-info');
+  }
+}
+
+function bjStand(){
+  if(!BJ.inRound) return;
+  bjSetBtns(true);
+  bjRenderHands(false);
+  bjDealerPlay();
+}
+
+function bjDouble(){
+  if(!BJ.inRound) return;
+  BJ.bet*=2;
+  BJ.playerHand.push(BJ.deck.pop());
+  BJ.doubled=true;
+  bjRenderHands(true);
+  const v=bjHandValue(BJ.playerHand);
+  if(v>21){
+    bjEndRound('bust','Bust on Double Down!');
+  } else {
+    bjStand();
+  }
+}
+
+function bjDealerPlay(){
+  let dv=bjHandValue(BJ.dealerHand);
+  while(dv<17){
+    BJ.dealerHand.push(BJ.deck.pop());
+    dv=bjHandValue(BJ.dealerHand);
+  }
+  bjRenderHands(false);
+  const pv=bjHandValue(BJ.playerHand);
+  document.getElementById('bj-dealer-value').textContent=dv;
+  if(dv>21){
+    bjEndRound('win','Dealer busts! You win!');
+  } else if(pv>dv){
+    bjEndRound('win','You win! '+pv+' beats '+dv+'!');
+  } else if(dv>pv){
+    bjEndRound('loss','Dealer wins! '+dv+' beats '+pv+'.');
+  } else {
+    bjEndRound('push','Push — Tie at '+pv+'!');
+  }
+}
+
+function bjEndRound(result,msg){
+  BJ.inRound=false;
+  bjSetBtns(true);
+  bjRenderHands(false);
+  if(result==='blackjack'){
+    BJ.chips+=Math.floor(BJ.bet*1.5);
+    BJ.wins++;
+    bjSetStatus('♠ BLACKJACK! +$'+Math.floor(BJ.bet*1.5),'s-win');
+  } else if(result==='win'){
+    BJ.chips+=BJ.bet;
+    BJ.wins++;
+    bjSetStatus('✓ '+msg+' +$'+BJ.bet,'s-win');
+  } else if(result==='bust'){
+    BJ.chips-=BJ.bet;
+    BJ.losses++;
+    bjSetStatus('✗ '+msg+' -$'+BJ.bet,'s-lose');
+  } else if(result==='loss'){
+    BJ.chips-=BJ.bet;
+    BJ.losses++;
+    bjSetStatus('✗ '+msg+' -$'+BJ.bet,'s-lose');
+  } else {
+    bjSetStatus('~ '+msg,'s-push');
+    BJ.pushes++;
+  }
+  if(BJ.chips<=0){BJ.chips=500;bjSetStatus('Out of chips! Reloading $500 bonus.','s-push');}
+  bjUpdateUI();
+  bjSave();
+}
+
+function bjSetBtns(dealOnly){
+  document.getElementById('bj-deal-btn').disabled=false;
+  document.getElementById('bj-hit-btn').disabled=dealOnly;
+  document.getElementById('bj-stand-btn').disabled=dealOnly;
+  document.getElementById('bj-double-btn').disabled=dealOnly;
+}
+
+function bjSetStatus(msg,cls){
+  const el=document.getElementById('bj-status');
+  el.textContent=msg;
+  el.className='status-bar '+(cls||'s-info');
+}
+
+function bjRenderHands(hideHole){
+  const ph=document.getElementById('bj-player-hand');
+  const dh=document.getElementById('bj-dealer-hand');
+  ph.innerHTML='';dh.innerHTML='';
+  for(const c of BJ.playerHand) ph.appendChild(cardEl(c,false));
+  for(let i=0;i<BJ.dealerHand.length;i++){
+    dh.appendChild(cardEl(BJ.dealerHand[i],hideHole&&i===1));
+  }
+  const pv=bjHandValue(BJ.playerHand);
+  document.getElementById('bj-player-value').textContent=pv;
+  if(hideHole){
+    document.getElementById('bj-dealer-value').textContent=bjCardVal(BJ.dealerHand[0]);
+  } else {
+    document.getElementById('bj-dealer-value').textContent=bjHandValue(BJ.dealerHand);
+  }
+}
+
+function bjUpdateUI(){
+  document.getElementById('bj-chips').innerHTML='$'+BJ.chips+'<span>Chips</span>';
+  document.getElementById('bj-wins').textContent=BJ.wins;
+  document.getElementById('bj-losses').textContent=BJ.losses;
+  document.getElementById('bj-pushes').textContent=BJ.pushes;
+}
+
+// ─────────────────────────────────────────────
+// WAR
+// ─────────────────────────────────────────────
+const WAR={
+  pDeck:[],dDeck:[],
+  pWins:0,dWins:0,wars:0,totalWins:0,
+  pot:[],
+  inWar:false,
+  running:false
+};
+
+function warRankVal(rank){
+  const order=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+  return order.indexOf(rank);
+}
+
+function warInit(){
+  WAR.totalWins=parseInt(localStorage.getItem('cards_war_wins'))||0;
+  document.getElementById('war-total-wins').textContent=WAR.totalWins;
+  warNewGame();
+}
+
+function warNewGame(){
+  const deck=shuffle(makeDeck());
+  WAR.pDeck=deck.slice(0,26);
+  WAR.dDeck=deck.slice(26);
+  WAR.pWins=0;WAR.dWins=0;WAR.wars=0;
+  WAR.pot=[];WAR.inWar=false;WAR.running=true;
+  document.getElementById('war-draw-btn').disabled=false;
+  warUpdateUI();
+  warSetResult('Decks shuffled! Press "Draw Card" to begin.','s-info');
+  document.getElementById('war-p-card').innerHTML='';
+  document.getElementById('war-d-card').innerHTML='';
+  document.getElementById('war-p-fd').innerHTML='';
+  document.getElementById('war-d-fd').innerHTML='';
+}
+
+function warDraw(){
+  if(!WAR.running) return;
+  if(WAR.pDeck.length===0||WAR.dDeck.length===0){
+    warCheckWin(); return;
+  }
+  const pCard=WAR.pDeck.shift();
+  const dCard=WAR.dDeck.shift();
+  WAR.pot.push(pCard,dCard);
+
+  document.getElementById('war-p-card').innerHTML='';
+  document.getElementById('war-d-card').innerHTML='';
+  document.getElementById('war-p-fd').innerHTML='';
+  document.getElementById('war-d-fd').innerHTML='';
+  document.getElementById('war-p-card').appendChild(cardEl(pCard,false));
+  document.getElementById('war-d-card').appendChild(cardEl(dCard,false));
+
+  const pv=warRankVal(pCard.rank);
+  const dv=warRankVal(dCard.rank);
+
+  if(pv>dv){
+    shuffle(WAR.pot);
+    WAR.pDeck.push(...WAR.pot);
+    WAR.pot=[];
+    WAR.pWins++;
+    warSetResult('You win this round! '+pCard.rank+pCard.suit+' beats '+dCard.rank+dCard.suit,'s-win');
+  } else if(dv>pv){
+    shuffle(WAR.pot);
+    WAR.dDeck.push(...WAR.pot);
+    WAR.pot=[];
+    WAR.dWins++;
+    warSetResult('Dealer wins this round! '+dCard.rank+dCard.suit+' beats '+pCard.rank+pCard.suit,'s-lose');
+  } else {
+    warDoWar(pCard,dCard);
+    return;
+  }
+  warUpdateUI();
+  warCheckWin();
+}
+
+function warDoWar(pCard,dCard){
+  WAR.wars++;
+  // Each player puts up to 3 face-down cards
+  const pNeeded=Math.min(3,WAR.pDeck.length);
+  const dNeeded=Math.min(3,WAR.dDeck.length);
+
+  if(pNeeded===0||dNeeded===0){
+    if(pNeeded===0&&dNeeded===0){
+      // draw, split pot randomly
+      warSetResult('WAR ends in a draw — pot split!','s-war');
+      const half=Math.ceil(WAR.pot.length/2);
+      WAR.pDeck.push(...WAR.pot.slice(0,half));
+      WAR.dDeck.push(...WAR.pot.slice(half));
+      WAR.pot=[];
+    } else if(pNeeded===0){
+      warSetResult('WAR! You ran out of cards — Dealer wins!','s-lose');
+      WAR.running=false;
+      document.getElementById('war-draw-btn').disabled=true;
+    } else {
+      warSetResult('WAR! Dealer ran out of cards — You win!','s-win');
+      WAR.running=false;
+      document.getElementById('war-draw-btn').disabled=true;
+      WAR.totalWins++;
+      localStorage.setItem('cards_war_wins',WAR.totalWins);
+      document.getElementById('war-total-wins').textContent=WAR.totalWins;
+    }
+    warUpdateUI();
+    return;
+  }
+
+  const pFD=WAR.pDeck.splice(0,pNeeded);
+  const dFD=WAR.dDeck.splice(0,dNeeded);
+  WAR.pot.push(...pFD,...dFD);
+
+  // Show face-down cards
+  const pFdEl=document.getElementById('war-p-fd');
+  const dFdEl=document.getElementById('war-d-fd');
+  pFdEl.innerHTML='';dFdEl.innerHTML='';
+  for(let i=0;i<pFD.length;i++) pFdEl.appendChild(cardEl(pFD[i],true));
+  for(let i=0;i<dFD.length;i++) dFdEl.appendChild(cardEl(dFD[i],true));
+
+  warSetResult('⚔️ WAR! Each player puts '+pNeeded+' cards down — Draw again to reveal!','s-war');
+  warUpdateUI();
+  // The next draw will be the war resolution card
+}
+
+function warCheckWin(){
+  if(!WAR.running) return;
+  if(WAR.pDeck.length===0){
+    warSetResult('Game Over! Dealer wins the game!','s-lose');
+    WAR.running=false;
+    document.getElementById('war-draw-btn').disabled=true;
+    warUpdateUI();
+  } else if(WAR.dDeck.length===0){
+    warSetResult('🎉 You WIN the game! Congratulations!','s-win');
+    WAR.running=false;
+    document.getElementById('war-draw-btn').disabled=true;
+    WAR.totalWins++;
+    localStorage.setItem('cards_war_wins',WAR.totalWins);
+    document.getElementById('war-total-wins').textContent=WAR.totalWins;
+    warUpdateUI();
+  }
+}
+
+function warSetResult(msg,cls){
+  const el=document.getElementById('war-result');
+  el.textContent=msg;
+  el.className='war-result-banner '+(cls||'s-info')+' mt8';
+}
+
+function warUpdateUI(){
+  document.getElementById('war-p-count').innerHTML=WAR.pDeck.length+'<span>cards remaining</span>';
+  document.getElementById('war-d-count').innerHTML=WAR.dDeck.length+'<span>cards remaining</span>';
+  document.getElementById('war-pw').textContent=WAR.pWins;
+  document.getElementById('war-dw').textContent=WAR.dWins;
+  document.getElementById('war-wars').textContent=WAR.wars;
+}
+
+// ─────────────────────────────────────────────
+// SOLITAIRE (Klondike)
+// ─────────────────────────────────────────────
+const SOL={
+  stock:[],waste:[],
+  foundations:[[],[],[],[]],// ♠♣♥♦
+  tableau:[[],[],[],[],[],[],[]],
+  moves:0,
+  totalWins:0,
+  selected:null,// {type:'tableau'|'waste'|'foundation', col, idx}
+};
+
+const SOL_SUITS=['♠','♣','♥','♦'];
+const SOL_RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
+function solRankIdx(r){return SOL_RANKS.indexOf(r)}
+
+function solInit(){
+  SOL.totalWins=parseInt(localStorage.getItem('cards_solitaire_wins'))||0;
+  document.getElementById('sol-total-wins').textContent=SOL.totalWins;
+  solNewGame();
+}
+
+function solNewGame(){
+  const deck=shuffle(makeDeck());
+  SOL.foundations=[[],[],[],[]];
+  SOL.tableau=[[],[],[],[],[],[],[]];
+  SOL.stock=[];SOL.waste=[];
+  SOL.moves=0;SOL.selected=null;
+  // Deal tableau
+  let idx=0;
+  for(let col=0;col<7;col++){
+    for(let row=0;row<=col;row++){
+      const c={...deck[idx++],faceUp:(row===col)};
+      SOL.tableau[col].push(c);
+    }
+  }
+  // Remaining = stock (face down)
+  while(idx<52) SOL.stock.push({...deck[idx++],faceUp:false});
+  SOL.stock.reverse();
+  document.getElementById('sol-moves').textContent=0;
+  document.getElementById('sol-autocomplete-btn').style.display='none';
+  solSetMsg('Click a card to select, then click destination.');
+  solRender();
+}
+
+function solRender(){
+  // Stock
+  const stockEl=document.getElementById('sol-stock');
+  stockEl.innerHTML='';
+  if(SOL.stock.length>0){
+    const c=cardEl(null,true);
+    c.classList.add('clickable');
+    c.title='Stock ('+SOL.stock.length+' cards)';
+    c.onclick=()=>solClickStock();
+    stockEl.appendChild(c);
+  } else {
+    const e=emptySlotEl('↺');
+    e.title='Click to recycle waste';
+    e.onclick=()=>solClickStock();
+    stockEl.appendChild(e);
+  }
+
+  // Waste
+  const wasteEl=document.getElementById('sol-waste');
+  wasteEl.innerHTML='';
+  if(SOL.waste.length>0){
+    const top=SOL.waste[SOL.waste.length-1];
+    const isSel=SOL.selected&&SOL.selected.type==='waste';
+    const c=cardEl(top,false,isSel?'selected clickable':'clickable');
+    c.onclick=()=>solClickWaste();
+    wasteEl.appendChild(c);
+  } else {
+    const e=emptySlotEl('W');
+    wasteEl.appendChild(e);
+  }
+
+  // Foundations
+  for(let f=0;f<4;f++){
+    const fEl=document.getElementById('sol-f'+f);
+    fEl.innerHTML='';
+    const pile=SOL.foundations[f];
+    const isSel=SOL.selected&&SOL.selected.type==='foundation'&&SOL.selected.col===f;
+    if(pile.length>0){
+      const top=pile[pile.length-1];
+      const c=cardEl(top,false,isSel?'selected clickable':'clickable');
+      c.onclick=()=>solClickFoundation(f);
+      fEl.appendChild(c);
+    } else {
+      const e=emptySlotEl(SOL_SUITS[f]);
+      e.classList.add('clickable');
+      e.onclick=()=>solClickFoundation(f);
+      fEl.appendChild(e);
+    }
+  }
+
+  // Tableau
+  const tabEl=document.getElementById('sol-tableau');
+  tabEl.innerHTML='';
+  for(let col=0;col<7;col++){
+    const wrapper=document.createElement('div');
+    wrapper.className='sol-col-wrapper';
+    const cards=SOL.tableau[col];
+    if(cards.length===0){
+      const e=emptySlotEl('K');
+      e.classList.add('clickable');
+      e.dataset.col=col;
+      e.onclick=()=>solClickTableau(col,-1);
+      wrapper.appendChild(e);
+    } else {
+      for(let i=0;i<cards.length;i++){
+        const card=cards[i];
+        const isSel=SOL.selected&&SOL.selected.type==='tableau'&&SOL.selected.col===col&&SOL.selected.idx===i;
+        const isSelStack=SOL.selected&&SOL.selected.type==='tableau'&&SOL.selected.col===col&&i>=SOL.selected.idx;
+        let extra='';
+        if(isSel||isSelStack) extra='selected';
+        if(card.faceUp) extra+=' clickable';
+        const c=cardEl(card,!card.faceUp,extra.trim());
+        if(!card.faceUp) c.classList.add('face-down');
+        else c.classList.add('face-up');
+        c.dataset.col=col;c.dataset.idx=i;
+        if(card.faceUp) c.onclick=(function(cc,ci){return()=>solClickTableau(cc,ci)})(col,i);
+        wrapper.appendChild(c);
+      }
+    }
+    tabEl.appendChild(wrapper);
+  }
+
+  // Show auto-complete when all tableau cards are face-up (stock/waste can still be present)
+  const allFaceUp=SOL.tableau.every(col=>col.every(c=>c.faceUp));
+  document.getElementById('sol-autocomplete-btn').style.display=allFaceUp?'inline-block':'none';
+
+  document.getElementById('sol-moves').textContent=SOL.moves;
+  document.getElementById('sol-total-wins').textContent=SOL.totalWins;
+}
+
+function solClickStock(){
+  SOL.selected=null;
+  if(SOL.stock.length>0){
+    const c=SOL.stock.pop();
+    c.faceUp=true;
+    SOL.waste.push(c);
+    SOL.moves++;
+  } else if(SOL.waste.length>0){
+    // Recycle
+    while(SOL.waste.length>0){
+      const c=SOL.waste.pop();
+      c.faceUp=false;
+      SOL.stock.push(c);
+    }
+    SOL.moves++;
+    solSetMsg('Waste recycled to stock.');
+  }
+  solRender();
+}
+
+function solClickWaste(){
+  if(SOL.selected&&SOL.selected.type==='waste'){SOL.selected=null;solRender();return;}
+  if(SOL.waste.length===0) return;
+  SOL.selected={type:'waste',col:-1,idx:-1};
+  solSetMsg('Waste card selected. Click a tableau column or foundation.');
+  solRender();
+}
+
+function solClickFoundation(f){
+  if(SOL.selected){
+    // Try to move selected card to foundation
+    solMoveTo('foundation',f);
+  } else {
+    // Select top of foundation (allow moving back to tableau)
+    if(SOL.foundations[f].length>0){
+      SOL.selected={type:'foundation',col:f,idx:SOL.foundations[f].length-1};
+      solSetMsg('Foundation card selected.');
+      solRender();
+    }
+  }
+}
+
+function solClickTableau(col,idx){
+  if(SOL.selected){
+    if(SOL.selected.type==='tableau'&&SOL.selected.col===col){
+      // Deselect
+      SOL.selected=null;
+      solSetMsg('Deselected.');
+      solRender();
+      return;
+    }
+    solMoveTo('tableau',col);
+  } else {
+    // Select
+    if(idx===-1) return; // empty column, no card to select
+    SOL.selected={type:'tableau',col:col,idx:idx};
+    solSetMsg('Card selected. Click destination column or foundation.');
+    solRender();
+  }
+}
+
+function solGetSelectedCards(){
+  if(!SOL.selected) return null;
+  if(SOL.selected.type==='waste'){
+    return [SOL.waste[SOL.waste.length-1]];
+  }
+  if(SOL.selected.type==='foundation'){
+    const pile=SOL.foundations[SOL.selected.col];
+    return [pile[pile.length-1]];
+  }
+  if(SOL.selected.type==='tableau'){
+    return SOL.tableau[SOL.selected.col].slice(SOL.selected.idx);
+  }
+  return null;
+}
+
+function solCanPlaceOnTableau(cards,targetCol){
+  const col=SOL.tableau[targetCol];
+  if(cards.length===0) return false;
+  const card=cards[0];
+  if(col.length===0){
+    return card.rank==='K';
+  }
+  const top=col[col.length-1];
+  if(!top.faceUp) return false;
+  const topRankIdx=SOL_RANKS.indexOf(top.rank);
+  const cardRankIdx=SOL_RANKS.indexOf(card.rank);
+  const diffColor=(isRed(top.suit)!==isRed(card.suit));
+  return diffColor&&cardRankIdx===topRankIdx-1;
+}
+
+function solCanPlaceOnFoundation(card,f){
+  const pile=SOL.foundations[f];
+  if(pile.length===0) return card.rank==='A';
+  const top=pile[pile.length-1];
+  return top.suit===card.suit&&SOL_RANKS.indexOf(card.rank)===SOL_RANKS.indexOf(top.rank)+1;
+}
+
+function solRemoveSelected(){
+  if(SOL.selected.type==='waste'){
+    SOL.waste.pop();
+  } else if(SOL.selected.type==='foundation'){
+    SOL.foundations[SOL.selected.col].pop();
+  } else if(SOL.selected.type==='tableau'){
+    SOL.tableau[SOL.selected.col].splice(SOL.selected.idx);
+  }
+  SOL.selected=null;
+}
+
+function solFlipTopCards(){
+  for(let col=0;col<7;col++){
+    const c=SOL.tableau[col];
+    if(c.length>0&&!c[c.length-1].faceUp) c[c.length-1].faceUp=true;
+  }
+}
+
+function solMoveTo(destType,destIdx){
+  const cards=solGetSelectedCards();
+  if(!cards||cards.length===0){SOL.selected=null;solRender();return;}
+
+  let moved=false;
+  if(destType==='foundation'){
+    if(cards.length===1&&solCanPlaceOnFoundation(cards[0],destIdx)){
+      solRemoveSelected();
+      SOL.foundations[destIdx].push(cards[0]);
+      SOL.moves++;
+      moved=true;
+      solSetMsg('Moved to foundation.');
+    } else {
+      solSetMsg('Cannot place there. Try another spot.');
+      SOL.selected=null;
+    }
+  } else if(destType==='tableau'){
+    if(solCanPlaceOnTableau(cards,destIdx)){
+      solRemoveSelected();
+      for(const c of cards) SOL.tableau[destIdx].push(c);
+      SOL.moves++;
+      moved=true;
+      solSetMsg('Moved '+(cards.length>1?cards.length+' cards.':'card.'));
+    } else {
+      solSetMsg('Invalid move. Try another destination.');
+      SOL.selected=null;
+    }
+  }
+
+  if(moved){
+    solFlipTopCards();
+    solRender();
+    solCheckWin();
+  } else {
+    solRender();
+  }
+}
+
+function solAutoMove(){
+  // Try to auto-move any card to foundation
+  let moved=false;
+  // Try waste
+  if(SOL.waste.length>0){
+    const c=SOL.waste[SOL.waste.length-1];
+    for(let f=0;f<4;f++){
+      if(solCanPlaceOnFoundation(c,f)){
+        SOL.waste.pop();
+        SOL.foundations[f].push(c);
+        SOL.moves++;
+        moved=true;break;
+      }
+    }
+  }
+  // Try tableau
+  for(let col=0;col<7;col++){
+    const tab=SOL.tableau[col];
+    if(tab.length>0&&tab[tab.length-1].faceUp){
+      const c=tab[tab.length-1];
+      for(let f=0;f<4;f++){
+        if(solCanPlaceOnFoundation(c,f)){
+          tab.pop();
+          SOL.foundations[f].push(c);
+          SOL.moves++;
+          moved=true;break;
+        }
+      }
+    }
+  }
+  return moved;
+}
+
+function solAutoComplete(){
+  // Repeatedly auto-move until no more moves or win
+  let steps=0;
+  const run=()=>{
+    const moved=solAutoMove();
+    solFlipTopCards();
+    solRender();
+    if(solCheckWin()) return;
+    if(moved&&steps<200){steps++;setTimeout(run,80);}
+    else solSetMsg('Auto-complete done!');
+  };
+  run();
+}
+
+function solCheckWin(){
+  const total=SOL.foundations.reduce((s,p)=>s+p.length,0);
+  if(total===52){
+    SOL.totalWins++;
+    localStorage.setItem('cards_solitaire_wins',SOL.totalWins);
+    document.getElementById('sol-total-wins').textContent=SOL.totalWins;
+    solSetMsg('🎉 Congratulations! You won! Wins: '+SOL.totalWins);
+    document.getElementById('sol-autocomplete-btn').style.display='none';
+    return true;
+  }
+  return false;
+}
+
+function solSetMsg(msg){
+  document.getElementById('sol-msg').textContent=msg;
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  bjInit();
+  warInit();
+  solInit();
+});
+</script>
+</body>
+</html>

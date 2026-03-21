@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Reddit — VibedApps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--bg4:#21262d;
+      --border:rgba(255,255,255,0.1);--text:#fff;--text2:rgba(255,255,255,0.75);
+      --text3:rgba(255,255,255,0.45);--accent:#ff4500;--accent2:#e03d00;
+      --up:#ff4500;--down:#7193ff;--awards:#ffd700;--radius:999px;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    a{color:var(--accent);text-decoration:none}
+
+    /* ── Header ── */
+    header{background:var(--bg2);border-bottom:1px solid var(--border);height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:100}
+    .logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px;cursor:pointer}
+    .logo-icon{font-size:28px}
+    .header-search{flex:1;max-width:690px;margin:0 24px}
+    .header-search input{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);padding:8px 18px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+    .header-search input:focus{border-color:var(--accent);background:var(--bg)}
+    .header-actions{display:flex;gap:10px;align-items:center}
+    .header-btn{background:none;border:1px solid var(--border);border-radius:var(--radius);padding:6px 16px;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+    .header-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .header-btn.filled{background:var(--accent);border-color:var(--accent);color:#fff}
+    .header-btn.filled:hover{background:var(--accent2)}
+
+    /* ── Layout ── */
+    .layout{max-width:1200px;margin:0 auto;padding:20px 16px;display:grid;grid-template-columns:1fr 312px;gap:24px}
+    @media(max-width:960px){.layout{grid-template-columns:1fr}.right-panel{display:none!important}}
+
+    /* ── Sub banner ── */
+    .sub-banner{background:linear-gradient(135deg,var(--accent),#ff6534);border-radius:8px;padding:0 0 16px;margin-bottom:16px;overflow:hidden}
+    .sub-banner-img{height:96px;background:linear-gradient(135deg,#ff4500,#7193ff);width:100%}
+    .sub-banner-body{padding:0 16px;display:flex;align-items:flex-end;gap:12px;margin-top:-28px}
+    .sub-icon{font-size:48px;background:var(--bg2);border:4px solid var(--bg2);border-radius:50%;width:72px;height:72px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .sub-info{flex:1}
+    .sub-name{font-size:28px;font-weight:900;margin-bottom:2px}
+    .sub-meta{font-size:13px;color:var(--text3)}
+    .sub-stats{display:flex;gap:24px;margin-top:8px}
+    .sub-stat{text-align:center}
+    .sub-stat-num{font-size:18px;font-weight:800}
+    .sub-stat-label{font-size:12px;color:var(--text3)}
+    .join-btn{background:var(--accent);border:none;border-radius:var(--radius);padding:8px 24px;color:#fff;font-weight:700;font-size:14px;cursor:pointer;transition:background .15s;flex-shrink:0;font-family:'Inter',sans-serif}
+    .join-btn:hover{background:var(--accent2)}
+    .join-btn.joined{background:none;border:1px solid var(--border);color:var(--text)}
+
+    /* ── Post sort ── */
+    .sort-bar{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;margin-bottom:12px;display:flex;gap:4px}
+    .sort-btn{background:none;border:none;color:var(--text3);font-size:14px;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:var(--radius);transition:all .15s;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px}
+    .sort-btn:hover{background:var(--bg4);color:var(--text)}
+    .sort-btn.active{background:var(--bg4);color:var(--text)}
+
+    /* ── Create post bar ── */
+    .create-bar{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+    .create-bar input{flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s;cursor:pointer}
+    .create-bar input:focus{border-color:var(--accent)}
+    .create-icon-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:9px;color:var(--text2);cursor:pointer;font-size:18px;transition:all .15s}
+    .create-icon-btn:hover{border-color:var(--accent);background:rgba(255,69,0,0.1)}
+
+    /* ── Post card ── */
+    .post-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;display:flex;transition:border-color .15s;animation:fadeUp .25s ease;overflow:hidden}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .post-card:hover{border-color:rgba(255,255,255,0.25)}
+    
+    /* ── Vote bar ── */
+    .vote-col{background:var(--bg3);padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:44px}
+    .vote-btn{background:none;border:none;cursor:pointer;font-size:18px;width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--text3)}
+    .vote-btn:hover{background:rgba(255,69,0,0.1);color:var(--up)}
+    .vote-btn.upvoted{color:var(--up)}
+    .vote-btn.downvoted{color:var(--down)}
+    .vote-btn:hover.down-btn{color:var(--down);background:rgba(113,147,255,0.1)}
+    .vote-score{font-size:12px;font-weight:700;color:var(--text2)}
+    .vote-score.upvoted{color:var(--up)}
+    .vote-score.downvoted{color:var(--down)}
+    
+    /* ── Post body ── */
+    .post-body{flex:1;padding:10px;min-width:0}
+    .post-meta{font-size:12px;color:var(--text3);margin-bottom:8px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+    .post-sub{color:var(--text);font-weight:700;cursor:pointer}
+    .post-sub:hover{text-decoration:underline}
+    .post-author{cursor:pointer}
+    .post-author:hover{text-decoration:underline}
+    .post-title{font-size:18px;font-weight:600;margin-bottom:8px;line-height:1.4;cursor:pointer}
+    .post-title:hover{color:var(--text2)}
+    .post-flair{display:inline-block;padding:2px 8px;border-radius:var(--radius);font-size:12px;font-weight:600;margin-left:8px;vertical-align:middle}
+    .post-text{font-size:14px;line-height:1.6;color:var(--text2);margin-bottom:10px;white-space:pre-wrap;max-height:250px;overflow:hidden;position:relative}
+    .post-text.expanded{max-height:none}
+    .post-image{border-radius:6px;overflow:hidden;margin-bottom:10px;max-height:512px}
+    .post-image img{width:100%;display:block;max-height:512px;object-fit:cover}
+    .post-actions{display:flex;gap:4px;flex-wrap:wrap}
+    .post-action-btn{background:none;border:none;color:var(--text3);font-size:13px;font-weight:600;cursor:pointer;padding:6px 10px;border-radius:4px;display:flex;align-items:center;gap:6px;transition:all .15s;font-family:'Inter',sans-serif}
+    .post-action-btn:hover{background:var(--bg4);color:var(--text)}
+    .post-award-chip{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--awards);padding:4px 8px;background:rgba(255,215,0,0.1);border-radius:var(--radius);margin-bottom:8px;cursor:pointer}
+
+    /* ── Comments ── */
+    .comment-section{border-top:1px solid var(--border);padding:12px}
+    .comment-input-row{display:flex;gap:8px;margin-bottom:16px}
+    .comment-input{flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;resize:vertical;min-height:80px;transition:border-color .2s}
+    .comment-input:focus{border-color:var(--accent)}
+    .comment-submit{background:var(--accent);border:none;border-radius:var(--radius);padding:8px 20px;color:#fff;font-weight:700;cursor:pointer;align-self:flex-end;font-family:'Inter',sans-serif;font-size:14px;transition:background .15s}
+    .comment-submit:hover{background:var(--accent2)}
+    .comment{padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+    .comment:last-child{border-bottom:none}
+    .comment-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+    .comment-avatar{width:26px;height:26px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+    .comment-user{font-size:13px;font-weight:700;cursor:pointer}
+    .comment-user:hover{text-decoration:underline}
+    .comment-time{font-size:12px;color:var(--text3)}
+    .comment-op-badge{font-size:11px;color:var(--accent);font-weight:700;border:1px solid var(--accent);border-radius:3px;padding:1px 5px}
+    .comment-body{font-size:14px;line-height:1.6;margin-bottom:8px;padding-left:34px}
+    .comment-actions{display:flex;gap:4px;padding-left:34px}
+    .comment-vote-btn{background:none;border:none;cursor:pointer;font-size:14px;padding:4px 8px;border-radius:4px;color:var(--text3);display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600;transition:all .15s;font-family:'Inter',sans-serif}
+    .comment-vote-btn:hover{background:var(--bg4);color:var(--text)}
+    .comment-vote-btn.upvoted{color:var(--up)}
+    .comment-reply-btn{background:none;border:none;cursor:pointer;font-size:13px;font-weight:600;color:var(--text3);padding:4px 8px;border-radius:4px;transition:all .15s;font-family:'Inter',sans-serif}
+    .comment-reply-btn:hover{background:var(--bg4);color:var(--text)}
+    .comment-indent{margin-left:20px;padding-left:16px;border-left:2px solid var(--border)}
+    .comments-header{font-size:16px;font-weight:700;margin-bottom:12px}
+
+    /* ── Right panel ── */
+    .right-panel{position:sticky;top:68px;max-height:calc(100vh - 88px);overflow-y:auto}
+    .widget{background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:16px;overflow:hidden}
+    .widget-header{padding:12px 16px;font-size:14px;font-weight:700;border-bottom:1px solid var(--border);background:linear-gradient(135deg,var(--accent),#ff8c00)}
+    .widget-body{padding:16px}
+    .sub-list-item{display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05)}
+    .sub-list-item:last-child{border-bottom:none}
+    .sub-list-item:hover .sub-list-name{text-decoration:underline}
+    .sub-list-icon{font-size:24px;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+    .sub-list-name{font-weight:700;font-size:14px}
+    .sub-list-members{font-size:12px;color:var(--text3)}
+
+    /* ── Post modal ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(4px)}
+    .modal-overlay.open{opacity:1;pointer-events:all}
+    .modal{background:var(--bg2);border-radius:12px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;transform:scale(0.95);transition:transform .2s;margin:16px}
+    .modal-overlay.open .modal{transform:scale(1)}
+    .modal-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:18px;font-weight:700;position:sticky;top:0;background:var(--bg2);z-index:1}
+    .close-btn{background:none;border:none;color:var(--text);cursor:pointer;font-size:22px;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .15s}
+    .close-btn:hover{background:var(--bg4)}
+    .modal-body{padding:16px}
+    .tab-selector{display:flex;gap:0;border:1px solid var(--border);border-radius:4px;margin-bottom:16px;overflow:hidden}
+    .tab-sel-btn{flex:1;background:none;border:none;color:var(--text3);font-size:14px;font-weight:600;padding:10px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;border-right:1px solid var(--border)}
+    .tab-sel-btn:last-child{border-right:none}
+    .tab-sel-btn.active{background:var(--bg4);color:var(--text)}
+    .form-label{font-size:13px;font-weight:600;color:var(--text3);margin-bottom:6px;display:block}
+    .form-input{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:15px;outline:none;margin-bottom:14px;transition:border-color .2s}
+    .form-input:focus{border-color:var(--accent)}
+    .form-textarea{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:15px;outline:none;resize:vertical;min-height:100px;margin-bottom:14px;transition:border-color .2s}
+    .form-textarea:focus{border-color:var(--accent)}
+    .submit-post-btn{width:100%;background:var(--accent);border:none;border-radius:var(--radius);padding:12px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;transition:background .15s;font-family:'Inter',sans-serif}
+    .submit-post-btn:disabled{opacity:0.5;cursor:not-allowed}
+    .submit-post-btn:not(:disabled):hover{background:var(--accent2)}
+
+    /* ── Toast ── */
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--accent);color:#fff;padding:12px 24px;border-radius:var(--radius);font-size:15px;font-weight:600;z-index:9999;transition:transform .3s cubic-bezier(0.34,1.56,0.64,1)}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+
+    /* ── Award chips ── */
+    .awards-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+    .award-chip{font-size:12px;padding:3px 8px;border-radius:var(--radius);cursor:pointer;transition:background .15s}
+    .award-chip:hover{filter:brightness(1.2)}
+
+    /* ── Subreddit tabs ── */
+    .sub-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
+    .sub-tab{padding:12px 16px;cursor:pointer;font-size:14px;font-weight:600;color:var(--text3);white-space:nowrap;transition:all .15s;border-bottom:3px solid transparent;flex-shrink:0}
+    .sub-tab.active{color:var(--text);border-bottom-color:var(--accent)}
+    .sub-tab:hover{background:rgba(255,255,255,0.03);color:var(--text2)}
+
+    /* ── User flair ── */
+    .user-flair{font-size:11px;background:rgba(255,69,0,0.15);color:var(--accent);border-radius:var(--radius);padding:2px 7px;font-weight:600}
+
+    /* ── Loading skeleton ── */
+    .skel{background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200%;animation:skel 1.5s infinite;border-radius:6px}
+    @keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo" onclick="navigateTo('home')">
+    <span class="logo-icon">🟠</span>
+    <span>reddit</span>
+  </div>
+  <div class="header-search">
+    <input type="text" placeholder="Search Reddit" id="headerSearch" oninput="handleSearch(this.value)" onkeydown="if(event.key==='Enter')doSearch(this.value)"/>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" onclick="openPostModal()">+ Create post</button>
+    <button class="header-btn filled" id="loginBtn" onclick="openLoginModal()">Log in</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- Main feed -->
+  <div class="main-col">
+    <!-- Sub banner -->
+    <div class="sub-banner" id="subBanner">
+      <div class="sub-banner-img"></div>
+      <div class="sub-banner-body">
+        <div class="sub-icon" id="subIcon">🌐</div>
+        <div class="sub-info">
+          <div class="sub-name" id="subName">r/Popular</div>
+          <div class="sub-meta" id="subMeta">All popular posts</div>
+          <div class="sub-stats">
+            <div class="sub-stat"><div class="sub-stat-num" id="subMembers">24.5M</div><div class="sub-stat-label">Members</div></div>
+            <div class="sub-stat"><div class="sub-stat-num" id="subOnline">8.2K</div><div class="sub-stat-label">Online</div></div>
+          </div>
+        </div>
+        <button class="join-btn" id="joinBtn" onclick="toggleJoin()">Join</button>
+      </div>
+    </div>
+
+    <!-- Sub navigation -->
+    <div class="sub-tabs" id="subTabs">
+      <div class="sub-tab active" onclick="switchSub('popular','🌐','r/Popular','All popular posts','24.5M','8.2K')">🌐 r/Popular</div>
+      <div class="sub-tab" onclick="switchSub('worldnews','🌍','r/worldnews','Breaking news and more','28M','11K')">🌍 r/worldnews</div>
+      <div class="sub-tab" onclick="switchSub('technology','💻','r/technology','All things tech','17M','4.5K')">💻 r/technology</div>
+      <div class="sub-tab" onclick="switchSub('gaming','🎮','r/gaming','Game on','37M','15K')">🎮 r/gaming</div>
+      <div class="sub-tab" onclick="switchSub('science','🔬','r/science','Science discussion','31M','9K')">🔬 r/science</div>
+      <div class="sub-tab" onclick="switchSub('crypto','₿','r/CryptoCurrency','Crypto hub','6M','3K')">₿ r/CryptoCurrency</div>
+      <div class="sub-tab" onclick="switchSub('fitness','💪','r/fitness','Fitness community','8M','2K')">💪 r/fitness</div>
+    </div>
+
+    <!-- Create post bar -->
+    <div class="create-bar">
+      <div class="avatar" style="width:38px;height:38px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">👤</div>
+      <input type="text" placeholder="Create post" onclick="openPostModal()" readonly/>
+      <button class="create-icon-btn" onclick="openPostModal()" title="Image post">🖼️</button>
+      <button class="create-icon-btn" onclick="openPostModal()" title="Link post">🔗</button>
+    </div>
+
+    <!-- Sort bar -->
+    <div class="sort-bar">
+      <button class="sort-btn active" id="sort-hot" onclick="sortPosts('hot',this)">🔥 Hot</button>
+      <button class="sort-btn" id="sort-new" onclick="sortPosts('new',this)">✨ New</button>
+      <button class="sort-btn" id="sort-top" onclick="sortPosts('top',this)">🏆 Top</button>
+      <button class="sort-btn" id="sort-rising" onclick="sortPosts('rising',this)">📈 Rising</button>
+    </div>
+
+    <!-- Posts list -->
+    <div id="postsList"></div>
+    <div id="loadMoreBtn" style="text-align:center;padding:16px"><button onclick="loadMorePosts()" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 28px;color:var(--text);font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">Load more posts</button></div>
+  </div>
+
+  <!-- Right panel -->
+  <aside class="right-panel">
+    <div class="widget">
+      <div class="widget-header" id="communityWidgetTitle">📊 Community stats</div>
+      <div class="widget-body">
+        <div style="margin-bottom:12px;font-size:14px;line-height:1.6;color:var(--text2)" id="communityDesc">The frontpage of the internet. Share links, create posts, vote on content and comment.</div>
+        <button onclick="openPostModal()" style="width:100%;background:var(--accent);border:none;border-radius:var(--radius);padding:10px;color:#fff;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:8px;transition:background .15s" onmouseover="this.style.background='var(--accent2)'" onmouseout="this.style.background='var(--accent)'">Create Post</button>
+        <button onclick="openPostModal()" style="width:100%;background:none;border:1px solid var(--border);border-radius:var(--radius);padding:10px;color:var(--text);font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">Create Community</button>
+      </div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-header">🔥 Top Communities</div>
+      <div class="widget-body" style="padding:0">
+        <div class="sub-list-item" style="padding:10px 16px" onclick="switchSub('worldnews','🌍','r/worldnews','Breaking news','28M','11K')">
+          <div class="sub-list-icon">🌍</div>
+          <div><div class="sub-list-name">r/worldnews</div><div class="sub-list-members">28.1M members</div></div>
+        </div>
+        <div class="sub-list-item" style="padding:10px 16px" onclick="switchSub('technology','💻','r/technology','Tech news','17M','4.5K')">
+          <div class="sub-list-icon">💻</div>
+          <div><div class="sub-list-name">r/technology</div><div class="sub-list-members">17.3M members</div></div>
+        </div>
+        <div class="sub-list-item" style="padding:10px 16px" onclick="switchSub('gaming','🎮','r/gaming','Gaming hub','37M','15K')">
+          <div class="sub-list-icon">🎮</div>
+          <div><div class="sub-list-name">r/gaming</div><div class="sub-list-members">37.4M members</div></div>
+        </div>
+        <div class="sub-list-item" style="padding:10px 16px" onclick="switchSub('science','🔬','r/science','Science','31M','9K')">
+          <div class="sub-list-icon">🔬</div>
+          <div><div class="sub-list-name">r/science</div><div class="sub-list-members">31.2M members</div></div>
+        </div>
+        <div class="sub-list-item" style="padding:10px 16px;border:none" onclick="switchSub('crypto','₿','r/CryptoCurrency','Crypto','6M','3K')">
+          <div class="sub-list-icon">₿</div>
+          <div><div class="sub-list-name">r/CryptoCurrency</div><div class="sub-list-members">6.7M members</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;color:var(--text3);line-height:2;padding:8px">
+      <a href="../../index.html" style="color:var(--text3)">← Back to Hub</a> · Help · About · Reddit Inc · © 2025. All rights reserved.
+    </div>
+  </aside>
+</div>
+
+<!-- ── Create Post Modal ── -->
+<div class="modal-overlay" id="postModal">
+  <div class="modal">
+    <div class="modal-header">
+      Create Post
+      <button class="close-btn" onclick="closeModal('postModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--text3);margin-bottom:12px">Posting to: <strong id="postingTo" style="color:var(--text)">r/Popular</strong></div>
+      <div class="tab-selector">
+        <button class="tab-sel-btn active" id="ptype-text" onclick="switchPostType('text')">📝 Text</button>
+        <button class="tab-sel-btn" id="ptype-link" onclick="switchPostType('link')">🔗 Link</button>
+        <button class="tab-sel-btn" id="ptype-image" onclick="switchPostType('image')">🖼️ Image</button>
+      </div>
+      <input type="text" class="form-input" id="postTitle" placeholder="Title" maxlength="300" oninput="checkPostReady()"/>
+      <div id="textPostArea">
+        <textarea class="form-textarea" id="postText" placeholder="Text (optional)"></textarea>
+      </div>
+      <div id="linkPostArea" style="display:none">
+        <input type="url" class="form-input" id="postLink" placeholder="URL" oninput="checkPostReady()"/>
+      </div>
+      <div id="imagePostArea" style="display:none">
+        <div style="border:2px dashed var(--border);border-radius:6px;padding:32px;text-align:center;cursor:pointer;transition:border-color .2s;font-size:15px;color:var(--text3)" onclick="showToast('Image upload: drag & drop support coming soon! 🖼️')">
+          📁 Click to upload image
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <input type="text" class="form-input" id="postFlair" placeholder="Flair (optional)" style="margin-bottom:0;flex:1"/>
+        <div style="display:flex;gap:6px">
+          <button style="background:none;border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text3);cursor:pointer;font-size:13px;transition:all .15s" onclick="toggleOption('NSFW',this)">NSFW</button>
+          <button style="background:none;border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text3);cursor:pointer;font-size:13px;transition:all .15s" onclick="toggleOption('Spoiler',this)">Spoiler</button>
+        </div>
+      </div>
+      <button class="submit-post-btn" id="submitPostBtn" disabled onclick="submitPost()">Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Post Detail Modal ── -->
+<div class="modal-overlay" id="postDetailModal">
+  <div class="modal" style="max-width:860px">
+    <div class="modal-header">
+      <button class="close-btn" onclick="closeModal('postDetailModal')" style="order:-1">←</button>
+      <span id="postDetailTitle" style="flex:1;font-size:16px">Post</span>
+      <button class="close-btn" onclick="closeModal('postDetailModal')">✕</button>
+    </div>
+    <div id="postDetailContent" style="padding:16px"></div>
+  </div>
+</div>
+
+<!-- ── Login Modal ── -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">Log in to Reddit <button class="close-btn" onclick="closeModal('loginModal')">✕</button></div>
+    <div class="modal-body" style="text-align:center">
+      <div style="font-size:48px;margin-bottom:16px">🟠</div>
+      <input type="text" class="form-input" id="loginUsername" placeholder="Username"/>
+      <input type="password" class="form-input" id="loginPassword" placeholder="Password"/>
+      <button onclick="handleLogin()" style="width:100%;background:var(--accent);border:none;border-radius:var(--radius);padding:12px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;margin-bottom:12px" onmouseover="this.style.background='var(--accent2)'" onmouseout="this.style.background='var(--accent)'">Log In</button>
+      <div style="font-size:14px;color:var(--text3)">New to Reddit? <span style="color:var(--accent);cursor:pointer" onclick="handleLogin()">Sign Up</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function timeAgo(ts){const d=(Date.now()-ts)/1e3;if(d<60)return Math.floor(d)+'s';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';const days=Math.floor(d/86400);return days<365?days+'d':Math.floor(days/365)+'y'}
+function fmtNum(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(1)+'K';return n}
+
+const AWARDS_MAP=[
+  {icon:'🏆',name:'Gold',color:'#ffd700',bg:'rgba(255,215,0,0.15)'},
+  {icon:'🥈',name:'Silver',color:'#c0c0c0',bg:'rgba(192,192,192,0.15)'},
+  {icon:'🍕',name:'Helpful',color:'#ff7f50',bg:'rgba(255,127,80,0.15)'},
+  {icon:'💡',name:'Insightful',color:'#87ceeb',bg:'rgba(135,206,235,0.15)'},
+  {icon:'❤️',name:'Wholesome',color:'#ff69b4',bg:'rgba(255,105,180,0.15)'},
+];
+
+const FLAIRS_MAP={
+  popular:{color:'#ff6534',bg:'rgba(255,101,52,0.2)'},
+  worldnews:{color:'#4fc3f7',bg:'rgba(79,195,247,0.15)'},
+  technology:{color:'#00e5ff',bg:'rgba(0,229,255,0.15)'},
+  gaming:{color:'#76ff03',bg:'rgba(118,255,3,0.15)'},
+  science:{color:'#ea80fc',bg:'rgba(234,128,252,0.15)'},
+  crypto:{color:'#ffd740',bg:'rgba(255,215,64,0.15)'},
+  fitness:{color:'#ff6d00',bg:'rgba(255,109,0,0.15)'},
+};
+
+const SEED_POSTS={
+  popular:[
+    {title:'Scientists discover new species of deep-sea creature that looks like it\'s from another planet',sub:'r/science',flair:'Discovery',author:'DeepSeaExplorer',score:145200,comments:4230,text:'Researchers at the Institute of Marine Biology have identified a bioluminescent creature at 4,500m depth. The organism uses a unique form of chemosynthesis never before observed.',ts:Date.now()-3600000*2},
+    {title:'This stray dog waited 2 years outside a hospital where its owner passed away, not knowing they were gone',sub:'r/worldnews',flair:'Heartbreaking',author:'LoyaltyStories',score:89400,comments:2180,text:'The dog, named Bruno, was finally adopted by one of the hospital nurses who had cared for its owner.',ts:Date.now()-3600000*5},
+    {title:'New AI model achieves 99.7% accuracy on medical imaging diagnosis, surpassing human doctors',sub:'r/technology',flair:'AI',author:'MedTechFuture',score:67800,comments:3450,text:'The model was trained on 50 million labelled images. In controlled trials it outperformed radiologists on detecting early-stage cancers.',ts:Date.now()-86400000},
+    {title:'[Discussion] What single change would improve your city/town the most?',sub:'r/popular',flair:'Discussion',author:'UrbanPlanner42',score:34600,comments:15200,text:'I\'ll start: better public transport. Having a reliable, affordable bus and metro system would transform everything — traffic, pollution, quality of life.',ts:Date.now()-86400000*2},
+    {title:'Bitcoin surpasses previous all-time high amid institutional adoption surge',sub:'r/CryptoCurrency',flair:'Market',author:'CryptoAnalyst',score:52300,comments:8900,text:'Major investment banks and sovereign wealth funds are increasing BTC allocations. Analysts predict continued growth through Q4.',ts:Date.now()-86400000*1},
+  ],
+  worldnews:[
+    {title:'G7 Nations agree on new climate framework targeting net-zero by 2045',sub:'r/worldnews',flair:'Climate',author:'GreenFuture',score:42000,comments:5600,text:'The framework includes binding carbon targets and a $2 trillion green energy transition fund.',ts:Date.now()-7200000},
+    {title:'Space agency confirms lunar water ice reserves larger than previously estimated',sub:'r/worldnews',flair:'Space',author:'LunarMission',score:31000,comments:2400,text:'New orbital radar data suggests ice deposits at the poles could sustain a permanent lunar outpost.',ts:Date.now()-172800000},
+  ],
+  technology:[
+    {title:'Open-source model beats GPT-4 on coding benchmarks with 3B parameters',sub:'r/technology',flair:'AI/ML',author:'OpenSourceDev',score:56700,comments:6700,text:'The model, released under Apache 2.0, runs on consumer hardware. Download and fine-tune it yourself.',ts:Date.now()-3600000*3},
+    {title:'Privacy browser surpasses 100M users as concerns over tracking grow',sub:'r/technology',flair:'Privacy',author:'PrivacyFirst',score:28900,comments:3200,text:'Ad-blocking and fingerprint resistance are cited as the top reasons users switched from Chrome.',ts:Date.now()-86400000*3},
+  ],
+  gaming:[
+    {title:'After 7 years of early access, beloved survival game finally launches 1.0 — and it\'s incredible',sub:'r/gaming',flair:'Review',author:'GamingEnthusiast',score:124000,comments:8900,text:'The developers kept their word on every promise. The 1.0 release includes the full story, modding tools, and co-op multiplayer.',ts:Date.now()-3600000*1},
+    {title:'This indie dev spent 8 years making their dream game solo — it just hit #1 on Steam',sub:'r/gaming',flair:'Indie',author:'IndieLove',score:98700,comments:4500,text:'The developer, working alone from a small apartment, created every asset, line of code and piece of music themselves.',ts:Date.now()-86400000*4},
+  ],
+  science:[
+    {title:'New study shows regular cold showers boost immune response by 30%',sub:'r/science',flair:'Health',author:'ResearchDoc',score:45600,comments:5600,text:'A controlled trial of 3,000 participants showed significantly reduced sick days among those who took cold showers 3x per week.',ts:Date.now()-3600000*6},
+  ],
+  crypto:[
+    {title:'Ethereum network processes 1M transactions in a single hour for the first time',sub:'r/CryptoCurrency',flair:'ETH',author:'EthereumDev',score:39000,comments:4800,text:'Layer 2 scaling solutions including Arbitrum and Optimism have dramatically increased throughput.',ts:Date.now()-3600000*2},
+  ],
+  fitness:[
+    {title:'After 2 years of consistent training I finally hit my first 405lb deadlift. Proof that patience works.',sub:'r/fitness',flair:'Progress',author:'IronMind',score:67800,comments:3400,text:'Started at 135lb. Following a simple linear progression programme, eating in a slight surplus, and getting 8 hours sleep. No shortcuts.',ts:Date.now()-86400000*1},
+  ],
+};
+
+let currentSub = 'popular';
+let posts = JSON.parse(localStorage.getItem('r_posts_popular') || 'null') || [...SEED_POSTS.popular];
+let currentSort = 'hot';
+let postType = 'text';
+let activeOptions = new Set();
+let joined = new Set(JSON.parse(localStorage.getItem('r_joined') || '[]'));
+let displayedPosts = 5;
+
+function init(){
+  loadSubPosts('popular');
+  updateJoinBtn();
+}
+
+function switchSub(sub, icon, name, desc, members, online){
+  document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  currentSub = sub;
+  displayedPosts = 5;
+  document.getElementById('subIcon').textContent = icon;
+  document.getElementById('subName').textContent = name;
+  document.getElementById('subMeta').textContent = desc;
+  document.getElementById('subMembers').textContent = members;
+  document.getElementById('subOnline').textContent = online;
+  document.getElementById('postingTo').textContent = name;
+  document.getElementById('communityDesc').textContent = desc;
+  loadSubPosts(sub);
+  updateJoinBtn();
+}
+
+function loadSubPosts(sub){
+  const saved = JSON.parse(localStorage.getItem('r_posts_'+sub) || 'null');
+  posts = saved || [...(SEED_POSTS[sub] || SEED_POSTS.popular)].map(p=>({...p,id:'p'+Math.random().toString(36).slice(2),vote:0,awards:[]}));
+  renderPosts();
+}
+
+function sortPosts(sort, btn){
+  currentSort = sort;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  displayedPosts = 5;
+  renderPosts();
+}
+
+function getSortedPosts(){
+  let sorted = [...posts];
+  if(currentSort==='hot') sorted.sort((a,b)=>b.score-a.score);
+  else if(currentSort==='new') sorted.sort((a,b)=>b.ts-a.ts);
+  else if(currentSort==='top') sorted.sort((a,b)=>(b.score+b.comments)-(a.score+a.comments));
+  else if(currentSort==='rising') sorted.sort((a,b)=>(b.comments/((Date.now()-b.ts)/36e5+1))-(a.comments/((Date.now()-a.ts)/36e5+1)));
+  return sorted;
+}
+
+function renderPosts(){
+  const list = document.getElementById('postsList');
+  const sorted = getSortedPosts().slice(0, displayedPosts);
+  list.innerHTML = sorted.map(p => postCard(p)).join('');
+  attachPostEvents();
+}
+
+function postCard(p){
+  const flairInfo = FLAIRS_MAP[currentSub]||FLAIRS_MAP.popular;
+  const flairHtml = p.flair ? `<span class="post-flair" style="background:${flairInfo.bg};color:${flairInfo.color}">${escHtml(p.flair)}</span>` : '';
+  const awardsHtml = p.awards && p.awards.length ? `<div class="awards-row">${p.awards.map(a=>`<span class="award-chip" style="background:${AWARDS_MAP[a].bg};color:${AWARDS_MAP[a].color}">${AWARDS_MAP[a].icon} ${AWARDS_MAP[a].name}</span>`).join('')}</div>` : '';
+  return`<div class="post-card" id="post_${escHtml(p.id)}">
+    <div class="vote-col">
+      <button class="vote-btn ${p.vote>0?'upvoted':''}" data-action="upvote" data-id="${escHtml(p.id)}" title="Upvote">▲</button>
+      <span class="vote-score ${p.vote>0?'upvoted':p.vote<0?'downvoted':''}">${fmtNum(p.score+(p.vote||0))}</span>
+      <button class="vote-btn down-btn ${p.vote<0?'downvoted':''}" data-action="downvote" data-id="${escHtml(p.id)}" title="Downvote">▼</button>
+    </div>
+    <div class="post-body">
+      <div class="post-meta">
+        <span class="post-sub" data-sub="${escHtml(currentSub)}">${escHtml(p.sub||'r/'+currentSub)}</span>
+        <span>·</span>Posted by <span class="post-author">u/${escHtml(p.author)}</span>
+        <span class="user-flair">lvl ${rnd(1,100)}</span>
+        <span>· ${timeAgo(p.ts)}</span>
+      </div>
+      <div class="post-title" data-action="openpost" data-id="${escHtml(p.id)}">${escHtml(p.title)}${flairHtml}</div>
+      ${awardsHtml}
+      ${p.text?`<div class="post-text">${escHtml(p.text.slice(0,300))}${p.text.length>300?'...':''}</div>`:''}
+      <div class="post-actions">
+        <button class="post-action-btn" data-action="openpost" data-id="${escHtml(p.id)}">💬 ${fmtNum(p.comments)} Comments</button>
+        <button class="post-action-btn" data-action="share" data-id="${escHtml(p.id)}">🔗 Share</button>
+        <button class="post-action-btn" data-action="award" data-id="${escHtml(p.id)}">🏆 Award</button>
+        <button class="post-action-btn" data-action="save" data-id="${escHtml(p.id)}">🔖 Save</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function attachPostEvents(){
+  document.querySelectorAll('[data-action]').forEach(el=>{
+    el.addEventListener('click',e=>{
+      e.stopPropagation();
+      const action=el.dataset.action;
+      const id=el.dataset.id;
+      if(action==='upvote')vote(id,1);
+      else if(action==='downvote')vote(id,-1);
+      else if(action==='openpost')openPostDetail(id);
+      else if(action==='share')navigator.clipboard&&navigator.clipboard.writeText(window.location.href+'#'+id).then(()=>showToast('Link copied! 🔗'));
+      else if(action==='award')giveAward(id);
+      else if(action==='save')showToast('Saved to your profile 🔖');
+    });
+  });
+}
+
+function vote(id, dir){
+  const p = posts.find(x=>x.id===id);
+  if(!p) return;
+  if(p.vote===dir) p.vote=0;
+  else p.vote=dir;
+  savePosts();
+  renderPosts();
+}
+
+function giveAward(id){
+  const p = posts.find(x=>x.id===id);
+  if(!p) return;
+  if(!p.awards) p.awards=[];
+  const award = AWARDS_MAP[rnd(0,AWARDS_MAP.length-1)];
+  p.awards.push(AWARDS_MAP.indexOf(award));
+  savePosts();
+  renderPosts();
+  showToast(award.icon+' '+award.name+' award given!');
+}
+
+function openPostDetail(id){
+  const p = posts.find(x=>x.id===id);
+  if(!p) return;
+  const comments = JSON.parse(localStorage.getItem('r_comments_'+id) || 'null') || generateSeedComments(p);
+  document.getElementById('postDetailTitle').textContent = p.title.slice(0,80)+(p.title.length>80?'...':'');
+  document.getElementById('postDetailContent').innerHTML = `
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;min-width:36px">
+        <button class="vote-btn ${p.vote>0?'upvoted':''}" style="background:none;border:none;cursor:pointer;font-size:20px;color:${p.vote>0?'var(--up)':'var(--text3)'}">▲</button>
+        <span style="font-weight:700;color:${p.vote>0?'var(--up)':p.vote<0?'var(--down)':'var(--text2)'}">${fmtNum(p.score+(p.vote||0))}</span>
+        <button class="vote-btn" style="background:none;border:none;cursor:pointer;font-size:20px;color:${p.vote<0?'var(--down)':'var(--text3)'}">▼</button>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:6px">${escHtml(p.sub||'r/'+currentSub)} · Posted by u/${escHtml(p.author)} · ${timeAgo(p.ts)}</div>
+        <div style="font-size:22px;font-weight:700;line-height:1.3;margin-bottom:10px">${escHtml(p.title)}</div>
+        ${p.text?`<div style="font-size:15px;line-height:1.65;color:var(--text2);margin-bottom:14px;white-space:pre-wrap">${escHtml(p.text)}</div>`:''}
+      </div>
+    </div>
+    <div class="comments-header" style="font-size:17px;font-weight:800">${fmtNum(p.comments)} Comments</div>
+    <div class="comment-section">
+      <div class="comment-input-row">
+        <textarea class="comment-input" id="newComment_${escHtml(id)}" placeholder="What are your thoughts?" oninput="this.nextElementSibling.disabled=!this.value.trim()"></textarea>
+        <button class="comment-submit" disabled onclick="addComment('${escHtml(id)}')">Comment</button>
+      </div>
+      <div id="commentsList_${escHtml(id)}">${comments.map(c=>commentHTML(c,id,false)).join('')}</div>
+    </div>`;
+  document.getElementById('postDetailModal').classList.add('open');
+}
+
+function commentHTML(c, postId, isReply){
+  const indent = isReply ? 'comment-indent' : '';
+  return`<div class="comment ${indent}" id="comment_${escHtml(c.id)}">
+    <div class="comment-header">
+      <div class="comment-avatar" style="background:hsl(${hashCode(c.author)%360},50%,30%)">${escHtml(c.author[0].toUpperCase())}</div>
+      <span class="comment-user">u/${escHtml(c.author)}</span>
+      ${c.op?'<span class="comment-op-badge">OP</span>':''}
+      <span class="comment-time">${timeAgo(c.ts)}</span>
+    </div>
+    <div class="comment-body">${escHtml(c.text)}</div>
+    <div class="comment-actions">
+      <button class="comment-vote-btn ${c.vote>0?'upvoted':''}" onclick="voteComment('${escHtml(c.id)}','${escHtml(postId)}',1)">▲ ${fmtNum(c.score+(c.vote||0))}</button>
+      <button class="comment-vote-btn" onclick="voteComment('${escHtml(c.id)}','${escHtml(postId)}',-1)" style="${c.vote<0?'color:var(--down)':''}">▼</button>
+      <button class="comment-reply-btn" onclick="replyToComment('${escHtml(c.id)}','${escHtml(postId)}')">Reply</button>
+      <button class="comment-reply-btn" onclick="showToast('Award given! 🏆')">Award</button>
+      <button class="comment-reply-btn" onclick="showToast('Saved 🔖')">Save</button>
+    </div>
+    ${c.replies&&c.replies.length?`<div class="comment-indent">${c.replies.map(r=>commentHTML(r,postId,true)).join('')}</div>`:''}
+    <div id="replyArea_${escHtml(c.id)}" style="display:none;padding-left:34px;margin-top:8px">
+      <textarea style="width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;resize:vertical;min-height:70px" placeholder="Add a reply..." id="replyText_${escHtml(c.id)}"></textarea>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button onclick="submitReply('${escHtml(c.id)}','${escHtml(postId)}')" style="background:var(--accent);border:none;border-radius:var(--radius);padding:6px 18px;color:#fff;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px">Reply</button>
+        <button onclick="document.getElementById('replyArea_${escHtml(c.id)}').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function generateSeedComments(p){
+  const users=['xylophone42','quantumleap','starfire99','debugmaster','nightowl'];
+  return users.slice(0,rnd(3,5)).map((u,i)=>({
+    id:'c'+Date.now()+i,author:u,score:rnd(5,500),vote:0,
+    text:['Really fascinating post. Thanks for sharing!','I disagree with the premise here. Here\'s why...','This is exactly what I needed to see today.','Can someone ELI5?','The implications of this are massive.'][i],
+    ts:Date.now()-rnd(60000,86400000),op:i===0,
+    replies:i<2?[{id:'r'+Date.now()+i,author:users[i+1]||users[0],score:rnd(2,100),vote:0,text:'Good point! I\'d add that...',ts:Date.now()-rnd(1000,3600000),op:false,replies:[]}]:[]
+  }));
+}
+
+function addComment(postId){
+  const input = document.getElementById('newComment_'+postId);
+  if(!input||!input.value.trim()) return;
+  const comments = JSON.parse(localStorage.getItem('r_comments_'+postId) || '[]');
+  const c = {id:'c'+Date.now(),author:'You',score:1,vote:1,text:input.value.trim(),ts:Date.now(),op:false,replies:[]};
+  comments.unshift(c);
+  localStorage.setItem('r_comments_'+postId, JSON.stringify(comments));
+  const p = posts.find(x=>x.id===postId);
+  if(p){p.comments++;savePosts();}
+  input.value='';
+  input.nextElementSibling.disabled=true;
+  document.getElementById('commentsList_'+postId).innerHTML = comments.map(c=>commentHTML(c,postId,false)).join('');
+  showToast('Comment posted! 💬');
+}
+
+function voteComment(cid, postId, dir){
+  const comments = JSON.parse(localStorage.getItem('r_comments_'+postId) || '[]');
+  function findAndVote(list){
+    for(const c of list){
+      if(c.id===cid){c.vote=(c.vote===dir)?0:dir;return true;}
+      if(c.replies&&findAndVote(c.replies))return true;
+    }return false;
+  }
+  findAndVote(comments);
+  localStorage.setItem('r_comments_'+postId, JSON.stringify(comments));
+  document.getElementById('commentsList_'+postId).innerHTML = comments.map(c=>commentHTML(c,postId,false)).join('');
+}
+
+function replyToComment(cid, postId){
+  const area = document.getElementById('replyArea_'+cid);
+  if(area)area.style.display = area.style.display==='none'?'block':'none';
+}
+
+function submitReply(cid, postId){
+  const input = document.getElementById('replyText_'+cid);
+  if(!input||!input.value.trim()) return;
+  const comments = JSON.parse(localStorage.getItem('r_comments_'+postId) || '[]');
+  function findAndReply(list){
+    for(const c of list){
+      if(c.id===cid){if(!c.replies)c.replies=[];c.replies.push({id:'r'+Date.now(),author:'You',score:1,vote:1,text:input.value.trim(),ts:Date.now(),op:false,replies:[]});return true;}
+      if(c.replies&&findAndReply(c.replies))return true;
+    }return false;
+  }
+  findAndReply(comments);
+  localStorage.setItem('r_comments_'+postId, JSON.stringify(comments));
+  input.value='';
+  document.getElementById('commentsList_'+postId).innerHTML = comments.map(c=>commentHTML(c,postId,false)).join('');
+  showToast('Reply posted! 💬');
+}
+
+function submitPost(){
+  const title = document.getElementById('postTitle').value.trim();
+  if(!title) return;
+  const text = postType==='text'?document.getElementById('postText').value.trim():'';
+  const flair = document.getElementById('postFlair').value.trim();
+  const p = {
+    id:'p'+Date.now(),
+    title,text,flair,
+    sub:'r/'+currentSub,
+    author:'You',
+    score:1,vote:1,comments:0,
+    ts:Date.now(),awards:[]
+  };
+  posts.unshift(p);
+  displayedPosts=Math.min(displayedPosts+1,posts.length);
+  savePosts();
+  closeModal('postModal');
+  renderPosts();
+  showToast('Post submitted! 🎉');
+  document.getElementById('postTitle').value='';
+  document.getElementById('postText').value='';
+  document.getElementById('postFlair').value='';
+  document.getElementById('submitPostBtn').disabled=true;
+}
+
+function loadMorePosts(){
+  displayedPosts=Math.min(displayedPosts+5,posts.length);
+  if(displayedPosts>=posts.length)document.getElementById('loadMoreBtn').style.display='none';
+  renderPosts();
+}
+
+function toggleJoin(){
+  const sub = currentSub;
+  if(joined.has(sub)){joined.delete(sub);showToast('Left r/'+currentSub);}
+  else{joined.add(sub);showToast('Joined r/'+currentSub+' 🎉');}
+  localStorage.setItem('r_joined',JSON.stringify([...joined]));
+  updateJoinBtn();
+}
+
+function updateJoinBtn(){
+  const btn = document.getElementById('joinBtn');
+  if(joined.has(currentSub)){btn.textContent='Joined';btn.classList.add('joined');}
+  else{btn.textContent='Join';btn.classList.remove('joined');}
+}
+
+function openPostModal(){document.getElementById('postModal').classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open')}));
+
+function switchPostType(type){
+  postType=type;
+  document.querySelectorAll('.tab-sel-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('ptype-'+type).classList.add('active');
+  document.getElementById('textPostArea').style.display=type==='text'?'block':'none';
+  document.getElementById('linkPostArea').style.display=type==='link'?'block':'none';
+  document.getElementById('imagePostArea').style.display=type==='image'?'block':'none';
+}
+
+function checkPostReady(){
+  const title = document.getElementById('postTitle').value.trim();
+  document.getElementById('submitPostBtn').disabled=!title;
+}
+
+function toggleOption(opt, btn){
+  if(activeOptions.has(opt)){activeOptions.delete(opt);btn.style.background='none';btn.style.color='var(--text3)';}
+  else{activeOptions.add(opt);btn.style.background=opt==='NSFW'?'rgba(255,0,0,0.2)':'rgba(255,165,0,0.2)';btn.style.color=opt==='NSFW'?'#ff4444':'#ffa500';}
+}
+
+function handleSearch(val){if(!val)return;}
+function doSearch(val){if(!val)return;showToast('Searching for: '+val);}
+
+function handleLogin(){
+  const u=document.getElementById('loginUsername').value.trim()||'RedditUser';
+  closeModal('loginModal');
+  document.getElementById('loginBtn').textContent=u;
+  document.getElementById('loginBtn').classList.remove('filled');
+  showToast('Welcome back, u/'+u+'! 🟠');
+}
+
+function navigateTo(view){showToast('Navigating to '+view);}
+
+function savePosts(){localStorage.setItem('r_posts_'+currentSub, JSON.stringify(posts));}
+function hashCode(s){let h=0;for(let i=0;i<s.length;i++)h=((h<<5)-h)+s.charCodeAt(i)|0;return Math.abs(h)}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+init();
+</script>
+</body>
+</html>

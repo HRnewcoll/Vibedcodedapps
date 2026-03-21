@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Portfolio Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#020b18;--accent:#3b82f6;--accent2:#2563eb;--accent3:#60a5fa;
+  --border:rgba(59,130,246,0.2);--glass:rgba(59,130,246,0.08);
+  --text:#e0f2fe;--text2:#93c5fd;--text3:rgba(224,242,254,0.6);
+  --green:#22c55e;--red:#ef4444;--yellow:#eab308;
+}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#020b18,#041525,#020f1e);min-height:100vh;color:var(--text)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:rgba(0,0,0,0.2)}
+::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:3px}
+.sticky-header{position:sticky;top:0;z-index:100;background:rgba(2,11,24,0.92);backdrop-filter:blur(12px);padding:12px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border)}
+.sticky-header h1{font-size:18px;font-weight:700;color:var(--accent3);flex:1}
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--glass);border:1px solid var(--border);border-radius:8px;color:var(--text2);text-decoration:none;font-size:13px;transition:all 0.2s;white-space:nowrap}
+.back-btn:hover{background:rgba(59,130,246,0.18);color:var(--text)}
+.disclaimer{background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.3);border-radius:8px;padding:10px 18px;color:#fde68a;font-size:12px;font-weight:500;margin:14px 24px 0;display:flex;align-items:center;gap:8px}
+.app-body{padding:16px 24px;max-width:1300px;margin:0 auto}
+.tabs{display:flex;gap:4px;margin-bottom:18px;background:var(--glass);border:1px solid var(--border);border-radius:10px;padding:4px}
+.tab{padding:8px 18px;border-radius:7px;border:none;background:transparent;color:var(--text3);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit}
+.tab.active{background:var(--accent2);color:#fff}
+.tab:hover:not(.active){background:rgba(59,130,246,0.12);color:var(--text)}
+.panel{background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:18px}
+.panel-title{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.form-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:11px;color:var(--text3);font-weight:500}
+input,select{background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;font-family:inherit;transition:border-color 0.2s;min-width:0}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+select option{background:#041525}
+.btn{padding:8px 18px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-danger{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
+.btn-danger:hover{background:rgba(239,68,68,0.3)}
+.btn-ghost{background:var(--glass);color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{background:rgba(59,130,246,0.18);color:var(--text)}
+.cards-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.stat-card{background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:16px;transition:transform 0.2s,border-color 0.2s}
+.stat-card:hover{transform:translateY(-2px);border-color:rgba(59,130,246,0.4)}
+.stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;font-weight:600}
+.stat-value{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat-sub{font-size:12px;color:var(--text3);margin-top:4px}
+.green{color:var(--green)}
+.red{color:var(--red)}
+.yellow{color:var(--yellow)}
+.neutral{color:var(--text3)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:8px 12px;text-align:left;color:var(--text2);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;transition:color 0.2s}
+thead th:hover{color:var(--text)}
+thead th .sort-icon{display:inline-block;margin-left:4px;opacity:0.5;font-size:10px}
+thead th.sorted .sort-icon{opacity:1;color:var(--accent3)}
+tbody tr{border-bottom:1px solid rgba(59,130,246,0.08);transition:background 0.15s}
+tbody tr:hover{background:rgba(59,130,246,0.07)}
+tbody td{padding:9px 12px;vertical-align:middle}
+.type-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:0.05em}
+.type-Stock{background:rgba(59,130,246,0.18);color:#93c5fd}
+.type-ETF{background:rgba(168,85,247,0.18);color:#d8b4fe}
+.type-Crypto{background:rgba(234,179,8,0.18);color:#fde68a}
+.type-Bond{background:rgba(34,197,94,0.18);color:#86efac}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.chart-box{background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:18px}
+.chart-box svg{display:block;width:100%;overflow:visible}
+.donut-legend{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;margin-right:4px}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+.watchlist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.watch-card{background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px;transition:border-color 0.2s}
+.watch-card:hover{border-color:rgba(59,130,246,0.4)}
+.watch-sym{font-size:16px;font-weight:700;letter-spacing:0.04em}
+.watch-price{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.watch-change{font-size:12px;font-weight:600}
+.empty-state{text-align:center;color:var(--text3);padding:40px;font-size:14px}
+.divlog-total{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:12px 16px;display:inline-flex;align-items:center;gap:10px;margin-bottom:16px}
+.divlog-total span{font-size:18px;font-weight:700;color:var(--green)}
+.export-row{display:flex;justify-content:flex-end;margin-bottom:14px}
+.line-path{fill:none;stroke:var(--accent3);stroke-width:2;stroke-linejoin:round}
+.line-fill{fill:url(#lineGrad);stroke:none}
+.axis-label{font-size:10px;fill:rgba(224,242,254,0.4)}
+@media(max-width:900px){.cards-grid{grid-template-columns:repeat(2,1fr)}.charts-row{grid-template-columns:1fr}}
+@media(max-width:600px){.cards-grid{grid-template-columns:1fr}.form-row{flex-direction:column}.tabs{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmt = (n, d=2) => Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtPct = n => (n>=0?'+':'')+fmt(n)+'%';
+const fmtDlr = n => (n>=0?'+$':'-$')+fmt(Math.abs(n));
+const clr = n => n>0?'green':n<0?'red':'neutral';
+
+const COLORS = ['#3b82f6','#8b5cf6','#22c55e','#f59e0b','#ef4444','#06b6d4','#ec4899','#a3e635','#f97316','#14b8a6'];
+
+// Park-Miller PRNG (MINSTD): deterministic, reproducible simulated history per symbol
+function seededRng(seed) {
+  let s = seed;
+  return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+}
+
+function generateHistory(symbol, buyPrice, days=30) {
+  const rng = seededRng(symbol.split('').reduce((a,c)=>a+c.charCodeAt(0),0));
+  const prices = [buyPrice];
+  for (let i=1;i<days;i++) {
+    const drift = (rng()-0.48)*0.035;
+    prices.push(Math.max(prices[i-1]*(1+drift), 0.01));
+  }
+  return prices;
+}
+
+function randomWalk(price, volatility=0.008) {
+  return Math.max(price * (1 + (Math.random()-0.5)*volatility*2), 0.01);
+}
+
+function useLocalStorage(key, initial) {
+  const [state, setState] = useState(() => {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : initial; }
+    catch { return initial; }
+  });
+  const set = useCallback(v => {
+    setState(prev => {
+      const next = typeof v === 'function' ? v(prev) : v;
+      try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, [key]);
+  return [state, set];
+}
+
+// ─── Summary Cards ─────────────────────────────────────────────────────────────
+function SummaryCards({ holdings }) {
+  const totalValue = holdings.reduce((a,h)=>a+h.currentPrice*h.shares,0);
+  const totalCost  = holdings.reduce((a,h)=>a+h.buyPrice*h.shares,0);
+  const pnlDlr = totalValue - totalCost;
+  const pnlPct = totalCost>0 ? (pnlDlr/totalCost)*100 : 0;
+  return (
+    <div className="cards-grid">
+      <div className="stat-card">
+        <div className="stat-label">Total Value</div>
+        <div className="stat-value">${fmt(totalValue)}</div>
+        <div className="stat-sub">{holdings.length} holding{holdings.length!==1?'s':''}</div>
+      </div>
+      <div className="stat-card">
+        <div className="stat-label">Total Cost</div>
+        <div className="stat-value">${fmt(totalCost)}</div>
+        <div className="stat-sub">Amount invested</div>
+      </div>
+      <div className="stat-card">
+        <div className="stat-label">Total P&amp;L ($)</div>
+        <div className={`stat-value ${clr(pnlDlr)}`}>{fmtDlr(pnlDlr)}</div>
+        <div className="stat-sub">Unrealised gain/loss</div>
+      </div>
+      <div className="stat-card">
+        <div className="stat-label">Total P&amp;L (%)</div>
+        <div className={`stat-value ${clr(pnlPct)}`}>{fmtPct(pnlPct)}</div>
+        <div className="stat-sub">vs. cost basis</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Add Holding Form ──────────────────────────────────────────────────────────
+function AddHoldingForm({ onAdd }) {
+  const [sym, setSym] = useState('');
+  const [shares, setShares] = useState('');
+  const [buyPrice, setBuyPrice] = useState('');
+  const [type, setType] = useState('Stock');
+
+  const submit = () => {
+    const s = sym.trim().toUpperCase();
+    const sh = parseFloat(shares);
+    const bp = parseFloat(buyPrice);
+    if (!s || isNaN(sh) || sh<=0 || isNaN(bp) || bp<=0) return;
+    onAdd({ id: Date.now(), symbol: s, shares: sh, buyPrice: bp, type, currentPrice: bp, prevPrice: bp });
+    setSym(''); setShares(''); setBuyPrice('');
+  };
+
+  return (
+    <div className="panel">
+      <div className="panel-title">➕ Add Holding</div>
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="add-sym">Symbol</label>
+          <input id="add-sym" style={{width:90}} value={sym} onChange={e=>setSym(e.target.value)} placeholder="AAPL" onKeyDown={e=>e.key==='Enter'&&submit()} />
+        </div>
+        <div className="form-group">
+          <label htmlFor="add-shares">Shares</label>
+          <input id="add-shares" style={{width:90}} type="number" min="0.0001" step="any" value={shares} onChange={e=>setShares(e.target.value)} placeholder="10" />
+        </div>
+        <div className="form-group">
+          <label htmlFor="add-buy">Buy Price ($)</label>
+          <input id="add-buy" style={{width:110}} type="number" min="0.0001" step="any" value={buyPrice} onChange={e=>setBuyPrice(e.target.value)} placeholder="150.00" />
+        </div>
+        <div className="form-group">
+          <label htmlFor="add-type">Type</label>
+          <select id="add-type" value={type} onChange={e=>setType(e.target.value)} style={{width:100}}>
+            <option>Stock</option><option>ETF</option><option>Crypto</option><option>Bond</option>
+          </select>
+        </div>
+        <button className="btn btn-primary" onClick={submit}>Add</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Holdings Table ─────────────────────────────────────────────────────────────
+function HoldingsTable({ holdings, onDelete, onSort, sortKey, sortDir }) {
+  const cols = [
+    {key:'symbol',label:'Symbol'},{key:'type',label:'Type'},{key:'shares',label:'Shares'},
+    {key:'buyPrice',label:'Buy $'},{key:'currentPrice',label:'Curr $'},{key:'value',label:'Value'},
+    {key:'gainDlr',label:'Gain $'},{key:'gainPct',label:'Gain %'},{key:'change24h',label:'24h Chg'}
+  ];
+
+  const rows = useMemo(() => holdings.map(h => ({
+    ...h,
+    value: h.currentPrice * h.shares,
+    gainDlr: (h.currentPrice - h.buyPrice) * h.shares,
+    gainPct: h.buyPrice>0 ? ((h.currentPrice-h.buyPrice)/h.buyPrice)*100 : 0,
+    change24h: h.prevPrice>0 ? ((h.currentPrice-h.prevPrice)/h.prevPrice)*100 : 0,
+  })), [holdings]);
+
+  if (!rows.length) return <div className="empty-state">No holdings yet. Add one above.</div>;
+
+  return (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            {cols.map(c=>(
+              <th key={c.key} className={sortKey===c.key?'sorted':''} onClick={()=>onSort(c.key)}>
+                {c.label}<span className="sort-icon">{sortKey===c.key?(sortDir==='asc'?'▲':'▼'):'⇅'}</span>
+              </th>
+            ))}
+            <th>Del</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(r=>(
+            <tr key={r.id}>
+              <td><strong>{r.symbol}</strong></td>
+              <td><span className={`type-badge type-${r.type}`}>{r.type}</span></td>
+              <td>{fmt(r.shares,4)}</td>
+              <td>${fmt(r.buyPrice)}</td>
+              <td>
+                <span className="pulse" style={{background:r.currentPrice>r.prevPrice?'var(--green)':r.currentPrice<r.prevPrice?'var(--red)':'var(--yellow)'}}></span>
+                ${fmt(r.currentPrice)}
+              </td>
+              <td>${fmt(r.value)}</td>
+              <td className={clr(r.gainDlr)}>{r.gainDlr>=0?'+':''} ${fmt(Math.abs(r.gainDlr))}</td>
+              <td className={clr(r.gainPct)}>{fmtPct(r.gainPct)}</td>
+              <td className={clr(r.change24h)}>{fmtPct(r.change24h)}</td>
+              <td><button className="btn btn-danger" style={{padding:'4px 10px',fontSize:12}} onClick={()=>onDelete(r.id)}>✕</button></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─── Donut Chart ────────────────────────────────────────────────────────────────
+function DonutChart({ holdings }) {
+  const total = holdings.reduce((a,h)=>a+h.currentPrice*h.shares,0);
+  if (!total) return <div className="empty-state">No data</div>;
+
+  const cx=110, cy=110, R=90, r=52;
+  let angle = -Math.PI/2;
+  const slices = holdings.map((h,i)=>{
+    const val = h.currentPrice*h.shares;
+    const pct = val/total;
+    const sweep = pct*2*Math.PI;
+    const x1=cx+R*Math.cos(angle), y1=cy+R*Math.sin(angle);
+    angle += sweep;
+    const x2=cx+R*Math.cos(angle), y2=cy+R*Math.sin(angle);
+    const large = sweep>Math.PI?1:0;
+    const xi1=cx+r*Math.cos(angle-sweep), yi1=cy+r*Math.sin(angle-sweep);
+    const xi2=cx+r*Math.cos(angle), yi2=cy+r*Math.sin(angle);
+    const d=`M${x1} ${y1} A${R} ${R} 0 ${large} 1 ${x2} ${y2} L${xi2} ${yi2} A${r} ${r} 0 ${large} 0 ${xi1} ${yi1} Z`;
+    return { d, color: COLORS[i%COLORS.length], symbol: h.symbol, pct };
+  });
+
+  return (
+    <div>
+      <svg viewBox="0 0 220 220" style={{maxWidth:220,margin:'0 auto',display:'block'}}>
+        {slices.map((s,i)=>(
+          <path key={i} d={s.d} fill={s.color} opacity={0.9}>
+            <title>{s.symbol}: {fmt(s.pct*100)}%</title>
+          </path>
+        ))}
+        <text x={cx} y={cy-6} textAnchor="middle" fill="var(--text3)" fontSize="11">Total</text>
+        <text x={cx} y={cy+14} textAnchor="middle" fill="var(--text)" fontSize="14" fontWeight="700">${fmt(total,0)}</text>
+      </svg>
+      <div className="donut-legend">
+        {slices.map((s,i)=>(
+          <div key={i} className="legend-item">
+            <div className="legend-dot" style={{background:s.color}}></div>
+            {s.symbol} {fmt(s.pct*100,1)}%
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Performance Line Chart ─────────────────────────────────────────────────────
+function PerformanceChart({ holdings }) {
+  const days = 30;
+  const series = useMemo(() => {
+    if (!holdings.length) return [];
+    const totals = Array(days).fill(0);
+    holdings.forEach(h => {
+      const hist = generateHistory(h.symbol, h.buyPrice, days);
+      hist.forEach((p,i)=>{ totals[i] += p*h.shares; });
+    });
+    return totals;
+  }, [holdings]);
+
+  if (!series.length) return <div className="empty-state">No data</div>;
+
+  const W=500, H=160, padL=50, padR=10, padT=10, padB=30;
+  const minV=Math.min(...series)*0.97, maxV=Math.max(...series)*1.03;
+  const scaleX = i => padL + (i/(days-1))*(W-padL-padR);
+  const scaleY = v => padT + (1-(v-minV)/(maxV-minV))*(H-padT-padB);
+  const pts = series.map((v,i)=>`${scaleX(i)},${scaleY(v)}`).join(' ');
+  const fillPts = `${scaleX(0)},${scaleY(minV)} ${pts} ${scaleX(days-1)},${scaleY(minV)}`;
+
+  const ticks = [0,7,14,21,29];
+  const today = new Date();
+  // Compute label by subtracting days from today using timestamps to avoid month-boundary issues
+  const dayLabel = i => {
+    const d = new Date(today.getTime() - (29-i)*24*60*60*1000);
+    return `${d.getMonth()+1}/${d.getDate()}`;
+  };
+
+  const startV=series[0], endV=series[days-1];
+  const lineColor = endV>=startV ? '#22c55e' : '#ef4444';
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`}>
+      <defs>
+        <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={lineColor} stopOpacity="0.25"/>
+          <stop offset="100%" stopColor={lineColor} stopOpacity="0.02"/>
+        </linearGradient>
+      </defs>
+      <polygon points={fillPts} fill="url(#lineGrad)"/>
+      <polyline points={pts} fill="none" stroke={lineColor} strokeWidth="2" strokeLinejoin="round"/>
+      {ticks.map(i=>(
+        <g key={i}>
+          <line x1={scaleX(i)} y1={padT} x2={scaleX(i)} y2={H-padB} stroke="rgba(255,255,255,0.05)" strokeDasharray="3,3"/>
+          <text x={scaleX(i)} y={H-padB+14} textAnchor="middle" className="axis-label">{dayLabel(i)}</text>
+        </g>
+      ))}
+      {[0,0.5,1].map(t=>{
+        const v = minV+(maxV-minV)*t;
+        return (
+          <g key={t}>
+            <line x1={padL} y1={scaleY(v)} x2={W-padR} y2={scaleY(v)} stroke="rgba(255,255,255,0.05)" strokeDasharray="3,3"/>
+            <text x={padL-4} y={scaleY(v)+4} textAnchor="end" className="axis-label">${fmt(v,0)}</text>
+          </g>
+        );
+      })}
+      <circle cx={scaleX(days-1)} cy={scaleY(endV)} r="4" fill={lineColor}/>
+    </svg>
+  );
+}
+
+// ─── Dividend Log ───────────────────────────────────────────────────────────────
+function DividendLog({ holdings }) {
+  const [divs, setDivs] = useLocalStorage('pt_dividends', []);
+  const [sym, setSym] = useState('');
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0,10));
+  const [amt, setAmt] = useState('');
+
+  const holdingSymbols = holdings.map(h=>h.symbol);
+
+  const addDiv = () => {
+    const s = sym.trim().toUpperCase();
+    const a = parseFloat(amt);
+    if (!s || !date || isNaN(a) || a<=0) return;
+    const h = holdings.find(x=>x.symbol===s);
+    const shares = h ? h.shares : 1;
+    setDivs(prev => [...prev, { id: Date.now(), symbol:s, date, amtPerShare:a, shares, total:a*shares }]);
+    setSym(''); setAmt('');
+  };
+
+  const totalDiv = divs.reduce((a,d)=>a+d.total,0);
+
+  return (
+    <div>
+      {totalDiv>0 && (
+        <div className="divlog-total">
+          <span>💰 Total Dividends: </span>
+          <span className="green">${fmt(totalDiv)}</span>
+        </div>
+      )}
+      <div className="panel">
+        <div className="panel-title">➕ Record Dividend</div>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Symbol</label>
+            <input style={{width:90}} value={sym} onChange={e=>setSym(e.target.value)} placeholder="AAPL" list="div-syms"/>
+            <datalist id="div-syms">{holdingSymbols.map(s=><option key={s} value={s}/>)}</datalist>
+          </div>
+          <div className="form-group">
+            <label>Date</label>
+            <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{width:140}}/>
+          </div>
+          <div className="form-group">
+            <label>Amt / Share ($)</label>
+            <input type="number" min="0" step="any" value={amt} onChange={e=>setAmt(e.target.value)} placeholder="0.25" style={{width:110}}/>
+          </div>
+          <button className="btn btn-primary" onClick={addDiv}>Record</button>
+        </div>
+      </div>
+      {divs.length>0 && (
+        <div className="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Symbol</th><th>Date</th><th>Per Share ($)</th><th>Shares</th><th>Total ($)</th><th>Del</th>
+            </tr></thead>
+            <tbody>
+              {[...divs].reverse().map(d=>(
+                <tr key={d.id}>
+                  <td><strong>{d.symbol}</strong></td>
+                  <td>{d.date}</td>
+                  <td className="green">{fmt(d.amtPerShare,4)}</td>
+                  <td>{fmt(d.shares,4)}</td>
+                  <td className="green">${fmt(d.total)}</td>
+                  <td><button className="btn btn-danger" style={{padding:'4px 10px',fontSize:12}} onClick={()=>setDivs(p=>p.filter(x=>x.id!==d.id))}>✕</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {!divs.length && <div className="empty-state">No dividends recorded.</div>}
+    </div>
+  );
+}
+
+// ─── Watchlist ──────────────────────────────────────────────────────────────────
+function Watchlist() {
+  const [watchlist, setWatchlist] = useLocalStorage('pt_watchlist', []);
+  const [input, setInput] = useState('');
+  const [prices, setPrices] = useState({});
+
+  useEffect(() => {
+    const init = {};
+    watchlist.forEach(s => {
+      const seed = s.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+      init[s] = init[s] || (seed % 200 + 50);
+    });
+    setPrices(p => ({ ...init, ...p }));
+  }, [watchlist]);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPrices(prev => {
+        const next = { ...prev };
+        watchlist.forEach(s => { if (next[s]) next[s] = randomWalk(next[s], 0.01); });
+        return next;
+      });
+    }, 4000);
+    return () => clearInterval(id);
+  }, [watchlist]);
+
+  const [prevPrices, setPrevPrices] = useState({});
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPrevPrices({ ...prices });
+    }, 60000);
+    return () => clearInterval(id);
+  }, [prices]);
+
+  const add = () => {
+    const s = input.trim().toUpperCase();
+    if (!s || watchlist.includes(s)) return;
+    setWatchlist(p => [...p, s]);
+    const seed = s.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+    setPrices(p => ({ ...p, [s]: seed%200+50 }));
+    setInput('');
+  };
+
+  const remove = s => setWatchlist(p => p.filter(x=>x!==s));
+
+  return (
+    <div>
+      <div className="panel">
+        <div className="panel-title">👁️ Watchlist</div>
+        <div className="form-row" style={{marginBottom:16}}>
+          <input style={{width:120}} value={input} onChange={e=>setInput(e.target.value)} placeholder="Symbol…" onKeyDown={e=>e.key==='Enter'&&add()}/>
+          <button className="btn btn-primary" onClick={add}>+ Watch</button>
+        </div>
+      </div>
+      {watchlist.length>0 ? (
+        <div className="watchlist-grid">
+          {watchlist.map(s => {
+            const p = prices[s] || 0;
+            const prev = prevPrices[s] || p;
+            const chg = prev>0 ? ((p-prev)/prev)*100 : 0;
+            return (
+              <div key={s} className="watch-card">
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div className="watch-sym">{s}</div>
+                  <button className="btn btn-danger" style={{padding:'3px 8px',fontSize:11}} onClick={()=>remove(s)}>✕</button>
+                </div>
+                <div className="watch-price">${fmt(p)}</div>
+                <div className={`watch-change ${clr(chg)}`}>{fmtPct(chg)} 24h</div>
+              </div>
+            );
+          })}
+        </div>
+      ) : <div className="empty-state">Add symbols to track them here.</div>}
+    </div>
+  );
+}
+
+// ─── Export CSV ─────────────────────────────────────────────────────────────────
+function exportCSV(holdings) {
+  const header = ['Symbol','Type','Shares','Buy Price','Current Price','Value','Gain $','Gain %','24h Change'];
+  const rows = holdings.map(h => {
+    const val = h.currentPrice*h.shares;
+    const gainDlr = (h.currentPrice-h.buyPrice)*h.shares;
+    const gainPct = h.buyPrice>0?((h.currentPrice-h.buyPrice)/h.buyPrice)*100:0;
+    const chg24 = h.prevPrice>0?((h.currentPrice-h.prevPrice)/h.prevPrice)*100:0;
+    return [h.symbol,h.type,h.shares,h.buyPrice.toFixed(4),h.currentPrice.toFixed(4),val.toFixed(2),gainDlr.toFixed(2),gainPct.toFixed(2)+'%',chg24.toFixed(2)+'%'];
+  });
+  const csv = [header,...rows].map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='portfolio.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── Main App ───────────────────────────────────────────────────────────────────
+function App() {
+  const [holdings, setHoldings] = useLocalStorage('pt_holdings', []);
+  const [tab, setTab] = useState('portfolio');
+  const [sortKey, setSortKey] = useState('symbol');
+  const [sortDir, setSortDir] = useState('asc');
+
+  // Use functional updater so the interval never captures stale state
+  useEffect(() => {
+    const id = setInterval(() => {
+      setHoldings(prev => prev.map(h => ({
+        ...h,
+        prevPrice: h.currentPrice,
+        currentPrice: randomWalk(h.currentPrice, 0.006)
+      })));
+    }, 5000);
+    return () => clearInterval(id);
+  }, [setHoldings]);
+
+  const addHolding = useCallback(h => {
+    setHoldings(prev => [...prev, h]);
+  }, []);
+
+  const deleteHolding = useCallback(id => {
+    setHoldings(prev => prev.filter(h => h.id !== id));
+  }, []);
+
+  const handleSort = useCallback(key => {
+    setSortKey(prev => {
+      if (prev === key) { setSortDir(d => d==='asc'?'desc':'asc'); return prev; }
+      setSortDir('asc');
+      return key;
+    });
+  }, []);
+
+  const sortedHoldings = useMemo(() => {
+    return [...holdings].sort((a, b) => {
+      const getV = (h,k) => {
+        if (k==='value') return h.currentPrice*h.shares;
+        if (k==='gainDlr') return (h.currentPrice-h.buyPrice)*h.shares;
+        if (k==='gainPct') return h.buyPrice>0?((h.currentPrice-h.buyPrice)/h.buyPrice)*100:0;
+        if (k==='change24h') return h.prevPrice>0?((h.currentPrice-h.prevPrice)/h.prevPrice)*100:0;
+        return h[k];
+      };
+      const av=getV(a,sortKey), bv=getV(b,sortKey);
+      const cmp = typeof av==='string'?av.localeCompare(bv):av-bv;
+      return sortDir==='asc'?cmp:-cmp;
+    });
+  }, [holdings, sortKey, sortDir]);
+
+  return (
+    <div>
+      <header className="sticky-header">
+        <a href="../../index.html" className="back-btn">← Back</a>
+        <h1>📊 Portfolio Tracker</h1>
+        <div style={{display:'flex',alignItems:'center',gap:8,fontSize:12,color:'var(--text3)'}}>
+          <span className="pulse"></span>Live prices
+        </div>
+      </header>
+
+      <div className="disclaimer">⚠️ Simulated data – not financial advice</div>
+
+      <div className="app-body">
+        <div className="tabs">
+          {[['portfolio','📈 Portfolio'],['charts','📉 Charts'],['dividends','💰 Dividends'],['watchlist','👁️ Watchlist']].map(([k,l])=>(
+            <button key={k} className={`tab ${tab===k?'active':''}`} onClick={()=>setTab(k)}>{l}</button>
+          ))}
+        </div>
+
+        {tab==='portfolio' && (
+          <div>
+            <SummaryCards holdings={holdings}/>
+            <AddHoldingForm onAdd={addHolding}/>
+            <div className="panel">
+              <div className="panel-title">
+                📋 Holdings
+                <button className="btn btn-ghost" style={{marginLeft:'auto',padding:'4px 12px',fontSize:12}} onClick={()=>exportCSV(holdings)}>⬇ Export CSV</button>
+              </div>
+              <HoldingsTable holdings={sortedHoldings} onDelete={deleteHolding} onSort={handleSort} sortKey={sortKey} sortDir={sortDir}/>
+            </div>
+          </div>
+        )}
+
+        {tab==='charts' && (
+          <div>
+            <SummaryCards holdings={holdings}/>
+            <div className="charts-row">
+              <div className="chart-box">
+                <div className="panel-title">🍩 Allocation</div>
+                <DonutChart holdings={holdings}/>
+              </div>
+              <div className="chart-box">
+                <div className="panel-title">📈 30-Day Performance</div>
+                <PerformanceChart holdings={holdings}/>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab==='dividends' && (
+          <div>
+            <DividendLog holdings={holdings}/>
+          </div>
+        )}
+
+        {tab==='watchlist' && <Watchlist/>}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Multiplayer Games — VibedApps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── Reset & Root ── */
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --amber:#f59e0b;--amber3:#fbbf24;
+      --border:rgba(245,158,11,.25);--glass:rgba(245,158,11,.08);
+      --text:#fef3c7;--text3:rgba(254,243,199,.6);
+      --red:#ef4444;--blue:#3b82f6;--yellow:#eab308;
+    }
+    body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0d0500,#1a0a00,#2d1600);min-height:100vh;color:var(--text)}
+
+    /* ── Nav ── */
+    nav{
+      position:sticky;top:0;background:rgba(13,5,0,.95);
+      backdrop-filter:blur(20px);border-bottom:1px solid var(--border);
+      padding:0 24px;height:56px;display:flex;align-items:center;
+      justify-content:space-between;z-index:100
+    }
+    .back-btn{color:var(--amber);text-decoration:none;font-size:14px;font-weight:600;transition:opacity .15s}
+    .back-btn:hover{opacity:.75}
+    nav h1{
+      font-size:18px;font-weight:700;
+      background:linear-gradient(135deg,#fbbf24,#f59e0b);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent
+    }
+
+    /* ── Tab Menu ── */
+    .menu{display:flex;justify-content:center;gap:12px;padding:20px 24px 10px;flex-wrap:wrap}
+    .mbtn{
+      position:relative;background:var(--glass);border:1px solid var(--border);
+      color:var(--amber);padding:11px 26px;border-radius:10px;font-size:14px;
+      font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;
+      transition:all .2s;outline:none
+    }
+    .mbtn:hover{background:rgba(245,158,11,.18);border-color:var(--amber);transform:translateY(-1px)}
+    .mbtn.active{
+      background:rgba(245,158,11,.22);border-color:var(--amber);
+      box-shadow:0 0 18px rgba(245,158,11,.3)
+    }
+    .mbtn .tip{
+      display:none;position:absolute;top:calc(100% + 8px);left:50%;
+      transform:translateX(-50%);background:rgba(13,5,0,.97);
+      border:1px solid var(--border);border-radius:8px;padding:8px 12px;
+      font-size:12px;font-weight:400;color:var(--text3);white-space:nowrap;z-index:20
+    }
+    .mbtn:hover .tip{display:block}
+
+    /* ── Game Area ── */
+    .ga{display:none;flex-direction:column;align-items:center;padding:10px 16px 30px;gap:10px}
+    .ga.active{display:flex}
+
+    /* ── HUD ── */
+    .hud{
+      display:flex;align-items:center;gap:20px;
+      background:var(--glass);border:1px solid var(--border);
+      border-radius:10px;padding:10px 24px;flex-wrap:wrap;justify-content:center
+    }
+    .hud-score{font-size:22px;font-weight:800;letter-spacing:1px}
+    .hud-label{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+    .hud-sep{color:var(--border);font-size:28px;font-weight:300}
+    .hud-vs{font-size:13px;font-weight:700;color:var(--text3)}
+
+    /* ── Buttons ── */
+    .btn{
+      background:var(--glass);border:1px solid var(--border);color:var(--amber);
+      padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;
+      cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s
+    }
+    .btn:hover{background:rgba(245,158,11,.2);transform:translateY(-1px)}
+    .btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+    .btn-danger{border-color:rgba(239,68,68,.4);color:#fca5a5}
+    .btn-danger:hover{background:rgba(239,68,68,.12)}
+
+    /* ── Info text ── */
+    .info{color:var(--text3);font-size:12px;text-align:center;line-height:1.6}
+    .kbd{
+      display:inline-block;background:rgba(245,158,11,.12);border:1px solid var(--border);
+      border-radius:4px;padding:1px 6px;font-size:11px;font-family:monospace;color:var(--amber3)
+    }
+
+    /* ── Stats Panel ── */
+    .stats-panel{
+      display:flex;gap:12px;flex-wrap:wrap;justify-content:center;
+      background:var(--glass);border:1px solid var(--border);
+      border-radius:12px;padding:12px 20px;width:100%;max-width:600px
+    }
+    .stat-item{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:70px}
+    .stat-val{font-size:20px;font-weight:800;color:var(--amber3)}
+    .stat-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;text-align:center}
+
+    /* ── Canvas ── */
+    canvas{border:2px solid var(--border);border-radius:10px;max-width:100%;display:block}
+
+    /* ── Countdown overlay ── */
+    #pong-overlay{
+      position:absolute;pointer-events:none;
+      font-size:72px;font-weight:800;color:var(--amber3);
+      text-shadow:0 0 30px var(--amber);opacity:0;transition:opacity .2s;
+      z-index:5;top:50%;left:50%;transform:translate(-50%,-50%)
+    }
+    .pong-wrap{position:relative;display:inline-block}
+
+    /* ── Tic-Tac-Toe ── */
+    #ttt-board{
+      display:grid;grid-template-columns:repeat(3,100px);
+      grid-template-rows:repeat(3,100px);gap:6px;
+      background:var(--glass);border:2px solid var(--border);
+      border-radius:12px;padding:12px
+    }
+    .ttt-cell{
+      width:100px;height:100px;border-radius:10px;
+      background:rgba(245,158,11,.06);border:2px solid var(--border);
+      display:flex;align-items:center;justify-content:center;
+      font-size:44px;font-weight:800;cursor:pointer;transition:all .15s;
+      user-select:none;-webkit-tap-highlight-color:transparent
+    }
+    .ttt-cell:hover:not(.taken){background:rgba(245,158,11,.15);border-color:var(--amber)}
+    .ttt-cell.taken{cursor:default}
+    .ttt-cell.x-mark{color:var(--amber3)}
+    .ttt-cell.o-mark{color:var(--blue)}
+    .ttt-cell.win-cell{
+      background:rgba(245,158,11,.25);border-color:var(--amber3);
+      animation:winPulse .5s ease-in-out infinite alternate
+    }
+    .ttt-cell.x-mark.win-cell{background:rgba(251,191,36,.2)}
+    .ttt-cell.o-mark.win-cell{background:rgba(59,130,246,.2);border-color:var(--blue)}
+    @keyframes winPulse{from{transform:scale(1)}to{transform:scale(1.06)}}
+    #ttt-status{font-size:18px;font-weight:700;color:var(--amber3);min-height:28px;text-align:center}
+    .ttt-history{
+      width:100%;max-width:330px;background:var(--glass);
+      border:1px solid var(--border);border-radius:10px;padding:10px 14px
+    }
+    .ttt-history h3{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+    .hist-item{
+      font-size:12px;color:var(--text3);padding:4px 0;
+      border-bottom:1px solid rgba(245,158,11,.1);display:flex;gap:8px
+    }
+    .hist-item:last-child{border-bottom:none}
+    .hist-result{font-weight:700;color:var(--amber)}
+
+    /* ── Connect Four ── */
+    #c4-outer{display:flex;flex-direction:column;align-items:center;gap:10px}
+    #c4-status{font-size:18px;font-weight:700;color:var(--amber3);text-align:center;min-height:28px}
+    #c4-cols{display:grid;grid-template-columns:repeat(7,54px);gap:4px}
+    .c4-drop{
+      width:54px;height:34px;background:var(--glass);border:1px solid var(--border);
+      border-radius:6px;color:var(--amber);font-size:16px;cursor:pointer;
+      font-family:'Inter',sans-serif;transition:all .15s
+    }
+    .c4-drop:hover{background:rgba(245,158,11,.22);border-color:var(--amber)}
+    #c4-board{
+      display:grid;grid-template-columns:repeat(7,54px);
+      grid-template-rows:repeat(6,54px);gap:4px;
+      background:rgba(245,158,11,.12);padding:10px;
+      border-radius:14px;border:2px solid var(--border)
+    }
+    .c4-cell{
+      width:54px;height:54px;border-radius:50%;
+      background:#120600;border:2px solid rgba(245,158,11,.15);
+      transition:background .12s
+    }
+    .c4-cell.red{background:var(--red);border-color:#fca5a5;box-shadow:0 0 8px rgba(239,68,68,.5)}
+    .c4-cell.yellow{background:var(--yellow);border-color:#fef08a;box-shadow:0 0 8px rgba(234,179,8,.5)}
+    .c4-cell.win{animation:c4blink .45s alternate infinite}
+    .c4-cell.red.win{box-shadow:0 0 18px var(--red)}
+    .c4-cell.yellow.win{box-shadow:0 0 18px var(--yellow)}
+    @keyframes c4blink{to{opacity:.45;transform:scale(.93)}}
+    @keyframes dropIn{
+      0%{transform:translateY(-200px);opacity:0}
+      70%{transform:translateY(6px)}
+      85%{transform:translateY(-3px)}
+      100%{transform:translateY(0);opacity:1}
+    }
+    .c4-cell.dropping{animation:dropIn .35s cubic-bezier(.22,.61,.36,1) forwards}
+  </style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+  <a class="back-btn" href="../index.html">← Back</a>
+  <h1>🤝 Multiplayer Games</h1>
+  <div></div>
+</nav>
+
+<!-- ── Tab Selector ── -->
+<div class="menu">
+  <button class="mbtn active" id="b1" onclick="showGame(1)">
+    🏓 Pong
+    <span class="tip">2-player keyboard — W/S vs ↑/↓</span>
+  </button>
+  <button class="mbtn" id="b2" onclick="showGame(2)">
+    ❌ Tic-Tac-Toe
+    <span class="tip">2-player click — X vs O, track wins</span>
+  </button>
+  <button class="mbtn" id="b3" onclick="showGame(3)">
+    🔴 Connect Four
+    <span class="tip">2-player click — drop discs to win</span>
+  </button>
+</div>
+
+<!-- ════════════════════════════════
+     GAME 1 — PONG
+     ════════════════════════════════ -->
+<div id="g1" class="ga active">
+
+  <!-- Score HUD -->
+  <div class="hud">
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <span class="hud-score" style="color:var(--amber3)" id="p1sc">0</span>
+      <span class="hud-label" style="color:var(--amber3)">Player 1</span>
+    </div>
+    <span class="hud-sep">:</span>
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <span class="hud-score" style="color:var(--blue)" id="p2sc">0</span>
+      <span class="hud-label" style="color:var(--blue)">Player 2</span>
+    </div>
+    <span class="hud-vs">First to 7</span>
+  </div>
+
+  <!-- Canvas -->
+  <div class="pong-wrap">
+    <canvas id="pg" width="700" height="400"></canvas>
+    <div id="pong-overlay"></div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="btn-row">
+    <button class="btn" onclick="pongRestart()">↺ Restart</button>
+    <button class="btn btn-danger" onclick="pongResetStats()">✕ Reset Stats</button>
+  </div>
+
+  <!-- Controls -->
+  <div class="info">
+    <span style="color:var(--amber3)">Player 1:</span>
+    <span class="kbd">W</span> up &nbsp;<span class="kbd">S</span> down
+    &nbsp;&nbsp;
+    <span style="color:var(--blue)">Player 2:</span>
+    <span class="kbd">↑</span> up &nbsp;<span class="kbd">↓</span> down
+    &nbsp;&nbsp;
+    <span class="kbd">R</span> restart
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-panel" id="pong-stats">
+    <div class="stat-item"><span class="stat-val" id="ps-played">0</span><span class="stat-lbl">Games</span></div>
+    <div class="stat-item"><span class="stat-val" style="color:var(--amber3)" id="ps-p1w">0</span><span class="stat-lbl">P1 Wins</span></div>
+    <div class="stat-item"><span class="stat-val" style="color:var(--blue)" id="ps-p2w">0</span><span class="stat-lbl">P2 Wins</span></div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════
+     GAME 2 — TIC-TAC-TOE
+     ════════════════════════════════ -->
+<div id="g2" class="ga">
+
+  <!-- Score HUD -->
+  <div class="hud">
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <span class="hud-score" style="color:var(--amber3)" id="ttt-p1sc">0</span>
+      <span class="hud-label" style="color:var(--amber3)">Player 1 (X)</span>
+    </div>
+    <span class="hud-sep">:</span>
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <span class="hud-score" style="color:var(--blue)" id="ttt-p2sc">0</span>
+      <span class="hud-label" style="color:var(--blue)">Player 2 (O)</span>
+    </div>
+    <span class="hud-sep" style="font-size:22px;color:var(--text3)">Draws:</span>
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <span class="hud-score" style="color:var(--text3)" id="ttt-draws">0</span>
+      <span class="hud-label">Draws</span>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div id="ttt-status">X's Turn (Player 1)</div>
+
+  <!-- Board -->
+  <div id="ttt-board"></div>
+
+  <!-- Buttons -->
+  <div class="btn-row">
+    <button class="btn" onclick="tttNewGame()">↺ New Game</button>
+    <button class="btn btn-danger" onclick="tttResetStats()">✕ Reset Stats</button>
+  </div>
+
+  <!-- Stats panel -->
+  <div class="stats-panel">
+    <div class="stat-item"><span class="stat-val" id="ttt-played">0</span><span class="stat-lbl">Games</span></div>
+    <div class="stat-item"><span class="stat-val" style="color:var(--amber3)" id="ttt-sp1w">0</span><span class="stat-lbl">P1 Wins</span></div>
+    <div class="stat-item"><span class="stat-val" style="color:var(--blue)" id="ttt-sp2w">0</span><span class="stat-lbl">P2 Wins</span></div>
+    <div class="stat-item"><span class="stat-val" style="color:var(--text3)" id="ttt-sdraws">0</span><span class="stat-lbl">Draws</span></div>
+  </div>
+
+  <!-- History -->
+  <div class="ttt-history">
+    <h3>Recent Results (last 5)</h3>
+    <div id="ttt-hist-list"></div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════
+     GAME 3 — CONNECT FOUR
+     ════════════════════════════════ -->
+<div id="g3" class="ga">
+
+  <!-- Score HUD -->
+  <div class="hud">
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <span class="hud-score" style="color:var(--red)" id="c4-p1sc">0</span>
+      <span class="hud-label" style="color:var(--red)">Player 1 (Red)</span>
+    </div>
+    <span class="hud-sep">:</span>
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <span class="hud-score" style="color:var(--yellow)" id="c4-p2sc">0</span>
+      <span class="hud-label" style="color:var(--yellow)">Player 2 (Yellow)</span>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div id="c4-status">🔴 Red's Turn (Player 1)</div>
+
+  <!-- Board wrapper -->
+  <div id="c4-outer">
+    <div id="c4-cols"></div>
+    <div id="c4-board"></div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="btn-row">
+    <button class="btn" onclick="c4NewGame()">↺ New Game</button>
+    <button class="btn btn-danger" onclick="c4ResetStats()">✕ Reset Stats</button>
+  </div>
+
+  <!-- Stats panel -->
+  <div class="stats-panel">
+    <div class="stat-item"><span class="stat-val" id="c4-played">0</span><span class="stat-lbl">Games</span></div>
+    <div class="stat-item"><span class="stat-val" style="color:var(--red)" id="c4-sp1w">0</span><span class="stat-lbl">P1 Wins</span></div>
+    <div class="stat-item"><span class="stat-val" style="color:var(--yellow)" id="c4-sp2w">0</span><span class="stat-lbl">P2 Wins</span></div>
+    <div class="stat-item"><span class="stat-val" style="color:var(--text3)" id="c4-sdraws">0</span><span class="stat-lbl">Draws</span></div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════
+     JAVASCRIPT
+     ════════════════════════════════ -->
+<script>
+/* ──────────────────────────────────
+   UTILITY — Tab switcher
+────────────────────────────────── */
+function showGame(n) {
+  [1,2,3].forEach(i => {
+    const g = document.getElementById('g'+i);
+    const b = document.getElementById('b'+i);
+    g.classList.toggle('active', i === n);
+    b.classList.toggle('active', i === n);
+  });
+}
+
+/* ──────────────────────────────────
+   UTILITY — localStorage helpers
+────────────────────────────────── */
+function loadStats(key, def) {
+  try { return JSON.parse(localStorage.getItem(key)) || def; }
+  catch(_){ return def; }
+}
+function saveStats(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch(_){}
+}
+
+/* ══════════════════════════════════
+   GAME 1 — PONG
+══════════════════════════════════ */
+(function() {
+  const cv  = document.getElementById('pg');
+  const ctx = cv.getContext('2d');
+  const W = 700, H = 400, PW = 12, PH = 90, PSPD = 6, WIN = 7;
+  const BALL_R = 7, TRAIL_LEN = 16;
+
+  const COUNTDOWN_DISPLAY_MS = 600; /* "GO!" visible duration before ball launches */
+  const keys = {};
+  let ball, p1, p2, s1, s2, gs, countVal, countTimer, trail;
+  let pStats = loadStats('pong_stats', {played:0, p1w:0, p2w:0});
+
+  function renderPongStats() {
+    document.getElementById('ps-played').textContent = pStats.played;
+    document.getElementById('ps-p1w').textContent    = pStats.p1w;
+    document.getElementById('ps-p2w').textContent    = pStats.p2w;
+  }
+  renderPongStats();
+
+  window.pongRestart = function() {
+    p1 = {x:20,   y:H/2 - PH/2};
+    p2 = {x:W-PW-20, y:H/2 - PH/2};
+    s1 = 0; s2 = 0;
+    document.getElementById('p1sc').textContent = 0;
+    document.getElementById('p2sc').textContent = 0;
+    gs = 'countdown';
+    trail = [];
+    startCountdown();
+  };
+
+  window.pongResetStats = function() {
+    pStats = {played:0,p1w:0,p2w:0};
+    saveStats('pong_stats', pStats);
+    renderPongStats();
+  };
+
+  function launchBall(side) {
+    const dir  = side === 1 ? 1 : -1;
+    const ang  = (Math.random() * 0.6 - 0.3);
+    const spd  = 5;
+    ball = {
+      x: W/2, y: H/2,
+      vx: dir * Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd,
+      speed: spd
+    };
+    trail = [];
+  }
+
+  function startCountdown() {
+    const el = document.getElementById('pong-overlay');
+    countVal  = 3;
+    countTimer = 0;
+    gs = 'countdown';
+    el.style.opacity = '1';
+    el.textContent = countVal;
+  }
+
+  // At 60 fps, ~60 frames ≈ 1 second. Using 60 gives clean 1s countdown steps.
+  const COUNTDOWN_FRAMES_PER_STEP = 60;
+
+  function tickCountdown() {
+    countTimer++;
+    if (countTimer % COUNTDOWN_FRAMES_PER_STEP === 0) {
+      countVal--;
+      const el = document.getElementById('pong-overlay');
+      if (countVal <= 0) {
+        el.textContent = 'GO!';
+        setTimeout(() => { el.style.opacity='0'; gs='playing'; launchBall(Math.random()<.5?1:2); }, COUNTDOWN_DISPLAY_MS);
+      } else {
+        el.textContent = countVal;
+      }
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    keys[e.code] = true;
+    if (e.code === 'KeyR') pongRestart();
+    if (['ArrowUp','ArrowDown'].includes(e.code)) e.preventDefault();
+  });
+  document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+  function update() {
+    if (gs === 'countdown') { tickCountdown(); return; }
+    if (gs !== 'playing') return;
+
+    if (keys['KeyW'])    p1.y = Math.max(0,     p1.y - PSPD);
+    if (keys['KeyS'])    p1.y = Math.min(H-PH,  p1.y + PSPD);
+    if (keys['ArrowUp'])    p2.y = Math.max(0,     p2.y - PSPD);
+    if (keys['ArrowDown'])  p2.y = Math.min(H-PH,  p2.y + PSPD);
+
+    trail.push({x:ball.x, y:ball.y});
+    if (trail.length > TRAIL_LEN) trail.shift();
+
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    /* wall bounce */
+    if (ball.y - BALL_R < 0)  { ball.y = BALL_R;    ball.vy =  Math.abs(ball.vy); }
+    if (ball.y + BALL_R > H)  { ball.y = H-BALL_R;  ball.vy = -Math.abs(ball.vy); }
+
+    /* P1 paddle hit */
+    if (ball.vx < 0 &&
+        ball.x - BALL_R <= p1.x + PW &&
+        ball.x + BALL_R >= p1.x &&
+        ball.y >= p1.y && ball.y <= p1.y + PH) {
+      const rel = (ball.y - (p1.y + PH/2)) / (PH/2);
+      ball.speed = Math.min(14, ball.speed + 0.3);
+      const ang  = rel * 1.15;
+      ball.vx = Math.abs(Math.cos(ang) * ball.speed);
+      ball.vy = Math.sin(ang) * ball.speed;
+      ball.x  = p1.x + PW + BALL_R + 1;
+    }
+
+    /* P2 paddle hit */
+    if (ball.vx > 0 &&
+        ball.x + BALL_R >= p2.x &&
+        ball.x - BALL_R <= p2.x + PW &&
+        ball.y >= p2.y && ball.y <= p2.y + PH) {
+      const rel = (ball.y - (p2.y + PH/2)) / (PH/2);
+      ball.speed = Math.min(14, ball.speed + 0.3);
+      const ang  = rel * 1.15;
+      ball.vx = -Math.abs(Math.cos(ang) * ball.speed);
+      ball.vy = Math.sin(ang) * ball.speed;
+      ball.x  = p2.x - BALL_R - 1;
+    }
+
+    /* scoring */
+    if (ball.x < -30) {
+      s2++;
+      document.getElementById('p2sc').textContent = s2;
+      if (s2 >= WIN) { endPong(2); return; }
+      gs = 'countdown'; startCountdown();
+    }
+    if (ball.x > W + 30) {
+      s1++;
+      document.getElementById('p1sc').textContent = s1;
+      if (s1 >= WIN) { endPong(1); return; }
+      gs = 'countdown'; startCountdown();
+    }
+  }
+
+  function endPong(winner) {
+    gs = 'over';
+    pStats.played++;
+    if (winner === 1) pStats.p1w++; else pStats.p2w++;
+    saveStats('pong_stats', pStats);
+    renderPongStats();
+  }
+
+  function draw() {
+    /* background */
+    ctx.fillStyle = '#060210';
+    ctx.fillRect(0, 0, W, H);
+
+    /* center line */
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx.lineWidth   = 2;
+    ctx.setLineDash([14,12]);
+    ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* ghost scores */
+    ctx.fillStyle = 'rgba(255,255,255,.05)';
+    ctx.font      = 'bold 80px Inter,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(s1, W/4,   H/2+28);
+    ctx.fillText(s2, 3*W/4, H/2+28);
+
+    /* ball trail */
+    trail.forEach((pt, i) => {
+      const alpha = (i / trail.length) * 0.35;
+      const size  = BALL_R * (i / trail.length) * 0.9;
+      ctx.fillStyle = `rgba(245,158,11,${alpha})`;
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, size, 0, Math.PI*2); ctx.fill();
+    });
+
+    /* paddles with rounded rect */
+    ctx.fillStyle = '#f59e0b';
+    roundRect(ctx, p1.x, p1.y, PW, PH, 4); ctx.fill();
+    ctx.fillStyle = '#3b82f6';
+    roundRect(ctx, p2.x, p2.y, PW, PH, 4); ctx.fill();
+
+    /* ball */
+    if (gs !== 'countdown' || (ball && countVal === 0)) {
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    /* win screen */
+    if (gs === 'over') {
+      ctx.fillStyle = 'rgba(0,0,0,.78)';
+      ctx.fillRect(0, 0, W, H);
+      const wLabel = s1 >= WIN ? 'Player 1 (Amber)' : 'Player 2 (Blue)';
+      const wColor = s1 >= WIN ? '#fbbf24' : '#60a5fa';
+      ctx.fillStyle = wColor;
+      ctx.font      = 'bold 46px Inter,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(wLabel + ' Wins! 🎉', W/2, H/2 - 24);
+      ctx.fillStyle = 'rgba(254,243,199,.55)';
+      ctx.font      = '18px Inter,sans-serif';
+      ctx.fillText(s1 + '  —  ' + s2, W/2, H/2 + 18);
+      ctx.fillStyle = 'rgba(254,243,199,.4)';
+      ctx.font      = '14px Inter,sans-serif';
+      ctx.fillText('Press R or click Restart to play again', W/2, H/2 + 52);
+    }
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y);
+    ctx.arcTo(x+w, y,   x+w, y+r,   r);
+    ctx.lineTo(x+w, y+h-r);
+    ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+    ctx.lineTo(x+r, y+h);
+    ctx.arcTo(x,   y+h, x, y+h-r,   r);
+    ctx.lineTo(x,   y+r);
+    ctx.arcTo(x,   y,   x+r, y,     r);
+    ctx.closePath();
+  }
+
+  pongRestart();
+  (function loop() { update(); draw(); requestAnimationFrame(loop); })();
+})();
+
+/* ══════════════════════════════════
+   GAME 2 — TIC-TAC-TOE
+══════════════════════════════════ */
+(function() {
+  const WINS = [
+    [0,1,2],[3,4,5],[6,7,8],   /* rows */
+    [0,3,6],[1,4,7],[2,5,8],   /* cols */
+    [0,4,8],[2,4,6]            /* diags */
+  ];
+
+  let board, turn, over, cells;
+  let tStats = loadStats('ttt_stats', {played:0, p1w:0, p2w:0, draws:0, history:[]});
+
+  function renderTTTStats() {
+    document.getElementById('ttt-p1sc').textContent   = tStats.p1w;
+    document.getElementById('ttt-p2sc').textContent   = tStats.p2w;
+    document.getElementById('ttt-draws').textContent  = tStats.draws;
+    document.getElementById('ttt-played').textContent = tStats.played;
+    document.getElementById('ttt-sp1w').textContent   = tStats.p1w;
+    document.getElementById('ttt-sp2w').textContent   = tStats.p2w;
+    document.getElementById('ttt-sdraws').textContent = tStats.draws;
+    renderTTTHistory();
+  }
+
+  function renderTTTHistory() {
+    const el = document.getElementById('ttt-hist-list');
+    if (!tStats.history.length) { el.innerHTML = '<div class="hist-item" style="color:var(--text3)">No games yet</div>'; return; }
+    el.innerHTML = tStats.history.slice(-5).reverse().map((h,i) =>
+      `<div class="hist-item"><span>#${tStats.history.length - i}</span><span class="hist-result">${h}</span></div>`
+    ).join('');
+  }
+
+  function buildBoard() {
+    const el = document.getElementById('ttt-board');
+    el.innerHTML = '';
+    cells = [];
+    for (let i = 0; i < 9; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'ttt-cell';
+      cell.dataset.i = i;
+      cell.addEventListener('click', () => tttClick(i));
+      el.appendChild(cell);
+      cells.push(cell);
+    }
+  }
+
+  window.tttNewGame = function() {
+    board = Array(9).fill(0);
+    turn  = 1;
+    over  = false;
+    buildBoard();
+    document.getElementById('ttt-status').textContent = "✖ X's Turn (Player 1)";
+    document.getElementById('ttt-status').style.color = 'var(--amber3)';
+  };
+
+  window.tttResetStats = function() {
+    tStats = {played:0, p1w:0, p2w:0, draws:0, history:[]};
+    saveStats('ttt_stats', tStats);
+    renderTTTStats();
+  };
+
+  function tttClick(i) {
+    if (over || board[i] !== 0) return;
+    board[i] = turn;
+    const cell = cells[i];
+    cell.textContent = turn === 1 ? '✕' : '○';
+    cell.classList.add('taken', turn === 1 ? 'x-mark' : 'o-mark');
+
+    const winLine = getWinLine();
+    if (winLine) {
+      winLine.forEach(idx => cells[idx].classList.add('win-cell'));
+      const label = turn === 1 ? '🏆 Player 1 (X) Wins!' : '🏆 Player 2 (O) Wins!';
+      const color = turn === 1 ? 'var(--amber3)' : 'var(--blue)';
+      document.getElementById('ttt-status').textContent = label;
+      document.getElementById('ttt-status').style.color = color;
+      over = true;
+      tStats.played++;
+      if (turn === 1) tStats.p1w++; else tStats.p2w++;
+      tStats.history.push(turn === 1 ? 'P1 wins (X)' : 'P2 wins (O)');
+      saveStats('ttt_stats', tStats);
+      renderTTTStats();
+      return;
+    }
+    if (board.every(v => v !== 0)) {
+      document.getElementById('ttt-status').textContent = "🤝 It's a Draw!";
+      document.getElementById('ttt-status').style.color = 'var(--text3)';
+      over = true;
+      tStats.played++; tStats.draws++;
+      tStats.history.push('Draw');
+      saveStats('ttt_stats', tStats);
+      renderTTTStats();
+      return;
+    }
+    turn = turn === 1 ? 2 : 1;
+    const nextLabel = turn === 1 ? "✖ X's Turn (Player 1)" : "◯ O's Turn (Player 2)";
+    const nextColor = turn === 1 ? 'var(--amber3)' : 'var(--blue)';
+    document.getElementById('ttt-status').textContent = nextLabel;
+    document.getElementById('ttt-status').style.color = nextColor;
+  }
+
+  function getWinLine() {
+    for (const line of WINS) {
+      const [a,b,c] = line;
+      if (board[a] && board[a] === board[b] && board[b] === board[c]) return line;
+    }
+    return null;
+  }
+
+  renderTTTStats();
+  tttNewGame();
+})();
+
+/* ══════════════════════════════════
+   GAME 3 — CONNECT FOUR
+══════════════════════════════════ */
+(function() {
+  const COLS = 7, ROWS = 6;
+  let board, turn, over, cellEls;
+  let c4Stats = loadStats('c4_stats', {played:0, p1w:0, p2w:0, draws:0});
+
+  function renderC4Stats() {
+    document.getElementById('c4-p1sc').textContent   = c4Stats.p1w;
+    document.getElementById('c4-p2sc').textContent   = c4Stats.p2w;
+    document.getElementById('c4-played').textContent = c4Stats.played;
+    document.getElementById('c4-sp1w').textContent   = c4Stats.p1w;
+    document.getElementById('c4-sp2w').textContent   = c4Stats.p2w;
+    document.getElementById('c4-sdraws').textContent = c4Stats.draws;
+  }
+
+  function buildC4() {
+    /* column drop buttons */
+    const colEl = document.getElementById('c4-cols');
+    colEl.innerHTML = '';
+    for (let c = 0; c < COLS; c++) {
+      const btn = document.createElement('button');
+      btn.className = 'c4-drop';
+      btn.textContent = '▼';
+      btn.dataset.col = c;
+      btn.addEventListener('click', () => c4Drop(c));
+      colEl.appendChild(btn);
+    }
+    /* board cells (row 0 = top) */
+    const boardEl = document.getElementById('c4-board');
+    boardEl.innerHTML = '';
+    cellEls = [];
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'c4-cell';
+        cell.dataset.r = r;
+        cell.dataset.c = c;
+        boardEl.appendChild(cell);
+        cellEls.push(cell);
+      }
+    }
+  }
+
+  function getCell(r, c) { return cellEls[r * COLS + c]; }
+
+  window.c4NewGame = function() {
+    board  = Array.from({length:ROWS}, () => Array(COLS).fill(0));
+    turn   = 1;
+    over   = false;
+    buildC4();
+    setC4Status();
+  };
+
+  window.c4ResetStats = function() {
+    c4Stats = {played:0, p1w:0, p2w:0, draws:0};
+    saveStats('c4_stats', c4Stats);
+    renderC4Stats();
+  };
+
+  function setC4Status(msg) {
+    const el = document.getElementById('c4-status');
+    if (msg) { el.textContent = msg; return; }
+    if (turn === 1) {
+      el.textContent = '🔴 Red\'s Turn (Player 1)';
+      el.style.color = 'var(--red)';
+    } else {
+      el.textContent = '🟡 Yellow\'s Turn (Player 2)';
+      el.style.color = 'var(--yellow)';
+    }
+  }
+
+  function c4Drop(col) {
+    if (over) return;
+    let row = -1;
+    for (let r = ROWS-1; r >= 0; r--) {
+      if (board[r][col] === 0) { row = r; break; }
+    }
+    if (row === -1) return; /* column full */
+
+    board[row][col] = turn;
+    const cell = getCell(row, col);
+    cell.classList.add(turn === 1 ? 'red' : 'yellow', 'dropping');
+
+    /* remove animation class so it can replay */
+    cell.addEventListener('animationend', () => cell.classList.remove('dropping'), {once:true});
+
+    const winCells = getC4WinCells(row, col, turn);
+    if (winCells) {
+      winCells.forEach(([r,c]) => getCell(r,c).classList.add('win'));
+      const label = turn === 1 ? '🔴 Player 1 (Red) Wins! 🎉' : '🟡 Player 2 (Yellow) Wins! 🎉';
+      document.getElementById('c4-status').textContent = label;
+      document.getElementById('c4-status').style.color = turn === 1 ? 'var(--red)' : 'var(--yellow)';
+      over = true;
+      c4Stats.played++;
+      if (turn === 1) c4Stats.p1w++; else c4Stats.p2w++;
+      saveStats('c4_stats', c4Stats);
+      renderC4Stats();
+      return;
+    }
+    if (board[0].every(v => v !== 0)) {
+      document.getElementById('c4-status').textContent = "🤝 It's a Draw!";
+      document.getElementById('c4-status').style.color = 'var(--text3)';
+      over = true;
+      c4Stats.played++; c4Stats.draws++;
+      saveStats('c4_stats', c4Stats);
+      renderC4Stats();
+      return;
+    }
+    turn = turn === 1 ? 2 : 1;
+    setC4Status();
+  }
+
+  function countDir(r, c, p, dr, dc) {
+    let n = 0, nr = r+dr, nc = c+dc;
+    while (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && board[nr][nc] === p) {
+      n++; nr += dr; nc += dc;
+    }
+    return n;
+  }
+
+  function getC4WinCells(r, c, p) {
+    const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+    for (const [dr,dc] of dirs) {
+      const list = [[r,c]];
+      for (const [ddr,ddc] of [[dr,dc],[-dr,-dc]]) {
+        let nr=r+ddr, nc=c+ddc;
+        while (nr>=0 && nr<ROWS && nc>=0 && nc<COLS && board[nr][nc]===p) {
+          list.push([nr,nc]); nr+=ddr; nc+=ddc;
+        }
+      }
+      if (list.length >= 4) return list;
+    }
+    return null;
+  }
+
+  renderC4Stats();
+  c4NewGame();
+})();
+</script>
+</body>
+</html>

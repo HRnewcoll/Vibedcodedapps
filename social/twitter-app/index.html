@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>X — VibedApps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#000;--bg2:#0d0d0d;--bg3:#111;--bg4:#1a1a1a;
+      --border:rgba(255,255,255,0.1);--text:#fff;--text2:rgba(255,255,255,0.7);
+      --text3:rgba(255,255,255,0.45);--accent:#1d9bf0;--accent2:#1a8cd8;
+      --like:#f91880;--rt:#00ba7c;--radius:999px;--card:16px;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+    
+    /* ── Layout ── */
+    .app{display:grid;grid-template-columns:280px 1fr 340px;min-height:100vh;max-width:1280px;margin:0 auto}
+    @media(max-width:1100px){.app{grid-template-columns:72px 1fr 0}}
+    @media(max-width:700px){.app{grid-template-columns:0 1fr 0}.left-sidebar{display:none!important}.right-sidebar{display:none!important}}
+    
+    /* ── Left Sidebar ── */
+    .left-sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:8px 16px;display:flex;flex-direction:column;border-right:1px solid var(--border)}
+    .logo{padding:14px 12px 8px;font-size:28px;font-weight:900;cursor:pointer}
+    .nav-item{display:flex;align-items:center;gap:20px;padding:12px 16px;border-radius:var(--radius);cursor:pointer;transition:background .15s;font-size:20px;font-weight:500;color:var(--text);text-decoration:none;margin-bottom:2px}
+    .nav-item:hover{background:rgba(255,255,255,0.07)}
+    .nav-item.active{font-weight:700}
+    .nav-icon{font-size:24px;width:28px;text-align:center}
+    .nav-label{font-size:20px}
+    @media(max-width:1100px){.nav-label{display:none}.nav-item{justify-content:center;gap:0;width:52px;padding:12px}}
+    .post-btn{margin-top:16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:16px 24px;font-size:17px;font-weight:700;cursor:pointer;width:100%;transition:background .15s}
+    .post-btn:hover{background:var(--accent2)}
+    @media(max-width:1100px){.post-btn{width:52px;height:52px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;font-size:22px}}
+    .profile-widget{margin-top:auto;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--radius);cursor:pointer;transition:background .15s;border:none;background:none;color:var(--text);width:100%}
+    .profile-widget:hover{background:rgba(255,255,255,0.07)}
+    .avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+    .profile-info{text-align:left;flex:1}
+    .profile-name{font-size:15px;font-weight:700}
+    .profile-handle{font-size:14px;color:var(--text3)}
+    
+    /* ── Main feed ── */
+    .main{border-left:1px solid var(--border);border-right:1px solid var(--border);min-height:100vh}
+    .feed-header{position:sticky;top:0;z-index:10;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+    .feed-header h2{font-size:20px;font-weight:700}
+    .tabs{display:flex;border-bottom:1px solid var(--border)}
+    .tab{flex:1;padding:16px;text-align:center;cursor:pointer;font-size:15px;font-weight:500;color:var(--text3);transition:all .15s;position:relative}
+    .tab.active{color:var(--text);font-weight:700}
+    .tab.active::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:60%;height:4px;border-radius:4px;background:var(--accent)}
+    .tab:hover{background:rgba(255,255,255,0.04)}
+    
+    /* ── Compose ── */
+    .compose{display:flex;gap:14px;padding:16px;border-bottom:1px solid var(--border)}
+    .compose-area{flex:1}
+    .compose-input{width:100%;background:none;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:20px;resize:none;outline:none;min-height:100px;padding-top:4px;caret-color:var(--accent)}
+    .compose-input::placeholder{color:var(--text3)}
+    .compose-actions{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+    .compose-icons{display:flex;gap:4px}
+    .compose-icon-btn{background:none;border:none;color:var(--accent);cursor:pointer;font-size:20px;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .15s}
+    .compose-icon-btn:hover{background:rgba(29,155,240,0.1)}
+    .char-count{font-size:14px;color:var(--text3)}
+    .char-count.warn{color:#ffd400}
+    .char-count.over{color:#f4212e}
+    .tweet-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:8px 20px;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s}
+    .tweet-btn:disabled{background:rgba(29,155,240,0.4);cursor:not-allowed}
+    .tweet-btn:not(:disabled):hover{background:var(--accent2)}
+    
+    /* ── Tweet card ── */
+    .tweet{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;animation:fadeInDown .25s ease}
+    @keyframes fadeInDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    .tweet:hover{background:rgba(255,255,255,0.02)}
+    .tweet-content{flex:1;min-width:0}
+    .tweet-header{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+    .tweet-name{font-weight:700;font-size:15px}
+    .tweet-handle{color:var(--text3);font-size:14px}
+    .tweet-time{color:var(--text3);font-size:14px}
+    .verified-badge{color:var(--accent);font-size:15px}
+    .tweet-text{font-size:15px;line-height:1.55;word-break:break-word;white-space:pre-wrap}
+    .tweet-image{margin-top:12px;border-radius:16px;overflow:hidden;border:1px solid var(--border)}
+    .tweet-image img{width:100%;display:block;max-height:400px;object-fit:cover}
+    .tweet-hashtag{color:var(--accent)}
+    .tweet-mention{color:var(--accent)}
+    
+    /* ── Tweet actions ── */
+    .tweet-actions{display:flex;justify-content:space-between;max-width:420px;margin-top:10px}
+    .action-btn{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:6px 8px;border-radius:var(--radius);transition:all .15s;font-family:'Inter',sans-serif}
+    .action-btn:hover.reply-btn{color:#1d9bf0;background:rgba(29,155,240,0.1)}
+    .action-btn:hover.rt-btn{color:#00ba7c;background:rgba(0,186,124,0.1)}
+    .action-btn:hover.like-btn{color:#f91880;background:rgba(249,24,128,0.1)}
+    .action-btn.liked{color:var(--like);animation:likeAnim .3s ease}
+    .action-btn.retweeted{color:var(--rt)}
+    @keyframes likeAnim{0%{transform:scale(1)}50%{transform:scale(1.4)}100%{transform:scale(1)}}
+    .action-icon{font-size:18px}
+    
+    /* ── Right Sidebar ── */
+    .right-sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:12px 20px}
+    .search-box{background:var(--bg4);border-radius:var(--radius);padding:10px 16px;display:flex;align-items:center;gap:10px;margin-bottom:16px;border:1px solid transparent;transition:border-color .15s}
+    .search-box:focus-within{border-color:var(--accent);background:var(--bg)}
+    .search-box input{background:none;border:none;color:var(--text);outline:none;flex:1;font-size:15px;font-family:'Inter',sans-serif}
+    .search-box input::placeholder{color:var(--text3)}
+    .widget-card{background:var(--bg3);border-radius:var(--card);margin-bottom:16px;overflow:hidden}
+    .widget-title{font-size:20px;font-weight:800;padding:16px;border-bottom:1px solid var(--border)}
+    .trend-item{padding:14px 16px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+    .trend-item:last-child{border-bottom:none}
+    .trend-item:hover{background:rgba(255,255,255,0.03)}
+    .trend-category{font-size:12px;color:var(--text3)}
+    .trend-topic{font-size:16px;font-weight:700;margin:2px 0}
+    .trend-count{font-size:13px;color:var(--text3)}
+    .suggest-item{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;transition:background .15s}
+    .suggest-item:hover{background:rgba(255,255,255,0.03)}
+    .follow-btn{margin-left:auto;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);padding:6px 16px;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;transition:all .15s}
+    .follow-btn:hover{background:rgba(255,255,255,0.85)}
+    .follow-btn.following{background:none;border:1px solid var(--border);color:var(--text)}
+    
+    /* ── Modals ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(4px)}
+    .modal-overlay.open{opacity:1;pointer-events:all}
+    .modal{background:var(--bg);border-radius:16px;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;transform:scale(0.95);transition:transform .2s;margin:16px}
+    .modal-overlay.open .modal{transform:scale(1)}
+    .modal-header{display:flex;align-items:center;gap:16px;padding:12px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:1}
+    .close-btn{background:none;border:none;color:var(--text);cursor:pointer;font-size:20px;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .15s}
+    .close-btn:hover{background:rgba(255,255,255,0.07)}
+    
+    /* ── Profile modal ── */
+    .profile-header-img{height:200px;background:linear-gradient(135deg,#1d9bf0,#7856ff);position:relative}
+    .profile-avatar-lg{position:absolute;bottom:-50px;left:20px;width:100px;height:100px;border-radius:50%;background:var(--bg3);border:4px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700}
+    .profile-edit-btn{position:absolute;bottom:-24px;right:20px;background:none;border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:8px 20px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s}
+    .profile-edit-btn:hover{background:rgba(255,255,255,0.07)}
+    .profile-info-section{padding:70px 20px 20px}
+    .profile-name-lg{font-size:20px;font-weight:800}
+    .profile-handle-lg{color:var(--text3);font-size:15px;margin-bottom:12px}
+    .profile-bio{font-size:15px;margin-bottom:12px;line-height:1.55}
+    .profile-meta{display:flex;gap:20px;color:var(--text3);font-size:14px;margin-bottom:16px}
+    .profile-stats{display:flex;gap:20px}
+    .profile-stat span{font-weight:700;color:var(--text);margin-right:4px}
+    .profile-tabs{display:flex;border-bottom:1px solid var(--border)}
+    
+    /* ── Toast ── */
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--accent);color:#fff;padding:12px 24px;border-radius:var(--radius);font-size:15px;font-weight:600;z-index:9999;transition:transform .3s cubic-bezier(0.34,1.56,0.64,1)}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    
+    /* ── Notification badge ── */
+    .notif-badge{background:var(--accent);color:#fff;border-radius:999px;font-size:12px;font-weight:700;padding:2px 6px;min-width:20px;text-align:center}
+    
+    /* ── Loading skeleton ── */
+    .skeleton{background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    
+    /* ── Notification row ── */
+    .notif-row{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;animation:fadeInDown .25s ease}
+    .notif-row:hover{background:rgba(255,255,255,0.02)}
+    .notif-icon{font-size:22px;width:36px;text-align:center;flex-shrink:0;margin-top:2px}
+    .notif-text{font-size:15px;line-height:1.5}
+    .notif-text strong{font-weight:700}
+    .notif-time{font-size:13px;color:var(--text3);margin-top:4px}
+    
+    /* ── Reply thread ── */
+    .reply-thread{padding:16px;border-bottom:1px solid var(--border)}
+    .reply-to{font-size:14px;color:var(--text3);margin-bottom:12px}
+    
+    /* ── Explore tags ── */
+    .explore-tag{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;background:rgba(29,155,240,0.1);color:var(--accent);border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer;margin:4px;transition:background .15s}
+    .explore-tag:hover{background:rgba(29,155,240,0.2)}
+    
+    /* ── Emoji picker hint ── */
+    .emoji-grid{display:flex;flex-wrap:wrap;gap:6px;padding:12px}
+    .emoji-btn{background:none;border:none;font-size:22px;cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+    .emoji-btn:hover{background:var(--bg4)}
+  </style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ── Left Sidebar ── -->
+  <aside class="left-sidebar" id="leftSidebar">
+    <div class="logo" onclick="navigateTo('home')">𝕏</div>
+    <nav>
+      <a class="nav-item active" id="nav-home" onclick="navigateTo('home')">
+        <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+      </a>
+      <a class="nav-item" id="nav-explore" onclick="navigateTo('explore')">
+        <span class="nav-icon">🔍</span><span class="nav-label">Explore</span>
+      </a>
+      <a class="nav-item" id="nav-notifications" onclick="navigateTo('notifications')">
+        <span class="nav-icon">🔔</span><span class="nav-label">Notifications</span>
+        <span class="notif-badge" id="notifBadge" style="display:none">3</span>
+      </a>
+      <a class="nav-item" id="nav-messages" onclick="navigateTo('messages')">
+        <span class="nav-icon">✉️</span><span class="nav-label">Messages</span>
+      </a>
+      <a class="nav-item" id="nav-bookmarks" onclick="navigateTo('bookmarks')">
+        <span class="nav-icon">🔖</span><span class="nav-label">Bookmarks</span>
+      </a>
+      <a class="nav-item" id="nav-profile" onclick="navigateTo('profile')">
+        <span class="nav-icon">👤</span><span class="nav-label">Profile</span>
+      </a>
+    </nav>
+    <button class="post-btn" id="postBtnSidebar" onclick="openCompose()">
+      <span id="postBtnText">Post</span>
+    </button>
+    <button class="profile-widget" onclick="navigateTo('profile')">
+      <div class="avatar" id="sidebarAvatar">U</div>
+      <div class="profile-info" id="sidebarProfileInfo">
+        <div class="profile-name" id="sidebarName">VibedUser</div>
+        <div class="profile-handle" id="sidebarHandle">@vibeduser</div>
+      </div>
+    </button>
+  </aside>
+
+  <!-- ── Main Feed ── -->
+  <main class="main" id="mainContent">
+    <!-- Home Feed -->
+    <div id="view-home">
+      <div class="feed-header">
+        <h2>Home</h2>
+        <button style="background:none;border:none;color:var(--accent);font-size:22px;cursor:pointer" title="Refresh" onclick="loadFeed()">✦</button>
+      </div>
+      <div class="tabs">
+        <div class="tab active" id="tab-foryou" onclick="switchTab('foryou')">For You</div>
+        <div class="tab" id="tab-following" onclick="switchTab('following')">Following</div>
+      </div>
+      <div class="compose">
+        <div class="avatar" id="composeAvatar">U</div>
+        <div class="compose-area">
+          <textarea class="compose-input" id="composeMain" placeholder="What is happening?!" maxlength="280" oninput="updateCharCount(this, 'charCountMain', 'tweetBtnMain')"></textarea>
+          <div class="compose-actions">
+            <div class="compose-icons">
+              <button class="compose-icon-btn" title="Image" onclick="pickImage('composeMain')">🌄</button>
+              <button class="compose-icon-btn" title="GIF" onclick="insertGif('composeMain')">🎬</button>
+              <button class="compose-icon-btn" title="Emoji" onclick="openEmojiPicker('composeMain')">😊</button>
+              <button class="compose-icon-btn" title="Location">📍</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span class="char-count" id="charCountMain">280</span>
+              <button class="tweet-btn" id="tweetBtnMain" disabled onclick="postTweet('composeMain')">Post</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="feedList"></div>
+    </div>
+
+    <!-- Explore View -->
+    <div id="view-explore" style="display:none">
+      <div class="feed-header"><h2>Explore</h2></div>
+      <div style="padding:16px">
+        <div class="search-box" style="margin-bottom:20px">
+          <span style="font-size:18px;color:var(--text3)">🔍</span>
+          <input type="text" placeholder="Search X" id="exploreSearch" oninput="searchTweets(this.value)"/>
+        </div>
+        <div id="exploreContent">
+          <div style="font-size:17px;font-weight:800;margin-bottom:12px">Trending for you</div>
+          <div id="trendsList"></div>
+          <div style="font-size:17px;font-weight:800;margin:16px 0 12px">Popular hashtags</div>
+          <div id="hashtagsContainer"></div>
+        </div>
+        <div id="searchResults" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- Notifications View -->
+    <div id="view-notifications" style="display:none">
+      <div class="feed-header"><h2>Notifications</h2></div>
+      <div class="tabs">
+        <div class="tab active" id="tab-all-notif" onclick="switchNotifTab('all')">All</div>
+        <div class="tab" id="tab-mentions" onclick="switchNotifTab('mentions')">Mentions</div>
+      </div>
+      <div id="notifList"></div>
+    </div>
+
+    <!-- Messages View -->
+    <div id="view-messages" style="display:none">
+      <div class="feed-header"><h2>Messages</h2></div>
+      <div style="display:flex;height:calc(100vh - 60px)">
+        <div style="width:340px;border-right:1px solid var(--border);overflow-y:auto" id="dmList"></div>
+        <div style="flex:1;display:flex;flex-direction:column" id="dmChat">
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--text3)">
+            <span style="font-size:48px">💬</span>
+            <div style="font-size:20px;font-weight:800">Select a message</div>
+            <div style="font-size:15px">Choose from your existing conversations, or start a new one.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bookmarks View -->
+    <div id="view-bookmarks" style="display:none">
+      <div class="feed-header"><h2>Bookmarks</h2></div>
+      <div id="bookmarksList"></div>
+    </div>
+
+    <!-- Profile View -->
+    <div id="view-profile" style="display:none">
+      <div class="feed-header">
+        <button class="close-btn" onclick="navigateTo('home')">←</button>
+        <div>
+          <h2 id="profileViewName">VibedUser</h2>
+          <div style="font-size:13px;color:var(--text3)" id="profileTweetCount">0 posts</div>
+        </div>
+      </div>
+      <div class="profile-header-img">
+        <div class="profile-avatar-lg" id="profileAvatarLg">U</div>
+        <button class="profile-edit-btn" onclick="openEditProfile()">Edit profile</button>
+      </div>
+      <div class="profile-info-section">
+        <div class="profile-name-lg" id="profileNameLg">VibedUser</div>
+        <div class="profile-handle-lg" id="profileHandleLg">@vibeduser</div>
+        <div class="profile-bio" id="profileBio">✦ Building cool stuff. Vibing.</div>
+        <div class="profile-meta">
+          <span>📍 The Internet</span>
+          <span>🎂 Joined March 2024</span>
+        </div>
+        <div class="profile-stats">
+          <div class="profile-stat"><span id="followingCount">42</span> Following</div>
+          <div class="profile-stat"><span id="followersCount">128</span> Followers</div>
+        </div>
+      </div>
+      <div class="profile-tabs">
+        <div class="tab active">Posts</div>
+        <div class="tab">Replies</div>
+        <div class="tab">Media</div>
+        <div class="tab">Likes</div>
+      </div>
+      <div id="profileTweets"></div>
+    </div>
+  </main>
+
+  <!-- ── Right Sidebar ── -->
+  <aside class="right-sidebar">
+    <div class="search-box">
+      <span style="font-size:18px;color:var(--text3)">🔍</span>
+      <input type="text" placeholder="Search X" oninput="searchTweets(this.value)"/>
+    </div>
+    <div class="widget-card">
+      <div class="widget-title">Trends for you</div>
+      <div id="trendingWidget"></div>
+    </div>
+    <div class="widget-card">
+      <div class="widget-title">Who to follow</div>
+      <div id="whoToFollow"></div>
+    </div>
+    <div style="font-size:13px;color:var(--text3);padding:16px;line-height:1.8">
+      <a href="../../index.html" style="color:var(--text3)">← Back to Hub</a> · 
+      Terms of Service · Privacy Policy · Cookie Policy · © 2025 VibedX
+    </div>
+  </aside>
+</div>
+
+<!-- ── Compose Modal ── -->
+<div class="modal-overlay" id="composeModal">
+  <div class="modal">
+    <div class="modal-header">
+      <button class="close-btn" onclick="closeModal('composeModal')">✕</button>
+    </div>
+    <div class="compose" style="border-bottom:none">
+      <div class="avatar" id="composeModalAvatar">U</div>
+      <div class="compose-area">
+        <textarea class="compose-input" id="composeModalInput" placeholder="What is happening?!" maxlength="280" oninput="updateCharCount(this,'charCountModal','tweetBtnModal')"></textarea>
+        <div class="compose-actions">
+          <div class="compose-icons">
+            <button class="compose-icon-btn" onclick="insertGif('composeModalInput')">🎬</button>
+            <button class="compose-icon-btn" onclick="openEmojiPicker('composeModalInput')">😊</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <span class="char-count" id="charCountModal">280</span>
+            <button class="tweet-btn" id="tweetBtnModal" disabled onclick="postTweet('composeModalInput')">Post</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Emoji Picker Modal ── -->
+<div class="modal-overlay" id="emojiModal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <button class="close-btn" onclick="closeModal('emojiModal')">✕</button>
+      <h3 style="font-size:17px;font-weight:700">Emoji</h3>
+    </div>
+    <div class="emoji-grid" id="emojiGrid"></div>
+  </div>
+</div>
+
+<!-- ── Edit Profile Modal ── -->
+<div class="modal-overlay" id="editProfileModal">
+  <div class="modal">
+    <div class="modal-header">
+      <button class="close-btn" onclick="closeModal('editProfileModal')">✕</button>
+      <h3 style="font-size:17px;font-weight:700">Edit profile</h3>
+      <button style="margin-left:auto;background:var(--text);color:var(--bg);border:none;border-radius:999px;padding:7px 16px;font-size:15px;font-weight:700;cursor:pointer" onclick="saveProfile()">Save</button>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:16px">
+      <label style="font-size:13px;color:var(--text3);font-weight:600">Name
+        <input id="editName" style="display:block;width:100%;margin-top:6px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:10px 12px;font-family:'Inter',sans-serif;font-size:16px;outline:none"/>
+      </label>
+      <label style="font-size:13px;color:var(--text3);font-weight:600">Handle (@)
+        <input id="editHandle" style="display:block;width:100%;margin-top:6px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:10px 12px;font-family:'Inter',sans-serif;font-size:16px;outline:none"/>
+      </label>
+      <label style="font-size:13px;color:var(--text3);font-weight:600">Bio
+        <textarea id="editBio" maxlength="160" style="display:block;width:100%;margin-top:6px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:10px 12px;font-family:'Inter',sans-serif;font-size:16px;outline:none;resize:vertical;min-height:80px"></textarea>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- ── Reply Modal ── -->
+<div class="modal-overlay" id="replyModal">
+  <div class="modal">
+    <div class="modal-header">
+      <button class="close-btn" onclick="closeModal('replyModal')">✕</button>
+      <h3 style="font-size:17px;font-weight:700">Reply</h3>
+    </div>
+    <div id="replyOriginalTweet" style="padding:16px;border-bottom:1px solid var(--border)"></div>
+    <div class="compose" style="border-bottom:none">
+      <div class="avatar" id="replyAvatar">U</div>
+      <div class="compose-area">
+        <textarea class="compose-input" id="replyInput" placeholder="Post your reply" maxlength="280" oninput="updateCharCount(this,'charCountReply','tweetBtnReply')"></textarea>
+        <div class="compose-actions">
+          <div class="compose-icons">
+            <button class="compose-icon-btn" onclick="openEmojiPicker('replyInput')">😊</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <span class="char-count" id="charCountReply">280</span>
+            <button class="tweet-btn" id="tweetBtnReply" disabled onclick="postReply()">Reply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── escHtml ── */
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+
+/* ── State ── */
+let profile = JSON.parse(localStorage.getItem('x_profile') || 'null') || {name:'VibedUser',handle:'vibeduser',bio:'✦ Building cool stuff. Vibing.',following:42,followers:128};
+let tweets = JSON.parse(localStorage.getItem('x_tweets') || 'null') || seedTweets();
+let notifications = JSON.parse(localStorage.getItem('x_notifs') || 'null') || seedNotifs();
+let bookmarks = JSON.parse(localStorage.getItem('x_bookmarks') || '[]');
+let currentView = 'home';
+let currentTab = 'foryou';
+let replyTargetId = null;
+let emojiTargetId = null;
+let dmContacts = seedDMs();
+
+const EMOJIS = ['😀','😂','🔥','❤️','👍','🙏','😎','🤩','💯','✨','🎉','😍','🥳','😭','💀','🤣','😊','👀','💪','🚀','🌟','💫','🎯','🏆','✅','❌','💬','📢','🌍','💡'];
+
+const ACCOUNTS = [
+  {name:'Elon Musk',handle:'elonmusk',verified:true,emoji:'🚀'},
+  {name:'NASA',handle:'NASA',verified:true,emoji:'🛸'},
+  {name:'OpenAI',handle:'OpenAI',verified:true,emoji:'🤖'},
+  {name:'VibedUser',handle:'vibeduser',verified:false,emoji:'💎'},
+  {name:'TechNews',handle:'technews',verified:false,emoji:'📱'},
+  {name:'CryptoKing',handle:'cryptoking',verified:false,emoji:'💰'},
+  {name:'DesignDaily',handle:'designdaily',verified:false,emoji:'🎨'},
+  {name:'CodeWizard',handle:'codewizard',verified:false,emoji:'👨‍💻'},
+];
+
+function rnd(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+function timeAgo(ts){const d=(Date.now()-ts)/1e3;if(d<60)return Math.floor(d)+'s';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d'}
+
+function seedTweets(){
+  const posts=[
+    {text:'Just shipped a massive update to our platform 🚀 The future is being built right now. #tech #startup',likes:1200,rts:340,replies:89},
+    {text:'The best time to plant a tree was 20 years ago. The second best time is now. 🌱 #motivation #life',likes:4500,rts:1200,replies:234},
+    {text:'AI is not going to replace programmers. Programmers who use AI are going to replace programmers who don\'t. 💡 #AI #coding',likes:8900,rts:3200,replies:567},
+    {text:'Bitcoin just crossed a new ATH 📈 What a time to be alive! #crypto #btc',likes:2300,rts:890,replies:445},
+    {text:'Reminder: Your mental health matters more than any deadline 💙 Take breaks. Sleep. Breathe. #mentalhealth',likes:15000,rts:6700,replies:892},
+    {text:'Hot take: Dark mode should be the default everywhere. Who\'s with me? 🌑 #darkmode #ui',likes:5600,rts:1890,replies:234},
+    {text:'Just hit 1 million users 🎉 Building in public was the best decision I ever made. Thread on lessons learned 👇',likes:3400,rts:1200,replies:178},
+    {text:'The universe is under no obligation to make sense to you. — Neil deGrasse Tyson 🌌 #science #space',likes:9800,rts:4500,replies:123},
+  ];
+  return posts.map((p,i)=>{
+    const acc=ACCOUNTS[i%ACCOUNTS.length];
+    return{id:'seed_'+i,text:p.text,authorName:acc.name,authorHandle:acc.handle,authorVerified:acc.verified,authorEmoji:acc.emoji,likes:p.likes,rts:p.rts,replies:p.replies,liked:false,retweeted:false,bookmarked:false,timestamp:Date.now()-rnd(60000,86400000*7)};
+  });
+}
+
+function seedNotifs(){
+  return[
+    {id:'n1',type:'like',user:'elonmusk',text:'liked your post: "Just deployed a new feature..."',time:Date.now()-120000,read:false},
+    {id:'n2',type:'retweet',user:'NASA',text:'retweeted your post',time:Date.now()-3600000,read:false},
+    {id:'n3',type:'follow',user:'OpenAI',text:'followed you',time:Date.now()-7200000,read:false},
+    {id:'n4',type:'mention',user:'technews',text:'mentioned you in a post: "@vibeduser this is amazing!"',time:Date.now()-86400000,read:true},
+    {id:'n5',type:'like',user:'codewizard',text:'liked your reply',time:Date.now()-172800000,read:true},
+  ];
+}
+
+function seedDMs(){
+  return[
+    {id:'dm1',name:'Elon Musk',handle:'elonmusk',emoji:'🚀',lastMsg:'Let\'s ship this 🚀',time:Date.now()-300000,unread:2},
+    {id:'dm2',name:'NASA',handle:'NASA',emoji:'🛸',lastMsg:'Space exploration update...',time:Date.now()-3600000,unread:0},
+    {id:'dm3',name:'OpenAI',handle:'OpenAI',emoji:'🤖',lastMsg:'Have you tried GPT-5?',time:Date.now()-7200000,unread:1},
+  ];
+}
+
+/* ── Init ── */
+function init(){
+  updateSidebarProfile();
+  renderFeed();
+  renderTrending();
+  renderWhoToFollow();
+  renderNotifBadge();
+  document.getElementById('notifBadge').style.display='inline-block';
+}
+
+function updateSidebarProfile(){
+  document.getElementById('sidebarName').textContent=profile.name;
+  document.getElementById('sidebarHandle').textContent='@'+profile.handle;
+  ['sidebarAvatar','composeAvatar','composeModalAvatar','replyAvatar'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.textContent=profile.name[0].toUpperCase();
+  });
+}
+
+/* ── Navigation ── */
+function navigateTo(view){
+  document.querySelectorAll('[id^="view-"]').forEach(el=>el.style.display='none');
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const viewEl=document.getElementById('view-'+view);
+  if(viewEl)viewEl.style.display='block';
+  const navEl=document.getElementById('nav-'+view);
+  if(navEl)navEl.classList.add('active');
+  currentView=view;
+  if(view==='profile')renderProfile();
+  if(view==='notifications'){renderNotifs();markAllNotifsRead();}
+  if(view==='bookmarks')renderBookmarks();
+  if(view==='messages')renderDMs();
+  if(view==='explore')renderExplore();
+}
+
+/* ── Tab switching ── */
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  renderFeed();
+}
+
+function switchNotifTab(tab){
+  document.querySelectorAll('#view-notifications .tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+(tab==='all'?'all-notif':'mentions')).classList.add('active');
+  if(tab==='mentions')renderNotifs(true);else renderNotifs(false);
+}
+
+/* ── Feed ── */
+function renderFeed(){
+  const list=document.getElementById('feedList');
+  let feed=currentTab==='following'?tweets.filter(t=>t.authorHandle!==profile.handle||t.userPost):tweets;
+  list.innerHTML=feed.sort((a,b)=>b.timestamp-a.timestamp).map(t=>tweetHTML(t)).join('');
+  attachTweetEvents();
+}
+
+function tweetHTML(t,compact=false){
+  const name=escHtml(t.authorName);
+  const handle=escHtml(t.authorHandle);
+  const text=formatTweetText(t.text);
+  const time=timeAgo(t.timestamp);
+  const initials=t.authorEmoji||t.authorName[0].toUpperCase();
+  return`<div class="tweet" data-id="${escHtml(t.id)}">
+    <div class="avatar" style="background:hsl(${hashCode(t.authorHandle)%360},60%,35%)">${escHtml(initials)}</div>
+    <div class="tweet-content">
+      <div class="tweet-header">
+        <span class="tweet-name">${name}</span>
+        ${t.authorVerified?'<span class="verified-badge">✓</span>':''}
+        <span class="tweet-handle">@${handle}</span>
+        <span class="tweet-time">· ${escHtml(time)}</span>
+      </div>
+      <div class="tweet-text">${text}</div>
+      <div class="tweet-actions">
+        <button class="action-btn reply-btn" data-action="reply" data-id="${escHtml(t.id)}" title="Reply">
+          <span class="action-icon">💬</span><span>${fmtNum(t.replies)}</span>
+        </button>
+        <button class="action-btn rt-btn ${t.retweeted?'retweeted':''}" data-action="rt" data-id="${escHtml(t.id)}" title="Repost">
+          <span class="action-icon">🔁</span><span>${fmtNum(t.rts+(t.retweeted?1:0))}</span>
+        </button>
+        <button class="action-btn like-btn ${t.liked?'liked':''}" data-action="like" data-id="${escHtml(t.id)}" title="Like">
+          <span class="action-icon">${t.liked?'❤️':'🤍'}</span><span>${fmtNum(t.likes+(t.liked?1:0))}</span>
+        </button>
+        <button class="action-btn" data-action="bookmark" data-id="${escHtml(t.id)}" title="Bookmark">
+          <span class="action-icon">${t.bookmarked?'🔖':'📌'}</span>
+        </button>
+        <button class="action-btn" data-action="share" data-id="${escHtml(t.id)}" title="Share">
+          <span class="action-icon">📤</span>
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function attachTweetEvents(){
+  document.querySelectorAll('[data-action]').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const id=btn.dataset.id;
+      const action=btn.dataset.action;
+      if(action==='like')toggleLike(id);
+      else if(action==='rt')toggleRT(id);
+      else if(action==='bookmark')toggleBookmark(id);
+      else if(action==='reply')openReply(id);
+      else if(action==='share')sharePost(id);
+    });
+  });
+}
+
+function formatTweetText(text){
+  return escHtml(text)
+    .replace(/(#\w+)/g,'<span class="tweet-hashtag">$1</span>')
+    .replace(/(@\w+)/g,'<span class="tweet-mention">$1</span>');
+}
+
+function hashCode(s){let h=0;for(let i=0;i<s.length;i++)h=((h<<5)-h)+s.charCodeAt(i)|0;return Math.abs(h)}
+function fmtNum(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(1)+'K';return n}
+
+/* ── Post tweet ── */
+function postTweet(inputId){
+  const input=document.getElementById(inputId);
+  const text=input.value.trim();
+  if(!text)return;
+  const tweet={
+    id:'t'+Date.now(),text,
+    authorName:profile.name,authorHandle:profile.handle,
+    authorVerified:false,authorEmoji:profile.name[0].toUpperCase(),
+    likes:0,rts:0,replies:0,liked:false,retweeted:false,bookmarked:false,
+    userPost:true,timestamp:Date.now()
+  };
+  tweets.unshift(tweet);
+  saveTweets();
+  input.value='';
+  updateCharCount(input,inputId==='composeMain'?'charCountMain':inputId==='composeModalInput'?'charCountModal':'charCountReply',inputId==='composeMain'?'tweetBtnMain':inputId==='composeModalInput'?'tweetBtnModal':'tweetBtnReply');
+  closeAllModals();
+  renderFeed();
+  showToast('Post published! ✓');
+  addNotif('like',ACCOUNTS[rnd(0,ACCOUNTS.length-2)],'liked your new post');
+}
+
+function postReply(){
+  const input=document.getElementById('replyInput');
+  const text=input.value.trim();
+  if(!text||!replyTargetId)return;
+  const t=tweets.find(tw=>tw.id===replyTargetId);
+  if(t)t.replies++;
+  saveTweets();
+  const reply={
+    id:'r'+Date.now(),text,
+    authorName:profile.name,authorHandle:profile.handle,
+    authorVerified:false,authorEmoji:profile.name[0].toUpperCase(),
+    likes:0,rts:0,replies:0,liked:false,retweeted:false,bookmarked:false,
+    userPost:true,timestamp:Date.now()
+  };
+  tweets.unshift(reply);
+  saveTweets();
+  input.value='';
+  closeModal('replyModal');
+  renderFeed();
+  showToast('Reply posted! ✓');
+}
+
+/* ── Actions ── */
+function toggleLike(id){
+  const t=tweets.find(tw=>tw.id===id);
+  if(!t)return;
+  t.liked=!t.liked;
+  saveTweets();
+  if(currentView==='home')renderFeed();
+  else if(currentView==='bookmarks')renderBookmarks();
+  else if(currentView==='profile')renderProfile();
+  if(t.liked&&t.authorHandle!==profile.handle)addNotif('like',{name:profile.name,handle:profile.handle},'liked a post');
+}
+
+function toggleRT(id){
+  const t=tweets.find(tw=>tw.id===id);
+  if(!t)return;
+  t.retweeted=!t.retweeted;
+  saveTweets();
+  if(currentView==='home')renderFeed();
+  if(t.retweeted)showToast('Reposted! 🔁');
+}
+
+function toggleBookmark(id){
+  const t=tweets.find(tw=>tw.id===id);
+  if(!t)return;
+  t.bookmarked=!t.bookmarked;
+  saveTweets();
+  if(currentView==='home')renderFeed();
+  if(currentView==='bookmarks')renderBookmarks();
+  showToast(t.bookmarked?'Added to Bookmarks 🔖':'Removed from Bookmarks');
+}
+
+function sharePost(id){
+  navigator.clipboard&&navigator.clipboard.writeText(window.location.href+'#'+id).then(()=>showToast('Link copied! 📋'));
+}
+
+function openReply(id){
+  const t=tweets.find(tw=>tw.id===id);
+  if(!t)return;
+  replyTargetId=id;
+  document.getElementById('replyOriginalTweet').innerHTML=tweetHTML(t,true);
+  document.getElementById('replyInput').value='';
+  updateCharCount({value:''},'charCountReply','tweetBtnReply');
+  openModal('replyModal');
+}
+
+/* ── Char count ── */
+function updateCharCount(input,countId,btnId){
+  const v=typeof input==='object'?input.value:document.getElementById(input).value;
+  const rem=280-v.length;
+  const el=document.getElementById(countId);
+  const btn=document.getElementById(btnId);
+  if(el){el.textContent=rem;el.className='char-count'+(rem<20?' warn':'')+(rem<0?' over':'');}
+  if(btn)btn.disabled=v.trim().length===0||rem<0;
+}
+
+/* ── Trending ── */
+const TRENDS=[
+  {cat:'Technology · Trending',topic:'#AI',count:'245K posts'},
+  {cat:'Entertainment · Trending',topic:'#Eurovision2025',count:'89K posts'},
+  {cat:'Sports · Trending',topic:'#Champions League',count:'178K posts'},
+  {cat:'Trending in Tech',topic:'#OpenSource',count:'56K posts'},
+  {cat:'Crypto · Trending',topic:'#Bitcoin',count:'312K posts'},
+];
+
+function renderTrending(){
+  const widget=document.getElementById('trendingWidget');
+  if(widget)widget.innerHTML=TRENDS.slice(0,4).map(t=>`
+    <div class="trend-item" onclick="searchTweets('${escHtml(t.topic)}')">
+      <div class="trend-category">${escHtml(t.cat)}</div>
+      <div class="trend-topic">${escHtml(t.topic)}</div>
+      <div class="trend-count">${escHtml(t.count)}</div>
+    </div>`).join('');
+}
+
+function renderWhoToFollow(){
+  const el=document.getElementById('whoToFollow');
+  if(!el)return;
+  const users=ACCOUNTS.filter(a=>a.handle!==profile.handle&&a.handle!=='vibeduser').slice(0,3);
+  el.innerHTML=users.map(u=>`
+    <div class="suggest-item">
+      <div class="avatar" style="background:hsl(${hashCode(u.handle)%360},60%,35%)">${escHtml(u.emoji||u.name[0])}</div>
+      <div>
+        <div style="font-weight:700;font-size:15px">${escHtml(u.name)} ${u.verified?'<span style="color:var(--accent)">✓</span>':''}</div>
+        <div style="color:var(--text3);font-size:13px">@${escHtml(u.handle)}</div>
+      </div>
+      <button class="follow-btn" id="follow_${escHtml(u.handle)}" onclick="toggleFollow('${escHtml(u.handle)}',this)">Follow</button>
+    </div>`).join('');
+}
+
+function toggleFollow(handle,btn){
+  if(btn.classList.contains('following')){
+    btn.classList.remove('following');btn.textContent='Follow';profile.following--;showToast('Unfollowed @'+handle);
+  }else{
+    btn.classList.add('following');btn.textContent='Following';profile.following++;showToast('Following @'+handle+' 🎉');
+  }
+  saveProfile();
+  document.getElementById('followingCount').textContent=profile.following;
+}
+
+/* ── Explore ── */
+const HASHTAGS=['#AI','#Crypto','#Music','#Gaming','#Sports','#Tech','#Fashion','#Food','#Travel','#News','#Science','#Politics','#Art','#Fitness'];
+
+function renderExplore(){
+  const trendsList=document.getElementById('trendsList');
+  const hashtagsContainer=document.getElementById('hashtagsContainer');
+  if(trendsList)trendsList.innerHTML=TRENDS.map(t=>`
+    <div class="trend-item" onclick="searchTweets('${escHtml(t.topic)}')">
+      <div class="trend-category">${escHtml(t.cat)}</div>
+      <div class="trend-topic">${escHtml(t.topic)}</div>
+      <div class="trend-count">${escHtml(t.count)}</div>
+    </div>`).join('');
+  if(hashtagsContainer)hashtagsContainer.innerHTML=HASHTAGS.map(h=>`<span class="explore-tag" onclick="searchTweets('${escHtml(h)}')">${escHtml(h)}</span>`).join('');
+}
+
+function searchTweets(q){
+  const searchResults=document.getElementById('searchResults');
+  const exploreContent=document.getElementById('exploreContent');
+  if(!searchResults)return;
+  if(!q){searchResults.style.display='none';if(exploreContent)exploreContent.style.display='block';return;}
+  if(exploreContent)exploreContent.style.display='none';
+  searchResults.style.display='block';
+  const ql=q.toLowerCase();
+  const results=tweets.filter(t=>t.text.toLowerCase().includes(ql)||t.authorName.toLowerCase().includes(ql)||t.authorHandle.toLowerCase().includes(ql));
+  searchResults.innerHTML=results.length?results.map(t=>tweetHTML(t)).join(''):`<div style="text-align:center;padding:40px;color:var(--text3)"><span style="font-size:36px">🔍</span><p style="margin-top:12px;font-size:18px;font-weight:800">No results for "${escHtml(q)}"</p></div>`;
+  if(results.length)attachTweetEvents();
+}
+
+/* ── Notifications ── */
+const NOTIF_ICONS={like:'❤️',retweet:'🔁',follow:'👤',mention:'@'};
+
+function renderNotifs(mentionsOnly=false){
+  const list=document.getElementById('notifList');
+  const display=mentionsOnly?notifications.filter(n=>n.type==='mention'):notifications;
+  list.innerHTML=display.map(n=>`
+    <div class="notif-row" style="${!n.read?'background:rgba(29,155,240,0.04)':''}">
+      <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
+      <div>
+        <div class="notif-text"><strong>@${escHtml(n.user)}</strong> ${escHtml(n.text)}</div>
+        <div class="notif-time">${timeAgo(n.time)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderNotifBadge(){
+  const count=notifications.filter(n=>!n.read).length;
+  const badge=document.getElementById('notifBadge');
+  if(badge){badge.textContent=count;badge.style.display=count>0?'inline-block':'none';}
+}
+
+function markAllNotifsRead(){
+  notifications.forEach(n=>n.read=true);
+  localStorage.setItem('x_notifs',JSON.stringify(notifications));
+  renderNotifBadge();
+}
+
+function addNotif(type,user,text){
+  notifications.unshift({id:'n'+Date.now(),type,user:user.handle||user,text,time:Date.now(),read:false});
+  localStorage.setItem('x_notifs',JSON.stringify(notifications));
+  renderNotifBadge();
+}
+
+/* ── Bookmarks ── */
+function renderBookmarks(){
+  const list=document.getElementById('bookmarksList');
+  const bms=tweets.filter(t=>t.bookmarked);
+  list.innerHTML=bms.length?bms.map(t=>tweetHTML(t)).join(''):`<div style="text-align:center;padding:60px 20px;color:var(--text3)"><span style="font-size:48px">🔖</span><p style="font-size:20px;font-weight:800;margin-top:12px;color:var(--text)">Save posts for later</p><p style="margin-top:8px">Bookmark posts to easily find them again.</p></div>`;
+  attachTweetEvents();
+}
+
+/* ── Profile ── */
+function renderProfile(){
+  document.getElementById('profileViewName').textContent=profile.name;
+  document.getElementById('profileNameLg').textContent=profile.name;
+  document.getElementById('profileHandleLg').textContent='@'+profile.handle;
+  document.getElementById('profileBio').textContent=profile.bio||'';
+  document.getElementById('followingCount').textContent=profile.following;
+  document.getElementById('followersCount').textContent=profile.followers;
+  document.getElementById('profileAvatarLg').textContent=profile.name[0].toUpperCase();
+  const myTweets=tweets.filter(t=>t.userPost||t.authorHandle===profile.handle);
+  document.getElementById('profileTweetCount').textContent=myTweets.length+' posts';
+  document.getElementById('profileTweets').innerHTML=myTweets.map(t=>tweetHTML(t)).join('');
+  attachTweetEvents();
+}
+
+/* ── DMs ── */
+function renderDMs(){
+  const list=document.getElementById('dmList');
+  list.innerHTML=dmContacts.map(dm=>`
+    <div onclick="openDM('${escHtml(dm.id)}')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='none'">
+      <div class="avatar" style="position:relative;background:hsl(${hashCode(dm.handle)%360},60%,35%)">${escHtml(dm.emoji||dm.name[0])}
+        ${dm.unread?`<span style="position:absolute;top:-2px;right:-2px;background:var(--accent);border-radius:50%;width:14px;height:14px;font-size:10px;display:flex;align-items:center;justify-content:center">${dm.unread}</span>`:''}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:15px">${escHtml(dm.name)}</div>
+        <div style="color:var(--text3);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(dm.lastMsg)}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text3)">${timeAgo(dm.time)}</div>
+    </div>`).join('');
+}
+
+function openDM(id){
+  const dm=dmContacts.find(d=>d.id===id);
+  if(!dm)return;
+  dm.unread=0;
+  renderDMs();
+  const chat=document.getElementById('dmChat');
+  const msgs=JSON.parse(localStorage.getItem('x_msgs_'+id)||'[]');
+  chat.innerHTML=`
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:17px;display:flex;align-items:center;gap:10px">
+      <div class="avatar" style="width:34px;height:34px;background:hsl(${hashCode(dm.handle)%360},60%,35%)">${escHtml(dm.emoji||dm.name[0])}</div>${escHtml(dm.name)}
+    </div>
+    <div id="msgList" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px">
+      ${msgs.length?msgs.map(m=>`<div style="align-self:${m.mine?'flex-end':'flex-start'};background:${m.mine?'var(--accent)':'var(--bg3)'};color:#fff;border-radius:18px;padding:10px 16px;max-width:70%;font-size:15px;line-height:1.5">${escHtml(m.text)}</div>`).join(''):'<div style="text-align:center;color:var(--text3);margin:auto;font-size:15px">Start the conversation 👋</div>'}
+    </div>
+    <div style="display:flex;gap:10px;padding:12px 16px;border-top:1px solid var(--border)">
+      <input id="dmInput_${escHtml(id)}" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:999px;padding:10px 18px;font-size:15px;font-family:'Inter',sans-serif;outline:none" placeholder="Start a new message" onkeydown="if(event.key==='Enter')sendDM('${escHtml(id)}')"/>
+      <button onclick="sendDM('${escHtml(id)}')" style="background:var(--accent);border:none;border-radius:50%;width:42px;height:42px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">→</button>
+    </div>`;
+}
+
+function sendDM(id){
+  const input=document.getElementById('dmInput_'+id);
+  if(!input||!input.value.trim())return;
+  const msgs=JSON.parse(localStorage.getItem('x_msgs_'+id)||'[]');
+  msgs.push({text:input.value.trim(),mine:true,time:Date.now()});
+  localStorage.setItem('x_msgs_'+id,JSON.stringify(msgs));
+  const dm=dmContacts.find(d=>d.id===id);
+  if(dm)dm.lastMsg=input.value.trim();
+  input.value='';
+  openDM(id);
+}
+
+/* ── Edit Profile ── */
+function openEditProfile(){
+  document.getElementById('editName').value=profile.name;
+  document.getElementById('editHandle').value=profile.handle;
+  document.getElementById('editBio').value=profile.bio||'';
+  openModal('editProfileModal');
+}
+
+function saveProfile(){
+  const name=document.getElementById('editName').value.trim()||profile.name;
+  const handle=document.getElementById('editHandle').value.trim().replace(/[@\s]/g,'')||profile.handle;
+  const bio=document.getElementById('editBio').value.trim();
+  profile={...profile,name,handle,bio};
+  saveProfile_();
+  closeModal('editProfileModal');
+  updateSidebarProfile();
+  renderProfile();
+  showToast('Profile updated! ✓');
+}
+
+/* ── Emoji picker ── */
+function openEmojiPicker(targetId){
+  emojiTargetId=targetId;
+  document.getElementById('emojiGrid').innerHTML=EMOJIS.map(e=>`<button class="emoji-btn" onclick="insertEmoji('${e}')">${e}</button>`).join('');
+  openModal('emojiModal');
+}
+
+function insertEmoji(emoji){
+  const input=document.getElementById(emojiTargetId);
+  if(!input)return;
+  const pos=input.selectionStart||input.value.length;
+  input.value=input.value.slice(0,pos)+emoji+input.value.slice(pos);
+  input.focus();
+  const countId=emojiTargetId==='composeMain'?'charCountMain':emojiTargetId==='composeModalInput'?'charCountModal':'charCountReply';
+  const btnId=emojiTargetId==='composeMain'?'tweetBtnMain':emojiTargetId==='composeModalInput'?'tweetBtnModal':'tweetBtnReply';
+  updateCharCount(input,countId,btnId);
+  closeModal('emojiModal');
+}
+
+function insertGif(inputId){showToast('GIF picker coming soon 🎬')}
+function pickImage(inputId){showToast('Image upload coming soon 🌄')}
+
+/* ── Modals ── */
+function openCompose(){openModal('composeModal')}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function closeAllModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'))}
+
+document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+  overlay.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open')});
+});
+
+/* ── Load more ── */
+function loadFeed(){renderFeed();showToast('Feed refreshed ✦')}
+
+/* ── Save ── */
+function saveTweets(){localStorage.setItem('x_tweets',JSON.stringify(tweets))}
+function saveProfile_(){localStorage.setItem('x_profile',JSON.stringify(profile))}
+function saveProfile(){saveProfile_();}
+
+/* ── Toast ── */
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+/* ── Start ── */
+init();
+</script>
+</body>
+</html>

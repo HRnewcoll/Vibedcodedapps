@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Slack App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d0308;--accent:#f43f5e;--accent2:#e11d48;--accent3:#fb7185;--border:rgba(244,63,94,0.2);--glass:rgba(244,63,94,0.08);--text:#fff1f2;--text2:#fda4af;--text3:rgba(255,241,242,0.6)}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0d0308,#1a0510,#0d0308);min-height:100vh;color:var(--text);overflow:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(244,63,94,.2);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback,useMemo}=React;
+
+const WORKSPACES=[
+  {id:'vc',abbr:'VC',name:'VibesCo',color:'#f43f5e'},
+  {id:'dev',abbr:'Dev',name:'Dev Team',color:'#8b5cf6'},
+  {id:'des',abbr:'Des',name:'Design',color:'#f59e0b'},
+];
+
+const CHANNELS=['general','dev-team','design','random','announcements'];
+const DM_CONTACTS=[
+  {name:'Alice',status:'online'},
+  {name:'Bob',status:'online'},
+  {name:'Charlie',status:'away'},
+  {name:'Diana',status:'offline'},
+];
+
+const STATUSES=[
+  {emoji:'🟢',label:'Active'},
+  {emoji:'🌙',label:'Do not disturb'},
+  {emoji:'📅',label:'In a meeting'},
+  {emoji:'🏖️',label:'On vacation'},
+  {emoji:'🤒',label:'Out sick'},
+];
+
+const SEED={
+  general:[
+    {id:1,u:'Alice',t:'Good morning team! Ready for a productive day? ☀️',ts:'9:00 AM',r:{},replies:[{id:11,u:'Bob',t:'Morning! Let\'s do it 💪',ts:'9:02 AM',r:{}}]},
+    {id:2,u:'Bob',t:'Don\'t forget we have standup at 10am',ts:'9:05 AM',r:{'👍':3},replies:[]},
+    {id:3,u:'Charlie',t:'Just pushed the new feature to staging, can someone review?',ts:'9:30 AM',r:{},replies:[{id:31,u:'Alice',t:'On it! Will check shortly',ts:'9:35 AM',r:{}},{id:32,u:'Diana',t:'I can also take a look',ts:'9:40 AM',r:{}}]},
+    {id:4,u:'Diana',t:'The design for the new landing page is done, sharing in #design',ts:'10:00 AM',r:{'❤️':4,'🔥':2},replies:[]},
+    {id:5,u:'Alice',t:'Sprint planning tomorrow at 2pm, please review the backlog beforehand',ts:'10:30 AM',r:{'✅':5},replies:[]},
+  ],
+  'dev-team':[
+    {id:1,u:'Charlie',t:'`npm run build` is failing on CI. Anyone seen this before?',ts:'11:00 AM',r:{},replies:[{id:11,u:'Bob',t:'Check if node_modules is cached properly',ts:'11:05 AM',r:{}}]},
+    {id:2,u:'Bob',t:'New PR up for the auth refactor, please review when you get a chance',ts:'11:30 AM',r:{'👀':2},replies:[]},
+    {id:3,u:'Diana',t:'Bumped React to 18.3 - all tests passing ✅',ts:'12:00 PM',r:{'🚀':3},replies:[]},
+    {id:4,u:'Charlie',t:'Reminder: code freeze is Friday EOD',ts:'2:00 PM',r:{'👍':4},replies:[]},
+  ],
+  design:[
+    {id:1,u:'Diana',t:'New brand guidelines document: https://example.com/brand',ts:'8:00 AM',r:{},replies:[]},
+    {id:2,u:'Alice',t:'Figma file updated with new components',ts:'9:00 AM',r:{'❤️':2},replies:[{id:21,u:'Charlie',t:'Looking great! Love the new button styles',ts:'9:15 AM',r:{}}]},
+    {id:3,u:'Diana',t:'Color palette refresh proposal - thoughts?',ts:'10:00 AM',r:{'👍':3,'❤️':2},replies:[]},
+  ],
+  random:[
+    {id:1,u:'Bob',t:'Anyone watching the game tonight? 🏈',ts:'5:00 PM',r:{},replies:[]},
+    {id:2,u:'Charlie',t:'Recommended: "The Phoenix Project" for any engineering folks',ts:'5:30 PM',r:{'📚':2},replies:[]},
+    {id:3,u:'Alice',t:'Friday afternoon = time for coffee ☕',ts:'3:00 PM',r:{'☕':5},replies:[]},
+  ],
+  announcements:[
+    {id:1,u:'Alice',t:'🎉 We hit 1000 users! Huge milestone for the team.',ts:'Monday',r:{'🎉':12,'❤️':8},replies:[]},
+    {id:2,u:'Alice',t:'📢 All-hands meeting next Thursday at 11am. Calendar invite sent.',ts:'Tuesday',r:{'👍':7},replies:[]},
+    {id:3,u:'Alice',t:'🚀 v2.0 ships next week. Final push team!',ts:'Today',r:{'🚀':10,'🔥':6},replies:[]},
+  ],
+};
+
+const REACT_EMOJIS=['❤️','👍','😂','🔥','😮','✅','👀','🚀'];
+
+function hslColor(str){let h=0;for(let i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))%360;return`hsl(${h},65%,60%)`}
+
+function Avatar({name,size=32,status}){
+  const c=hslColor(name||'?');
+  return(
+    <div style={{position:'relative',flexShrink:0}}>
+      <div style={{width:size,height:size,borderRadius:size*.28,background:c,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:size*.4,color:'#fff',userSelect:'none'}}>{(name||'?')[0].toUpperCase()}</div>
+      {status&&<div style={{position:'absolute',bottom:-1,right:-1,width:size*.32,height:size*.32,borderRadius:'50%',background:status==='online'?'#4ade80':status==='away'?'#fbbf24':'#6b7280',border:'2px solid #1a0510'}}/>}
+    </div>
+  );
+}
+
+function formatMsg(text){
+  const parts=text.split(/(```[\s\S]*?```|`[^`]+`|\*\*[^*]+\*\*|_[^_]+_|https?:\/\/[^\s]+)/g);
+  return parts.map((p,i)=>{
+    if(p.startsWith('```')&&p.endsWith('```'))return<pre key={i} style={{background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,63,94,.15)',borderRadius:6,padding:'8px 12px',fontFamily:'monospace',fontSize:'.8rem',margin:'4px 0',overflowX:'auto',color:'#e2e8f0',whiteSpace:'pre-wrap'}}>{p.slice(3,-3)}</pre>;
+    if(p.startsWith('`')&&p.endsWith('`'))return<code key={i} style={{background:'rgba(255,255,255,.1)',borderRadius:4,padding:'1px 5px',fontFamily:'monospace',fontSize:'.85em',color:'#fda4af'}}>{p.slice(1,-1)}</code>;
+    if(p.startsWith('**')&&p.endsWith('**'))return<strong key={i}>{p.slice(2,-2)}</strong>;
+    if(p.startsWith('_')&&p.endsWith('_'))return<em key={i}>{p.slice(1,-1)}</em>;
+    if(p.startsWith('http'))return<a key={i} href={p} target="_blank" rel="noreferrer" style={{color:'#fb7185',textDecoration:'underline'}}>{p}</a>;
+    return p;
+  });
+}
+
+function MessageActions({onReact,onThread,onBookmark}){
+  const[showReact,setShowReact]=useState(false);
+  return(
+    <div style={{display:'flex',gap:3,background:'rgba(13,3,8,.9)',border:'1px solid rgba(244,63,94,.15)',borderRadius:8,padding:'3px 6px',position:'absolute',right:8,top:-16,zIndex:10,boxShadow:'0 2px 8px rgba(0,0,0,.3)'}}>
+      <div style={{position:'relative'}}>
+        <button onClick={()=>setShowReact(!showReact)} style={{background:'none',border:'none',fontSize:'1rem',cursor:'pointer',padding:2,color:'rgba(255,241,242,.6)'}} title="React">😀</button>
+        {showReact&&<div style={{position:'absolute',bottom:'100%',right:0,background:'rgba(13,3,8,.97)',border:'1px solid rgba(244,63,94,.2)',borderRadius:10,padding:6,display:'flex',gap:2,zIndex:100,marginBottom:4,whiteSpace:'nowrap'}}>
+          {REACT_EMOJIS.map(e=><button key={e} onClick={()=>{onReact(e);setShowReact(false)}} style={{background:'none',border:'none',fontSize:'1rem',cursor:'pointer',padding:2}}>{e}</button>)}
+        </div>}
+      </div>
+      <button onClick={onThread} style={{background:'none',border:'none',fontSize:'.8rem',cursor:'pointer',padding:'2px 4px',color:'rgba(255,241,242,.6)',fontFamily:'Inter'}} title="Reply in Thread">💬</button>
+      <button onClick={onBookmark} style={{background:'none',border:'none',fontSize:'.8rem',cursor:'pointer',padding:2,color:'rgba(255,241,242,.6)'}} title="Bookmark">🔖</button>
+    </div>
+  );
+}
+
+function MessageRow({msg,isOwn,onReact,onThread,onBookmark}){
+  const[hovered,setHovered]=useState(false);
+  return(
+    <div onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)} style={{display:'flex',gap:10,padding:'4px 0 4px',borderRadius:8,position:'relative',marginBottom:4,transition:'background .1s',background:hovered?'rgba(255,255,255,.03)':'transparent'}}>
+      {hovered&&<MessageActions onReact={e=>onReact(msg.id,e)} onThread={()=>onThread(msg)} onBookmark={()=>{}}/>}
+      <div style={{width:36,flexShrink:0,paddingTop:2}}><Avatar name={msg.u} size={36}/></div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{display:'flex',alignItems:'baseline',gap:8,marginBottom:2}}>
+          <span style={{fontWeight:700,fontSize:'.875rem',color:hslColor(msg.u)}}>{msg.u}</span>
+          <span style={{fontSize:'.7rem',color:'rgba(255,241,242,.3)'}}>{msg.ts}</span>
+        </div>
+        <div style={{fontSize:'.875rem',lineHeight:1.6,color:'rgba(255,241,242,.9)',wordBreak:'break-word'}}>{formatMsg(msg.t)}</div>
+        {msg.r&&Object.entries(msg.r).filter(([,c])=>c>0).length>0&&(
+          <div style={{display:'flex',gap:4,marginTop:5,flexWrap:'wrap'}}>
+            {Object.entries(msg.r).filter(([,c])=>c>0).map(([e,c])=>(
+              <button key={e} onClick={()=>onReact(msg.id,e)} style={{background:'rgba(244,63,94,.08)',border:'1px solid rgba(244,63,94,.2)',borderRadius:14,padding:'2px 8px',fontSize:'.75rem',cursor:'pointer',color:'#fff1f2',fontFamily:'Inter',display:'flex',alignItems:'center',gap:3}}>{e}<span style={{color:'rgba(255,241,242,.5)'}}>{c}</span></button>
+            ))}
+          </div>
+        )}
+        {msg.replies&&msg.replies.length>0&&(
+          <button onClick={()=>onThread(msg)} style={{background:'none',border:'none',color:'#fb7185',fontFamily:'Inter',fontSize:'.78rem',cursor:'pointer',marginTop:4,padding:0}}>
+            💬 {msg.replies.length} {msg.replies.length===1?'reply':'replies'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const[workspace,setWorkspace]=useState('vc');
+  const[activeChannel,setActiveChannel]=useState('general');
+  const[isDM,setIsDM]=useState(false);
+  const[dmContact,setDmContact]=useState(null);
+  const[input,setInput]=useState('');
+  const[messages,setMessages]=useState(()=>{const s=localStorage.getItem('sl_general');return s?JSON.parse(s):SEED.general});
+  const[threadMsg,setThreadMsg]=useState(null);
+  const[threadInput,setThreadInput]=useState('');
+  const[typing,setTyping]=useState([]);
+  const[showSearch,setShowSearch]=useState(false);
+  const[searchQ,setSearchQ]=useState('');
+  const[username]=useState(()=>localStorage.getItem('sl_username')||'');
+  const[showSetup,setShowSetup]=useState(!localStorage.getItem('sl_username'));
+  const[nameInput,setNameInput]=useState('');
+  const[status,setStatus]=useState(STATUSES[0]);
+  const[showStatus,setShowStatus]=useState(false);
+  const[unread,setUnread]=useState({'dev-team':3,'announcements':1,random:1});
+  const[showHuddle,setShowHuddle]=useState(false);
+  const[collapsedChannels,setCollapsedChannels]=useState(false);
+  const[collapsedDMs,setCollapsedDMs]=useState(false);
+  const bottomRef=useRef(null);
+  const channelRef=useRef(null);
+  const typingRef=useRef(null);
+
+  useEffect(()=>{
+    if(!username||showSetup)return;
+    const key=isDM?`sl_dm_${dmContact}`:`sl_${activeChannel}`;
+    const ch=new BroadcastChannel('slack_'+key);
+    channelRef.current=ch;
+    const stored=localStorage.getItem(key);
+    setMessages(stored?JSON.parse(stored):(isDM?[]:(SEED[activeChannel]||[])));
+    ch.onmessage=ev=>{
+      const d=ev.data;
+      if(d.type==='msg'){setMessages(prev=>{const next=[...prev,d.msg].slice(-200);localStorage.setItem(key,JSON.stringify(next));return next})}
+      else if(d.type==='react'){setMessages(prev=>prev.map(m=>m.id===d.id?{...m,r:{...m.r,[d.e]:(m.r?.[d.e]||0)+1}}:m))}
+      else if(d.type==='thread_reply'){setMessages(prev=>prev.map(m=>m.id===d.pid?{...m,replies:[...( m.replies||[]),d.msg]}:m));if(threadMsg?.id===d.pid)setThreadMsg(t=>({...t,replies:[...(t.replies||[]),d.msg]}))}
+      else if(d.type==='typing'){setTyping(t=>{const n=t.filter(u=>u!==d.u);return d.on?[...n,d.u]:n});clearTimeout(typingRef.current);typingRef.current=setTimeout(()=>setTyping([]),3000)}
+    };
+    return()=>ch.close();
+  },[activeChannel,isDM,dmContact,username,showSetup]);
+
+  useEffect(()=>bottomRef.current?.scrollIntoView({behavior:'smooth'}),[messages]);
+
+  useEffect(()=>{
+    const handler=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();setShowSearch(s=>!s)}};
+    document.addEventListener('keydown',handler);return()=>document.removeEventListener('keydown',handler);
+  },[]);
+
+  const switchChannel=(ch,dm=false,contact=null)=>{
+    setActiveChannel(ch);setIsDM(dm);setDmContact(contact);setThreadMsg(null);
+    setUnread(u=>({...u,[ch]:0}));
+  };
+
+  const sendMsg=()=>{
+    if(!input.trim())return;
+    const msg={id:Date.now(),u:username,t:input.trim(),ts:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),r:{},replies:[]};
+    const key=isDM?`sl_dm_${dmContact}`:`sl_${activeChannel}`;
+    const next=[...messages,msg].slice(-200);
+    setMessages(next);
+    localStorage.setItem(key,JSON.stringify(next));
+    channelRef.current?.postMessage({type:'msg',msg});
+    setInput('');
+  };
+
+  const sendThread=()=>{
+    if(!threadInput.trim()||!threadMsg)return;
+    const reply={id:Date.now(),u:username,t:threadInput.trim(),ts:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),r:{}};
+    setMessages(prev=>prev.map(m=>m.id===threadMsg.id?{...m,replies:[...(m.replies||[]),reply]}:m));
+    setThreadMsg(t=>({...t,replies:[...(t.replies||[]),reply]}));
+    channelRef.current?.postMessage({type:'thread_reply',pid:threadMsg.id,msg:reply});
+    setThreadInput('');
+  };
+
+  const handleReact=(id,emoji)=>{
+    setMessages(prev=>prev.map(m=>m.id===id?{...m,r:{...m.r,[emoji]:(m.r?.[emoji]||0)+1}}:m));
+    channelRef.current?.postMessage({type:'react',id,e:emoji});
+  };
+
+  const handleTyping=e=>{
+    setInput(e.target.value);
+    channelRef.current?.postMessage({type:'typing',u:username,on:true});
+    clearTimeout(typingRef.current);typingRef.current=setTimeout(()=>channelRef.current?.postMessage({type:'typing',u:username,on:false}),1500);
+  };
+
+  const searchResults=useMemo(()=>{
+    if(!searchQ.trim())return[];
+    const res=[];
+    Object.entries(SEED).forEach(([ch,msgs])=>{
+      msgs.forEach(m=>{if(m.t.toLowerCase().includes(searchQ.toLowerCase()))res.push({...m,channel:ch})});
+    });
+    return res;
+  },[searchQ]);
+
+  if(showSetup){return(
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:9999}}>
+      <div style={{background:'linear-gradient(135deg,#1a0510,#2d0a1e)',border:'1px solid rgba(244,63,94,.3)',borderRadius:20,padding:32,width:'100%',maxWidth:360}}>
+        <h2 style={{fontSize:'1.2rem',fontWeight:700,color:'#fff1f2',marginBottom:6,textAlign:'center'}}>💬 Join Workspace</h2>
+        <p style={{fontSize:'.85rem',color:'rgba(255,241,242,.5)',marginBottom:20,textAlign:'center'}}>Choose your display name</p>
+        <input value={nameInput} onChange={e=>setNameInput(e.target.value)} placeholder="Display name" onKeyDown={e=>e.key==='Enter'&&nameInput.trim()&&(localStorage.setItem('sl_username',nameInput.trim()),setShowSetup(false))} style={{width:'100%',background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,63,94,.2)',borderRadius:10,padding:'10px 14px',color:'#fff1f2',fontFamily:'Inter',fontSize:'.9rem',outline:'none',marginBottom:14}}/>
+        <button onClick={()=>nameInput.trim()&&(localStorage.setItem('sl_username',nameInput.trim()),setShowSetup(false))} style={{width:'100%',padding:12,background:'linear-gradient(135deg,#f43f5e,#e11d48)',border:'none',borderRadius:12,color:'#fff',fontFamily:'Inter',fontWeight:600,cursor:'pointer'}}>Start →</button>
+      </div>
+    </div>
+  )}
+
+  const ws=WORKSPACES.find(w=>w.id===workspace);
+
+  return(
+    <div style={{display:'flex',height:'100vh',overflow:'hidden'}}>
+      {/* Search Modal */}
+      {showSearch&&(
+        <div onClick={()=>setShowSearch(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,.7)',backdropFilter:'blur(6px)',zIndex:9999,display:'flex',justifyContent:'center',paddingTop:60}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:'rgba(13,3,8,.97)',border:'1px solid rgba(244,63,94,.3)',borderRadius:14,width:'100%',maxWidth:560,height:'fit-content',maxHeight:'70vh',overflow:'auto'}}>
+            <div style={{padding:'12px 16px',borderBottom:'1px solid rgba(244,63,94,.15)',display:'flex',alignItems:'center',gap:8}}>
+              <span style={{color:'rgba(255,241,242,.5)'}}>🔍</span>
+              <input autoFocus value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="Search messages... (Esc to close)" style={{flex:1,background:'none',border:'none',color:'#fff1f2',fontFamily:'Inter',fontSize:'.9rem',outline:'none'}} onKeyDown={e=>e.key==='Escape'&&setShowSearch(false)}/>
+            </div>
+            <div style={{padding:8}}>
+              {searchResults.length===0&&searchQ&&<div style={{textAlign:'center',color:'rgba(255,241,242,.4)',padding:24,fontSize:'.875rem'}}>No results found</div>}
+              {searchResults.map(r=>(
+                <div key={r.id} onClick={()=>{switchChannel(r.channel);setShowSearch(false)}} style={{padding:'10px 14px',borderRadius:8,cursor:'pointer',marginBottom:4}} onMouseEnter={e=>e.currentTarget.style.background='rgba(244,63,94,.08)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                  <div style={{fontSize:'.72rem',color:'rgba(244,63,94,.8)',marginBottom:3}}>#{r.channel}</div>
+                  <div style={{display:'flex',gap:8,alignItems:'flex-start'}}>
+                    <Avatar name={r.u} size={28}/>
+                    <div><span style={{fontWeight:600,fontSize:'.82rem',color:hslColor(r.u)}}>{r.u} </span><span style={{fontSize:'.82rem',color:'rgba(255,241,242,.7)'}}>{r.t}</span></div>
+                  </div>
+                </div>
+              ))}
+              {!searchQ&&<div style={{textAlign:'center',color:'rgba(255,241,242,.35)',padding:20,fontSize:'.85rem'}}>Type to search across all channels</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Workspace switcher */}
+      <div style={{width:60,background:'rgba(8,2,6,.95)',display:'flex',flexDirection:'column',alignItems:'center',padding:'10px 0',gap:6,flexShrink:0,borderRight:'1px solid rgba(244,63,94,.1)'}}>
+        <a href="../../index.html" style={{width:44,height:44,borderRadius:12,background:'rgba(244,63,94,.15)',display:'flex',alignItems:'center',justifyContent:'center',textDecoration:'none',fontSize:'.85rem',color:'#f43f5e',marginBottom:6}} title="Back">←</a>
+        {WORKSPACES.map(w=>(
+          <div key={w.id} onClick={()=>setWorkspace(w.id)} title={w.name} style={{position:'relative',cursor:'pointer'}}>
+            {workspace===w.id&&<div style={{position:'absolute',left:-4,top:'50%',transform:'translateY(-50%)',width:4,height:20,background:'#fff',borderRadius:'0 3px 3px 0'}}/>}
+            <div style={{width:44,height:44,borderRadius:workspace===w.id?10:22,background:w.color,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:'.75rem',color:'#fff',transition:'border-radius .2s',userSelect:'none'}}>{w.abbr}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Sidebar */}
+      <div style={{width:260,background:'rgba(10,2,7,.9)',display:'flex',flexDirection:'column',flexShrink:0,borderRight:'1px solid rgba(244,63,94,.1)'}}>
+        {/* Workspace header */}
+        <div style={{padding:'12px 14px',borderBottom:'1px solid rgba(244,63,94,.1)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <div style={{fontWeight:700,fontSize:'.95rem',color:'#fff1f2'}}>{ws?.name}</div>
+          <button onClick={()=>setShowHuddle(!showHuddle)} style={{background:'rgba(244,63,94,.1)',border:'none',borderRadius:6,padding:'4px 8px',color:'rgba(255,241,242,.6)',cursor:'pointer',fontSize:'.75rem',fontFamily:'Inter'}}>🎙 Huddle</button>
+        </div>
+        {showHuddle&&<div style={{background:'rgba(244,63,94,.1)',border:'1px solid rgba(244,63,94,.2)',borderRadius:8,margin:'6px 10px',padding:'8px 12px',fontSize:'.78rem',color:'#fb7185'}}>🎙 Huddle started — <button onClick={()=>setShowHuddle(false)} style={{background:'none',border:'none',color:'rgba(255,241,242,.4)',cursor:'pointer',fontFamily:'Inter',fontSize:'.75rem'}}>Leave</button></div>}
+
+        {/* Search */}
+        <div style={{padding:'8px 10px'}}>
+          <button onClick={()=>setShowSearch(true)} style={{width:'100%',background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,63,94,.15)',borderRadius:8,padding:'6px 12px',color:'rgba(255,241,242,.5)',fontFamily:'Inter',fontSize:'.82rem',cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:6}}>🔍 Search <span style={{marginLeft:'auto',fontSize:'.7rem',opacity:.5}}>Ctrl+K</span></button>
+        </div>
+
+        <div style={{flex:1,overflow:'auto',padding:'0 0 8px'}}>
+          {/* Quick links */}
+          {[['🏠','Home',()=>switchChannel('general')],['💬','DMs',()=>switchChannel('general',true,'Alice')],['🔔','Activity',null]].map(([icon,label,fn])=>(
+            <button key={label} onClick={fn} style={{width:'100%',textAlign:'left',padding:'5px 14px',background:'transparent',border:'none',color:'rgba(255,241,242,.55)',fontFamily:'Inter',fontSize:'.85rem',cursor:'pointer',display:'flex',alignItems:'center',gap:8}} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.04)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>{icon} {label}</button>
+          ))}
+
+          {/* Channels */}
+          <div style={{padding:'10px 14px 4px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <button onClick={()=>setCollapsedChannels(!collapsedChannels)} style={{background:'none',border:'none',color:'rgba(255,241,242,.4)',fontFamily:'Inter',fontSize:'.72rem',fontWeight:700,letterSpacing:'.8px',textTransform:'uppercase',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>{collapsedChannels?'▶':'▼'} Channels</button>
+            <button onClick={()=>{}} style={{background:'none',border:'none',color:'rgba(255,241,242,.35)',cursor:'pointer',fontSize:'1rem'}}>+</button>
+          </div>
+          {!collapsedChannels&&CHANNELS.map(ch=>(
+            <button key={ch} onClick={()=>switchChannel(ch)} style={{width:'100%',textAlign:'left',padding:'5px 14px',background:!isDM&&activeChannel===ch?'rgba(244,63,94,.2)':'transparent',border:'none',color:!isDM&&activeChannel===ch?'#fff1f2':'rgba(255,241,242,.55)',fontFamily:'Inter',fontSize:'.85rem',cursor:'pointer',borderRadius:6,margin:'1px 6px',display:'flex',justifyContent:'space-between',alignItems:'center',width:'calc(100% - 12px)'}} onMouseEnter={e=>e.currentTarget.style.background=!isDM&&activeChannel===ch?'rgba(244,63,94,.2)':'rgba(255,255,255,.04)'} onMouseLeave={e=>e.currentTarget.style.background=!isDM&&activeChannel===ch?'rgba(244,63,94,.2)':'transparent'}>
+              <span># {ch}</span>
+              {unread[ch]>0&&<span style={{background:'#f43f5e',borderRadius:10,padding:'0 5px',fontSize:'.65rem',color:'#fff',fontWeight:700,minWidth:16,textAlign:'center'}}>{unread[ch]}</span>}
+            </button>
+          ))}
+
+          {/* DMs */}
+          <div style={{padding:'10px 14px 4px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <button onClick={()=>setCollapsedDMs(!collapsedDMs)} style={{background:'none',border:'none',color:'rgba(255,241,242,.4)',fontFamily:'Inter',fontSize:'.72rem',fontWeight:700,letterSpacing:'.8px',textTransform:'uppercase',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>{collapsedDMs?'▶':'▼'} Direct Messages</button>
+            <button style={{background:'none',border:'none',color:'rgba(255,241,242,.35)',cursor:'pointer',fontSize:'1rem'}}>+</button>
+          </div>
+          {!collapsedDMs&&DM_CONTACTS.map(c=>(
+            <button key={c.name} onClick={()=>switchChannel(c.name,true,c.name)} style={{width:'calc(100% - 12px)',textAlign:'left',padding:'5px 10px',background:isDM&&dmContact===c.name?'rgba(244,63,94,.2)':'transparent',border:'none',color:isDM&&dmContact===c.name?'#fff1f2':'rgba(255,241,242,.55)',fontFamily:'Inter',fontSize:'.85rem',cursor:'pointer',borderRadius:6,margin:'1px 6px',display:'flex',alignItems:'center',gap:8}} onMouseEnter={e=>e.currentTarget.style.background=isDM&&dmContact===c.name?'rgba(244,63,94,.2)':'rgba(255,255,255,.04)'} onMouseLeave={e=>e.currentTarget.style.background=isDM&&dmContact===c.name?'rgba(244,63,94,.2)':'transparent'}>
+              <Avatar name={c.name} size={22} status={c.status}/> {c.name}
+            </button>
+          ))}
+        </div>
+
+        {/* User footer */}
+        <div style={{padding:10,borderTop:'1px solid rgba(244,63,94,.1)',display:'flex',alignItems:'center',gap:8,position:'relative'}}>
+          <Avatar name={username} size={32} status="online"/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:'.82rem',fontWeight:600,color:'#fff1f2',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{username}</div>
+            <button onClick={()=>setShowStatus(!showStatus)} style={{background:'none',border:'none',color:'rgba(255,241,242,.4)',fontFamily:'Inter',fontSize:'.7rem',cursor:'pointer',padding:0,textAlign:'left'}}>{status.emoji} {status.label}</button>
+          </div>
+          {showStatus&&<div style={{position:'absolute',bottom:'100%',left:10,background:'rgba(13,3,8,.97)',border:'1px solid rgba(244,63,94,.2)',borderRadius:10,padding:6,zIndex:100,minWidth:180,boxShadow:'0 8px 24px rgba(0,0,0,.5)'}}>
+            {STATUSES.map(s=><button key={s.label} onClick={()=>{setStatus(s);setShowStatus(false)}} style={{display:'block',width:'100%',textAlign:'left',padding:'7px 12px',background:'none',border:'none',color:'rgba(255,241,242,.8)',fontFamily:'Inter',fontSize:'.82rem',cursor:'pointer',borderRadius:6}} onMouseEnter={e=>e.currentTarget.style.background='rgba(244,63,94,.1)'} onMouseLeave={e=>e.currentTarget.style.background='none'}>{s.emoji} {s.label}</button>)}
+          </div>}
+        </div>
+      </div>
+
+      {/* Main Chat */}
+      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+        {/* Header */}
+        <div style={{padding:'0 16px',height:49,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(244,63,94,.1)',background:'rgba(10,2,7,.8)',flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            {isDM?<><Avatar name={dmContact} size={24}/><span style={{fontWeight:600,color:'#fff1f2'}}>{dmContact}</span></>:<><span style={{fontWeight:700,color:'#fff1f2'}}>#{activeChannel}</span><span style={{fontSize:'.78rem',color:'rgba(255,241,242,.4)',borderLeft:'1px solid rgba(244,63,94,.15)',paddingLeft:8}}>Channel</span></>}
+          </div>
+          <button title="🔔 Notifications" style={{background:'rgba(244,63,94,.08)',border:'1px solid rgba(244,63,94,.15)',borderRadius:6,padding:'4px 8px',color:'rgba(255,241,242,.6)',cursor:'pointer',fontSize:'.8rem'}}>🔔</button>
+        </div>
+
+        {/* Messages */}
+        <div style={{flex:1,overflow:'auto',padding:'16px'}} onClick={()=>setShowStatus(false)}>
+          {messages.length===0&&<div style={{textAlign:'center',color:'rgba(255,241,242,.35)',marginTop:40,fontSize:'.9rem'}}>This is the beginning of #{activeChannel || dmContact} 👋</div>}
+          {messages.map(msg=>(
+            <MessageRow key={msg.id} msg={msg} isOwn={msg.u===username} onReact={handleReact} onThread={setThreadMsg} onBookmark={()=>{}}/>
+          ))}
+          {typing.filter(u=>u!==username).length>0&&<div style={{fontSize:'.78rem',color:'rgba(255,241,242,.4)',fontStyle:'italic',padding:'4px 46px'}}>{typing.filter(u=>u!==username).join(', ')} {typing.filter(u=>u!==username).length===1?'is':'are'} typing...</div>}
+          <div ref={bottomRef}/>
+        </div>
+
+        {/* Input */}
+        <div style={{padding:'8px 16px 12px',flexShrink:0,borderTop:'1px solid rgba(244,63,94,.1)'}}>
+          <div style={{background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,63,94,.2)',borderRadius:10,overflow:'hidden'}}>
+            {/* Formatting bar */}
+            <div style={{display:'flex',gap:2,padding:'4px 10px',borderBottom:'1px solid rgba(244,63,94,.1)'}}>
+              {[['B','**'],['I','_'],['`','`']].map(([l,w])=>(
+                <button key={l} onClick={()=>setInput(i=>{const ta=document.getElementById('sl-input');const s=ta?.selectionStart||0;const e=ta?.selectionEnd||0;return i.slice(0,s)+w+i.slice(s,e)+w+i.slice(e)})} style={{background:'none',border:'1px solid rgba(244,63,94,.15)',borderRadius:4,padding:'2px 7px',color:'rgba(255,241,242,.5)',cursor:'pointer',fontFamily:'Inter',fontSize:'.78rem',fontWeight:l==='B'?700:400,fontStyle:l==='I'?'italic':'normal'}}>{l}</button>
+              ))}
+              <button style={{background:'none',border:'1px solid rgba(244,63,94,.15)',borderRadius:4,padding:'2px 7px',color:'rgba(255,241,242,.5)',cursor:'pointer',fontSize:'.8rem',marginLeft:4}}>😀</button>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:6,padding:'4px 10px'}}>
+              <textarea id="sl-input" value={input} onChange={handleTyping} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()}}} placeholder={isDM?`Message ${dmContact}`:`Message #${activeChannel}`} rows={1} style={{flex:1,background:'none',border:'none',color:'#fff1f2',fontFamily:'Inter',fontSize:'.875rem',outline:'none',resize:'none',lineHeight:1.5}}/>
+              <button onClick={sendMsg} disabled={!input.trim()} style={{background:'linear-gradient(135deg,#f43f5e,#e11d48)',border:'none',borderRadius:8,padding:'6px 12px',color:'#fff',cursor:input.trim()?'pointer':'not-allowed',opacity:input.trim()?1:.4,fontSize:'.8rem',fontFamily:'Inter',fontWeight:500}}>Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Thread Panel */}
+      {threadMsg&&(
+        <div style={{width:340,background:'rgba(10,2,7,.9)',borderLeft:'1px solid rgba(244,63,94,.1)',display:'flex',flexDirection:'column',flexShrink:0}}>
+          <div style={{padding:'12px 14px',borderBottom:'1px solid rgba(244,63,94,.1)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <span style={{fontWeight:600,fontSize:'.9rem',color:'#fff1f2'}}>Thread</span>
+            <button onClick={()=>setThreadMsg(null)} style={{background:'none',border:'none',color:'rgba(255,241,242,.4)',cursor:'pointer',fontSize:'1rem'}}>✕</button>
+          </div>
+          <div style={{flex:1,overflow:'auto',padding:'12px'}}>
+            {/* Parent message */}
+            <div style={{padding:10,background:'rgba(244,63,94,.06)',border:'1px solid rgba(244,63,94,.12)',borderRadius:8,marginBottom:12}}>
+              <div style={{display:'flex',gap:8,alignItems:'flex-start'}}>
+                <Avatar name={threadMsg.u} size={28}/>
+                <div><div style={{fontWeight:600,fontSize:'.8rem',color:hslColor(threadMsg.u),marginBottom:2}}>{threadMsg.u}</div><div style={{fontSize:'.82rem',color:'rgba(255,241,242,.85)',lineHeight:1.5}}>{formatMsg(threadMsg.t)}</div></div>
+              </div>
+            </div>
+            <div style={{fontSize:'.72rem',color:'rgba(255,241,242,.3)',marginBottom:8,paddingLeft:4}}>{(threadMsg.replies||[]).length} {(threadMsg.replies||[]).length===1?'reply':'replies'}</div>
+            {(threadMsg.replies||[]).map(r=>(
+              <div key={r.id} style={{display:'flex',gap:8,marginBottom:10}}>
+                <Avatar name={r.u} size={28}/>
+                <div><div style={{fontWeight:600,fontSize:'.78rem',color:hslColor(r.u),marginBottom:1}}>{r.u} <span style={{color:'rgba(255,241,242,.3)',fontSize:'.68rem',fontWeight:400}}>{r.ts}</span></div><div style={{fontSize:'.82rem',color:'rgba(255,241,242,.85)',lineHeight:1.5}}>{formatMsg(r.t)}</div></div>
+              </div>
+            ))}
+          </div>
+          <div style={{padding:'8px 10px',borderTop:'1px solid rgba(244,63,94,.1)'}}>
+            <div style={{display:'flex',gap:6,background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,63,94,.15)',borderRadius:8,padding:'6px 10px'}}>
+              <input value={threadInput} onChange={e=>setThreadInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&sendThread()} placeholder="Reply in thread..." style={{flex:1,background:'none',border:'none',color:'#fff1f2',fontFamily:'Inter',fontSize:'.82rem',outline:'none'}}/>
+              <button onClick={sendThread} disabled={!threadInput.trim()} style={{background:'none',border:'none',color:threadInput.trim()?'#f43f5e':'rgba(244,63,94,.3)',cursor:threadInput.trim()?'pointer':'not-allowed',fontSize:'1rem'}}>➤</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

@@ -224,8 +224,8 @@ function renderMosqueList(mosques, centerLat, centerLng) {
     const item = document.createElement('div');
     item.className = 'mosque-item';
     item.innerHTML = `
-      <div class="mosque-name">${m.name}</div>
-      <div class="mosque-addr">${m.address || 'Address not available'}</div>
+      <div class="mosque-name">${escHtml(m.name)}</div>
+      <div class="mosque-addr">${escHtml(m.address || 'Address not available')}</div>
       ${dist !== null ? `<span class="mosque-dist">${dist < 1 ? (dist*1000).toFixed(0)+'m' : dist.toFixed(1)+'km'}</span>` : ''}
     `;
     item.addEventListener('click', () => {
@@ -340,6 +340,8 @@ async function useMyLocation() {
     map.setView([51.5074, -0.1278], 12);
   });
 }
+
+function escHtml(s) { const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
 
 // Initial load: show fallback
 plotMosques(FALLBACK_MOSQUES, 51.5074, -0.1278);

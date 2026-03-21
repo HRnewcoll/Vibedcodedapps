@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Diet Plan Generator — VibedApps</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --bg:#051a0f; --accent:#10b981; --accent2:#059669; --accent3:#34d399;
+      --border:rgba(16,185,129,0.2); --glass:rgba(16,185,129,0.08);
+      --text:#e2fdf3; --text2:#6ee7b7; --text3:rgba(226,253,243,0.6);
+      --red:#ef4444; --yellow:#f59e0b; --blue:#3b82f6;
+    }
+    body { font-family:'Inter',sans-serif; background:linear-gradient(135deg,#051a0f,#0a2818,#071a10); min-height:100vh; color:var(--text); }
+    nav { position:sticky; top:0; z-index:100; background:rgba(5,26,15,0.92); backdrop-filter:blur(14px); border-bottom:1px solid var(--border); padding:0 20px; display:flex; align-items:center; justify-content:space-between; height:60px; }
+    nav h1 { font-size:1.1rem; font-weight:700; color:var(--accent); }
+    .layout3 { display:grid; grid-template-columns:280px 1fr 240px; gap:18px; max-width:1300px; margin:0 auto; padding:22px 16px; }
+    @media(max-width:1080px){ .layout3{grid-template-columns:1fr 1fr;} }
+    @media(max-width:700px){  .layout3{grid-template-columns:1fr;} }
+    .card { background:var(--glass); border:1px solid var(--border); border-radius:16px; padding:18px; margin-bottom:16px; }
+    .card h2 { font-size:.88rem; font-weight:700; color:var(--accent); margin-bottom:12px; letter-spacing:.05em; text-transform:uppercase; }
+    label { display:block; font-size:.75rem; color:var(--text2); margin-bottom:3px; font-weight:500; }
+    input, select { width:100%; background:rgba(16,185,129,0.08); border:1px solid var(--border); border-radius:7px; padding:7px 10px; color:var(--text); font-size:.82rem; font-family:'Inter',sans-serif; outline:none; transition:border .2s; }
+    input:focus, select:focus { border-color:var(--accent); }
+    select option { background:#0a2818; }
+    .form-group { margin-bottom:9px; }
+    .btn { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; border-radius:9px; padding:9px 16px; font-size:.85rem; font-weight:600; cursor:pointer; transition:opacity .2s; }
+    .btn:hover { opacity:.85; }
+    .btn-sm { padding:4px 10px; font-size:.75rem; border-radius:6px; }
+    .btn-outline { background:none; border:1px solid var(--border); color:var(--text3); border-radius:7px; cursor:pointer; font-family:'Inter',sans-serif; font-size:.75rem; padding:5px 9px; font-weight:600; transition:all .2s; }
+    .btn-outline:hover { border-color:var(--accent); color:var(--accent); }
+    .btn-full { width:100%; }
+    .macro-presets { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+    .tdee-result { background:rgba(16,185,129,0.1); border:1px solid var(--border); border-radius:10px; padding:12px; margin-top:10px; }
+    .tdee-row { display:flex; justify-content:space-between; font-size:.8rem; padding:3px 0; }
+    .tdee-val { font-weight:700; color:var(--accent); }
+    .day-accordion { background:rgba(16,185,129,0.05); border:1px solid var(--border); border-radius:12px; margin-bottom:8px; overflow:hidden; }
+    .day-header { display:flex; align-items:center; justify-content:space-between; padding:11px 14px; cursor:pointer; user-select:none; }
+    .day-header:hover { background:rgba(16,185,129,0.06); }
+    .day-title { font-weight:700; font-size:.88rem; }
+    .day-cals { font-size:.78rem; color:var(--text3); }
+    .day-body { padding:0 14px 12px; }
+    .meal-row { display:flex; justify-content:space-between; align-items:flex-start; padding:6px 0; border-bottom:1px solid rgba(16,185,129,0.1); font-size:.8rem; }
+    .meal-row:last-child { border:none; }
+    .meal-type { color:var(--text3); font-weight:600; min-width:72px; }
+    .meal-name { flex:1; font-weight:500; }
+    .meal-macros { text-align:right; color:var(--text3); font-size:.72rem; line-height:1.6; }
+    .shop-group { margin-bottom:14px; }
+    .shop-group-title { font-size:.8rem; font-weight:700; color:var(--accent3); margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em; }
+    .shop-item { display:flex; align-items:center; gap:8px; padding:4px 0; font-size:.8rem; }
+    .shop-item input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; }
+    .shop-item.checked span { text-decoration:line-through; color:var(--text3); }
+    .chevron { transition:transform .2s; display:inline-block; }
+    .chevron.open { transform:rotate(90deg); }
+    .plan-actions { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo } = React;
+
+    const MEAL_DB = {
+      Breakfast:[
+        {name:'Oatmeal with berries',        cal:320, protein:10, carbs:58, fat:6,  ingredients:['oats','blueberries','milk']},
+        {name:'Scrambled eggs & toast',       cal:380, protein:20, carbs:32, fat:18, ingredients:['eggs','bread','butter']},
+        {name:'Greek yoghurt parfait',        cal:290, protein:18, carbs:40, fat:5,  ingredients:['greek yoghurt','granola','honey','banana']},
+        {name:'Avocado toast',                cal:340, protein:9,  carbs:34, fat:20, ingredients:['bread','avocado','lemon','salt']},
+        {name:'Protein smoothie bowl',        cal:400, protein:30, carbs:45, fat:8,  ingredients:['protein powder','banana','almond milk','chia seeds']},
+      ],
+      Lunch:[
+        {name:'Grilled chicken salad',        cal:420, protein:38, carbs:22, fat:18, ingredients:['chicken breast','mixed greens','tomato','olive oil']},
+        {name:'Brown rice & tuna bowl',        cal:480, protein:35, carbs:55, fat:8,  ingredients:['brown rice','tuna','cucumber','soy sauce']},
+        {name:'Turkey wrap',                   cal:440, protein:30, carbs:42, fat:14, ingredients:['turkey','whole wheat wrap','lettuce','mustard']},
+        {name:'Lentil soup',                   cal:360, protein:20, carbs:54, fat:4,  ingredients:['lentils','carrots','celery','onion','cumin']},
+        {name:'Quinoa & roasted vegetables',   cal:410, protein:14, carbs:62, fat:12, ingredients:['quinoa','bell pepper','zucchini','olive oil']},
+      ],
+      Dinner:[
+        {name:'Salmon with steamed broccoli',  cal:500, protein:42, carbs:18, fat:26, ingredients:['salmon','broccoli','lemon','garlic']},
+        {name:'Chicken stir-fry with noodles', cal:550, protein:36, carbs:60, fat:14, ingredients:['chicken','noodles','bok choy','soy sauce','sesame oil']},
+        {name:'Lean beef & sweet potato',      cal:520, protein:40, carbs:42, fat:16, ingredients:['beef sirloin','sweet potato','green beans']},
+        {name:'Baked cod & brown rice',        cal:460, protein:38, carbs:50, fat:8,  ingredients:['cod fillet','brown rice','lemon','parsley']},
+        {name:'Turkey meatballs & pasta',      cal:580, protein:38, carbs:62, fat:16, ingredients:['turkey mince','pasta','tomato sauce','parmesan']},
+      ],
+      Snack:[
+        {name:'Apple & peanut butter',         cal:230, protein:6,  carbs:30, fat:12, ingredients:['apple','peanut butter']},
+        {name:'Cottage cheese & pineapple',    cal:180, protein:18, carbs:18, fat:2,  ingredients:['cottage cheese','pineapple']},
+        {name:'Mixed nuts 30g',                cal:174, protein:6,  carbs:6,  fat:15, ingredients:['mixed nuts']},
+        {name:'Protein bar',                   cal:200, protein:20, carbs:22, fat:7,  ingredients:['protein bar']},
+        {name:'Rice cakes & hummus',           cal:160, protein:5,  carbs:28, fat:5,  ingredients:['rice cakes','hummus']},
+      ],
+    };
+
+    const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const ACTIVITY_LEVELS = [
+      {label:'Sedentary (desk job)',         mult:1.2},
+      {label:'Lightly active (1-3d/wk)',     mult:1.375},
+      {label:'Moderately active (3-5d/wk)',  mult:1.55},
+      {label:'Very active (6-7d/wk)',        mult:1.725},
+      {label:'Super active (twice/day)',     mult:1.9},
+    ];
+    const GOALS = [
+      {label:'Lose weight (-500 kcal)',  adj:-500},
+      {label:'Maintain weight',          adj:0},
+      {label:'Gain weight (+500 kcal)',  adj:500},
+];
+    const MACRO_PRESETS = [
+      {label:'Balanced',     C:40, P:30, F:30},
+      {label:'Low Carb',     C:25, P:45, F:30},
+      {label:'High Protein', C:30, P:50, F:20},
+      {label:'Keto',         C:5,  P:25, F:70},
+    ];
+
+    const SHOP_CATEGORIES = {
+      Protein:   ['chicken breast','salmon','beef sirloin','tuna','cod fillet','turkey','turkey mince','eggs','protein powder','protein bar'],
+      Grains:    ['oats','brown rice','bread','pasta','noodles','whole wheat wrap','rice cakes','quinoa'],
+      Dairy:     ['milk','greek yoghurt','cottage cheese','butter','parmesan','almond milk'],
+      Produce:   ['blueberries','banana','apple','avocado','tomato','mixed greens','cucumber','lettuce','bell pepper','zucchini','broccoli','green beans','sweet potato','bok choy','carrots','celery','pineapple'],
+      Pantry:    ['olive oil','lemon','garlic','soy sauce','sesame oil','mustard','honey','salt','cumin','parsley','tomato sauce','granola','chia seeds','hummus','mixed nuts','peanut butter'],
+    };
+
+    function pickMeal(type, seed) {
+      const arr = MEAL_DB[type];
+      return arr[seed % arr.length];
+    }
+
+    function generateDayPlan(dayIdx, targetCal, seed) {
+      const types = ['Breakfast','Lunch','Dinner','Snack'];
+      const meals = types.map((t,i)=>({type:t, ...pickMeal(t,(seed+dayIdx*7+i*3))}));
+      return meals;
+    }
+
+    function generatePlan(targetCal) {
+      return DAYS.map((_,i)=>({
+        day: DAYS[i],
+        meals: generateDayPlan(i, targetCal, Math.floor(Date.now()/1000)%100),
+      }));
+    }
+
+    function regenDay(plan, dayIdx, targetCal) {
+      const newPlan = [...plan];
+      const seed = Math.floor(Math.random()*100);
+      newPlan[dayIdx] = { day: DAYS[dayIdx], meals: generateDayPlan(dayIdx, targetCal, seed) };
+      return newPlan;
+    }
+
+    function ProfilePanel({ profile, setProfile, tdee, setTdee }) {
+      const [local, setLocal] = useState({...profile});
+      const set = (k,v) => setLocal(p=>({...p,[k]:v}));
+
+      const calcTDEE = () => {
+        const {age,sex,height,weight,activity,goal} = local;
+        if(!age||!height||!weight) return;
+        const bmr = sex==='M'
+          ? 10*Number(weight)+6.25*Number(height)-5*Number(age)+5
+          : 10*Number(weight)+6.25*Number(height)-5*Number(age)-161;
+        const mult = ACTIVITY_LEVELS[Number(activity)].mult;
+        const tdeeVal = Math.round(bmr * mult);
+        const goalAdj = GOALS[Number(goal)].adj;
+        const target = tdeeVal + goalAdj;
+        setTdee({bmr:Math.round(bmr),tdee:tdeeVal,target});
+        setProfile(local);
+      };
+
+      const applyPreset = (p) => {
+        if(!tdee) return;
+        const protein = Math.round((tdee.target*p.P/100)/4);
+        const carbs   = Math.round((tdee.target*p.C/100)/4);
+        const fat     = Math.round((tdee.target*p.F/100)/9);
+        setProfile(prev=>({...prev,macroPreset:p.label,protein,carbs,fat}));
+        setLocal(prev=>({...prev,macroPreset:p.label,protein,carbs,fat}));
+      };
+
+      return (
+        <div>
+          <div className="card">
+            <h2>Your Profile</h2>
+            <div className="form-group"><label>Age</label><input type="number" min="10" max="120" value={local.age||''} onChange={e=>set('age',e.target.value)} placeholder="years"/></div>
+            <div className="form-group">
+              <label>Sex</label>
+              <select value={local.sex||'M'} onChange={e=>set('sex',e.target.value)}>
+                <option value="M">Male</option><option value="F">Female</option>
+              </select>
+            </div>
+            <div className="form-group"><label>Height (cm)</label><input type="number" min="100" max="250" value={local.height||''} onChange={e=>set('height',e.target.value)} placeholder="e.g. 175"/></div>
+            <div className="form-group"><label>Weight (kg)</label><input type="number" min="30" max="300" value={local.weight||''} onChange={e=>set('weight',e.target.value)} placeholder="e.g. 70"/></div>
+            <div className="form-group">
+              <label>Activity Level</label>
+              <select value={local.activity??1} onChange={e=>set('activity',e.target.value)}>
+                {ACTIVITY_LEVELS.map((a,i)=><option key={i} value={i}>{a.label}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Goal</label>
+              <select value={local.goal??1} onChange={e=>set('goal',e.target.value)}>
+                {GOALS.map((g,i)=><option key={i} value={i}>{g.label}</option>)}
+              </select>
+            </div>
+            <button className="btn btn-full" onClick={calcTDEE}>Calculate TDEE</button>
+            {tdee && (
+              <div className="tdee-result">
+                <div className="tdee-row"><span>BMR</span><span className="tdee-val">{tdee.bmr} kcal</span></div>
+                <div className="tdee-row"><span>TDEE</span><span className="tdee-val">{tdee.tdee} kcal</span></div>
+                <div className="tdee-row"><span>Target</span><span className="tdee-val" style={{color:'#34d399'}}>{tdee.target} kcal</span></div>
+                {profile.protein && <>
+                  <div className="tdee-row"><span>Protein</span><span className="tdee-val">{profile.protein}g</span></div>
+                  <div className="tdee-row"><span>Carbs</span><span className="tdee-val">{profile.carbs}g</span></div>
+                  <div className="tdee-row"><span>Fat</span><span className="tdee-val">{profile.fat}g</span></div>
+                </>}
+              </div>
+            )}
+          </div>
+          {tdee && (
+            <div className="card">
+              <h2>Macro Presets</h2>
+              <div className="macro-presets">
+                {MACRO_PRESETS.map(p=>(
+                  <button key={p.label} className="btn-outline" onClick={()=>applyPreset(p)}
+                    style={profile.macroPreset===p.label?{borderColor:'var(--accent)',color:'var(--accent)'}:{}}>
+                    {p.label}<br/><span style={{fontWeight:400,fontSize:'.68rem'}}>{p.C}C/{p.P}P/{p.F}F</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function MealPlanPanel({ plan, setPlan, tdee, savePlan }) {
+      const [open, setOpen] = useState({});
+      const toggle = (i) => setOpen(p=>({...p,[i]:!p[i]}));
+
+      const regen = (i) => setPlan(p=>regenDay(p,i,tdee?.target||2000));
+      const fullGen = () => setPlan(generatePlan(tdee?.target||2000));
+
+      if(!plan.length) return (
+        <div className="card">
+          <h2>Meal Plan</h2>
+          <div style={{textAlign:'center',color:'var(--text3)',padding:'30px 0',fontSize:'.85rem'}}>
+            Set your profile and calculate TDEE, then generate a plan.
+          </div>
+          <button className="btn btn-full" onClick={fullGen}>Generate Full Plan</button>
+        </div>
+      );
+
+      return (
+        <div>
+          <div className="plan-actions">
+            <button className="btn" onClick={fullGen}>Generate Full Plan</button>
+            <button className="btn btn-sm" style={{background:'rgba(16,185,129,0.2)',border:'1px solid var(--border)'}} onClick={savePlan}>Save Plan</button>
+          </div>
+          {plan.map((day,i)=>{
+            const total={cal:0,protein:0,carbs:0,fat:0};
+            day.meals.forEach(m=>{total.cal+=m.cal;total.protein+=m.protein;total.carbs+=m.carbs;total.fat+=m.fat;});
+            return (
+              <div key={i} className="day-accordion">
+                <div className="day-header" onClick={()=>toggle(i)}>
+                  <span className="day-title"><span className="chevron{open[i]?' open':''}">▶</span> {day.day}</span>
+                  <span className="day-cals">{total.cal} kcal · P:{total.protein}g C:{total.carbs}g F:{total.fat}g</span>
+                  <button className="btn btn-sm" style={{marginLeft:8}} onClick={e=>{e.stopPropagation();regen(i);}}>↻</button>
+                </div>
+                {open[i] && (
+                  <div className="day-body">
+                    {day.meals.map((m,j)=>(
+                      <div key={j} className="meal-row">
+                        <span className="meal-type">{m.type}</span>
+                        <span className="meal-name">{m.name}</span>
+                        <span className="meal-macros">{m.cal} kcal<br/>P:{m.protein}g C:{m.carbs}g F:{m.fat}g</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    function ShoppingListPanel({ plan, checked, setChecked }) {
+      const items = useMemo(()=>{
+        const set={};
+        plan.forEach(day=>day.meals.forEach(m=>(m.ingredients||[]).forEach(ing=>{
+          const key=ing.toLowerCase().trim();
+          set[key]=(set[key]||0)+1;
+        })));
+        return Object.keys(set).sort();
+      },[plan]);
+
+      const grouped = useMemo(()=>{
+        const g={...Object.fromEntries(Object.keys(SHOP_CATEGORIES).map(k=>[k,[]]))};
+        g.Other=[];
+        items.forEach(item=>{
+          let found=false;
+          for(const [cat,words] of Object.entries(SHOP_CATEGORIES)){
+            if(words.some(w=>item.includes(w))){g[cat].push(item);found=true;break;}
+          }
+          if(!found) g.Other.push(item);
+        });
+        return g;
+      },[items]);
+
+      const toggle = (item) => setChecked(p=>p.includes(item)?p.filter(i=>i!==item):[...p,item]);
+
+      const exportList = () => {
+        const lines=['SHOPPING LIST','=============',''];
+        Object.entries(grouped).forEach(([cat,items])=>{
+          if(!items.length) return;
+          lines.push(`### ${cat}`);
+          items.forEach(i=>lines.push(`  [${checked.includes(i)?'x':' '}] ${i}`));
+          lines.push('');
+        });
+        const w=window.open('','_blank');
+        w.document.write('<pre style="font-family:monospace;padding:20px;background:#111;color:#eee;">'+lines.join('\n')+'</pre>');
+        w.document.close();
+      };
+
+      if(!items.length) return (
+        <div className="card">
+          <h2>Shopping List</h2>
+          <div style={{color:'var(--text3)',fontSize:'.82rem',textAlign:'center',padding:'20px 0'}}>Generate a plan to see your shopping list.</div>
+        </div>
+      );
+
+      return (
+        <div className="card">
+          <h2>Shopping List</h2>
+          <button className="btn btn-sm btn-full" style={{marginBottom:14}} onClick={exportList}>Export ↗</button>
+          {Object.entries(grouped).map(([cat,catItems])=>{
+            if(!catItems.length) return null;
+            return (
+              <div key={cat} className="shop-group">
+                <div className="shop-group-title">{cat}</div>
+                {catItems.map(item=>(
+                  <div key={item} className={`shop-item${checked.includes(item)?' checked':''}`}>
+                    <input type="checkbox" checked={checked.includes(item)} onChange={()=>toggle(item)}/>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    function App() {
+      const [profile, setProfile] = useState(()=>{ try{return JSON.parse(localStorage.getItem('dietProfile')||'null')||{age:'',sex:'M',height:'',weight:'',activity:1,goal:1};}catch{return {age:'',sex:'M',height:'',weight:'',activity:1,goal:1};} });
+      const [plan,    setPlan]    = useState(()=>{ try{return JSON.parse(localStorage.getItem('dietPlan')||'[]');}catch{return [];} });
+      const [checked, setChecked] = useState(()=>{ try{return JSON.parse(localStorage.getItem('checkedIngredients')||'[]');}catch{return [];} });
+      const [tdee,    setTdee]    = useState(null);
+
+      useEffect(()=>localStorage.setItem('dietProfile',           JSON.stringify(profile)),[profile]);
+      useEffect(()=>localStorage.setItem('dietPlan',              JSON.stringify(plan)),   [plan]);
+      useEffect(()=>localStorage.setItem('checkedIngredients',    JSON.stringify(checked)),[checked]);
+
+      const savePlan = useCallback(()=>{ localStorage.setItem('dietPlan',JSON.stringify(plan)); alert('Plan saved!'); },[plan]);
+
+      return (
+        <>
+          <nav>
+            <a href="../../index.html" style={{color:'var(--accent)',textDecoration:'none',fontWeight:600}}>← Back</a>
+            <h1>🥦 Diet Plan Generator</h1>
+            <div style={{width:60}}/>
+          </nav>
+          <div className="layout3">
+            <ProfilePanel profile={profile} setProfile={setProfile} tdee={tdee} setTdee={setTdee}/>
+            <MealPlanPanel plan={plan} setPlan={setPlan} tdee={tdee} savePlan={savePlan}/>
+            <ShoppingListPanel plan={plan} checked={checked} setChecked={setChecked}/>
+          </div>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

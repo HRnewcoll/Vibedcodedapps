@@ -3,558 +3,774 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DebateHub – Argue Your Corner</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<title>DebateArena – Argue What Matters</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg1: #0f0c29; --bg2: #302b63; --accent: #f43f5e;
-    --for: #10b981; --against: #f43f5e;
-    --glass: rgba(255,255,255,0.06); --glass-border: rgba(255,255,255,0.12);
-    --text: #f1f5f9; --subtext: #94a3b8;
-  }
-
-  body {
-    font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 50%, #24243e 100%);
-    min-height: 100vh; color: var(--text);
-  }
-
-  .nav {
-    position: sticky; top: 0; z-index: 50;
-    display: flex; align-items: center; gap: 12px; padding: 14px 24px;
-    background: rgba(0,0,0,0.4); backdrop-filter: blur(24px);
-    border-bottom: 1px solid var(--glass-border);
-  }
-  .back-btn {
-    display: flex; align-items: center; gap: 6px; color: var(--accent);
-    text-decoration: none; font-size: 14px; font-weight: 500;
-    padding: 6px 12px; border-radius: 8px;
-    background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3); transition: all .2s;
-  }
-  .back-btn:hover { background: rgba(244,63,94,0.2); transform: translateX(-2px); }
-  .nav-title { font-size: 18px; font-weight: 800; flex: 1; }
-
-  /* ── VIEWS ── */
-  .view { display: none; }
-  .view.active { display: block; }
-
-  /* ── TOPIC LIST ── */
-  .page-header { padding: 32px 24px 20px; max-width: 860px; margin: 0 auto; }
-  .page-header h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
-  .page-header p { color: var(--subtext); font-size: 15px; }
-
-  .topics-controls { max-width: 860px; margin: 0 auto 20px; padding: 0 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-  .new-topic-btn {
-    padding: 10px 20px; border-radius: 10px;
-    background: linear-gradient(135deg,var(--accent),#e11d48);
-    border: none; color: #fff; font-family: 'Inter', sans-serif;
-    font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s;
-  }
-  .new-topic-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(244,63,94,.4); }
-  .topics-count { font-size: 13px; color: var(--subtext); margin-left: auto; }
-
-  .topics-grid { max-width: 860px; margin: 0 auto 60px; padding: 0 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 16px; }
-  .topic-card {
-    background: var(--glass); backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border); border-radius: 18px; padding: 20px;
-    cursor: pointer; transition: all .25s; animation: cardIn .35s ease;
-  }
-  .topic-card:hover { transform: translateY(-4px); border-color: rgba(244,63,94,.4); box-shadow: 0 8px 30px rgba(244,63,94,.15); }
-  @keyframes cardIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-
-  .topic-category { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
-  .topic-title { font-size: 16px; font-weight: 700; line-height: 1.4; margin-bottom: 14px; }
-  .vote-bar-wrap { margin-bottom: 10px; }
-  .vote-bar-labels { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
-  .vote-bar-labels .for-label { color: var(--for); }
-  .vote-bar-labels .against-label { color: var(--against); }
-  .vote-bar-bg { background: rgba(255,255,255,.1); border-radius: 4px; height: 6px; overflow: hidden; }
-  .vote-bar-fill { height: 100%; background: linear-gradient(90deg,var(--for),#059669); border-radius: 4px; transition: width .5s ease; }
-  .topic-stats { display: flex; gap: 12px; }
-  .topic-stat { font-size: 12px; color: var(--subtext); }
-  .topic-stat strong { color: var(--text); }
-
-  /* ── NEW TOPIC MODAL ── */
-  .modal-overlay {
-    position: fixed; inset: 0; z-index: 200;
-    background: rgba(0,0,0,.7); backdrop-filter: blur(10px);
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-  }
-  .modal-overlay.hidden { display: none; }
-  .modal-card {
-    background: linear-gradient(135deg,rgba(15,12,41,.96),rgba(48,43,99,.96));
-    border: 1px solid var(--glass-border); border-radius: 24px;
-    padding: 32px; max-width: 480px; width: 100%; animation: fadeUp .4s ease;
-  }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-  .modal-card h2 { font-size: 20px; font-weight: 800; margin-bottom: 20px; }
-  .form-group { margin-bottom: 16px; }
-  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--subtext); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 7px; }
-  .form-input, .form-select {
-    width: 100%; padding: 13px 15px;
-    background: rgba(255,255,255,.07); border: 1px solid var(--glass-border);
-    border-radius: 12px; color: var(--text); font-family: 'Inter', sans-serif;
-    font-size: 14px; outline: none; transition: border-color .2s;
-  }
-  .form-select option { background: #1a1a2e; }
-  .form-input:focus, .form-select:focus { border-color: var(--accent); }
-  .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
-  .btn-cancel { flex: 1; padding: 12px; border-radius: 10px; background: rgba(255,255,255,.07); border: 1px solid var(--glass-border); color: var(--subtext); font-family: 'Inter', sans-serif; font-size: 14px; cursor: pointer; transition: all .2s; }
-  .btn-cancel:hover { background: rgba(255,255,255,.12); color: var(--text); }
-  .btn-create { flex: 2; padding: 12px; border-radius: 10px; background: linear-gradient(135deg,var(--accent),#e11d48); border: none; color: #fff; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; }
-  .btn-create:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(244,63,94,.4); }
-
-  /* ── DEBATE DETAIL ── */
-  .debate-header {
-    max-width: 900px; margin: 0 auto; padding: 28px 24px 0;
-  }
-  .debate-back-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 14px; color: var(--subtext); cursor: pointer;
-    background: none; border: none; padding: 6px 0; margin-bottom: 16px; transition: color .2s;
-  }
-  .debate-back-btn:hover { color: var(--text); }
-  .debate-topic-title { font-size: 26px; font-weight: 800; line-height: 1.3; margin-bottom: 16px; }
-  .debate-meta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
-  .debate-meta-item { font-size: 13px; color: var(--subtext); display: flex; align-items: center; gap: 5px; }
-  .debate-meta-item strong { color: var(--text); }
-
-  /* ── VOTE SPLIT ── */
-  .vote-split-card {
-    max-width: 900px; margin: 0 auto 24px; padding: 0 24px;
-  }
-  .split-inner {
-    background: var(--glass); backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border); border-radius: 18px; padding: 20px 22px;
-  }
-  .split-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--subtext); margin-bottom: 14px; }
-  .split-bar-wrap { margin-bottom: 12px; }
-  .split-bar-bg { background: rgba(244,63,94,.3); border-radius: 6px; height: 10px; overflow: hidden; }
-  .split-bar-for { background: linear-gradient(90deg,var(--for),#059669); height: 100%; border-radius: 6px; transition: width .6s cubic-bezier(.34,1.56,.64,1); }
-  .split-labels { display: flex; justify-content: space-between; margin-top: 8px; }
-  .split-label { font-size: 13px; font-weight: 700; }
-  .split-label.for { color: var(--for); }
-  .split-label.against { color: var(--against); }
-
-  /* ── ARGUE AREA ── */
-  .argue-section { max-width: 900px; margin: 0 auto 24px; padding: 0 24px; }
-  .side-picker { display: flex; gap: 10px; margin-bottom: 14px; }
-  .side-btn {
-    flex: 1; padding: 12px; border-radius: 12px; font-family: 'Inter', sans-serif;
-    font-size: 14px; font-weight: 700; cursor: pointer; transition: all .25s;
-    border: 2px solid; text-align: center;
-  }
-  .side-btn.for { border-color: rgba(16,185,129,.4); color: var(--for); background: rgba(16,185,129,.08); }
-  .side-btn.for.selected { background: rgba(16,185,129,.2); border-color: var(--for); box-shadow: 0 0 20px rgba(16,185,129,.3); transform: scale(1.02); }
-  .side-btn.against { border-color: rgba(244,63,94,.4); color: var(--against); background: rgba(244,63,94,.08); }
-  .side-btn.against.selected { background: rgba(244,63,94,.2); border-color: var(--against); box-shadow: 0 0 20px rgba(244,63,94,.3); transform: scale(1.02); }
-  .argue-textarea {
-    width: 100%; padding: 14px 16px; background: rgba(255,255,255,.06);
-    border: 1px solid var(--glass-border); border-radius: 12px;
-    color: var(--text); font-family: 'Inter', sans-serif;
-    font-size: 14px; resize: none; min-height: 80px; outline: none;
-    transition: border-color .2s; line-height: 1.6;
-  }
-  .argue-textarea:focus { border-color: rgba(244,63,94,.4); }
-  .argue-footer { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px; }
-  .argue-submit {
-    padding: 10px 24px; border-radius: 10px; border: none;
-    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
-    cursor: pointer; transition: all .2s;
-  }
-  .argue-submit.for { background: linear-gradient(135deg,var(--for),#059669); color: #fff; }
-  .argue-submit.against { background: linear-gradient(135deg,var(--against),#e11d48); color: #fff; }
-  .argue-submit:hover { transform: translateY(-2px); }
-  .argue-submit:disabled { opacity: .5; pointer-events: none; }
-  .name-input-sm {
-    padding: 10px 14px; background: rgba(255,255,255,.07);
-    border: 1px solid var(--glass-border); border-radius: 10px;
-    color: var(--text); font-family: 'Inter', sans-serif;
-    font-size: 13px; outline: none; transition: border-color .2s; width: 160px;
-  }
-  .name-input-sm:focus { border-color: rgba(244,63,94,.4); }
-
-  /* ── ARGUMENTS ── */
-  .args-section { max-width: 900px; margin: 0 auto 60px; padding: 0 24px; }
-  .args-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media(max-width:600px){ .args-cols { grid-template-columns: 1fr; } }
-  .args-col-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 15px; font-weight: 800; }
-  .args-col-header.for { color: var(--for); }
-  .args-col-header.against { color: var(--against); }
-  .arg-card {
-    background: var(--glass); backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border); border-radius: 14px; padding: 14px 16px;
-    margin-bottom: 10px; animation: cardIn .3s ease; transition: border-color .2s;
-  }
-  .arg-card.for { border-left: 3px solid var(--for); }
-  .arg-card.against { border-left: 3px solid var(--against); }
-  .arg-author { font-size: 12px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; display: flex; justify-content: space-between; }
-  .arg-text { font-size: 14px; line-height: 1.6; color: var(--text); margin-bottom: 10px; word-break: break-word; }
-  .arg-footer { display: flex; align-items: center; gap: 8px; }
-  .upvote-btn {
-    display: flex; align-items: center; gap: 5px;
-    padding: 5px 12px; border-radius: 20px;
-    background: rgba(255,255,255,.07); border: 1px solid var(--glass-border);
-    color: var(--subtext); font-size: 13px; font-weight: 600;
-    cursor: pointer; transition: all .2s;
-  }
-  .upvote-btn:hover { background: rgba(255,255,255,.13); color: var(--text); }
-  .upvote-btn.voted { background: rgba(244,63,94,.15); border-color: rgba(244,63,94,.4); color: var(--accent); }
-  .arg-del { background: none; border: none; color: rgba(255,255,255,.15); cursor: pointer; font-size: 12px; padding: 5px; border-radius: 6px; margin-left: auto; transition: color .2s; }
-  .arg-del:hover { color: var(--accent); }
-  .no-args { font-size: 13px; color: var(--subtext); text-align: center; padding: 20px; }
-
-  #toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
-    background: rgba(34,197,94,.9); color: #fff; padding: 12px 24px;
-    border-radius: 12px; font-size: 14px; font-weight: 500;
-    transition: transform .3s; z-index: 999; pointer-events: none;
-  }
-  #toast.show { transform: translateX(-50%) translateY(0); }
+  :root{--bg:#080f1a;--accent:#6366f1;--accent2:#4f46e5;--border:rgba(99,102,241,0.2);--text:#e0e7ff;--card:rgba(99,102,241,0.07);--danger:#ef4444;--success:#22c55e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  button{cursor:pointer;border:none;outline:none;font-family:inherit}
+  input,textarea,select{font-family:inherit;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;outline:none}
+  input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:3px}
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+  .badge-Politics{background:rgba(239,68,68,.18);color:#fca5a5}
+  .badge-Science{background:rgba(34,197,94,.18);color:#86efac}
+  .badge-Society{background:rgba(251,191,36,.18);color:#fde68a}
+  .badge-Tech{background:rgba(99,102,241,.25);color:#a5b4fc}
+  .badge-Sport{background:rgba(249,115,22,.18);color:#fdba74}
+  .badge-Random{background:rgba(168,85,247,.18);color:#d8b4fe}
+  .btn{padding:8px 18px;border-radius:8px;font-size:14px;font-weight:600;transition:all .2s}
+  .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+  .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{opacity:.85}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;transition:all .25s}
+  .card:hover{border-color:rgba(99,102,241,.5);box-shadow:0 4px 24px rgba(99,102,241,.12)}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+  .modal{background:#0d1629;border:1px solid var(--border);border-radius:18px;padding:28px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
+  .tab-bar{display:flex;gap:4px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:4px}
+  .tab{padding:8px 20px;border-radius:7px;font-size:14px;font-weight:600;transition:all .2s;color:rgba(224,231,255,.6)}
+  .tab.active{background:var(--accent);color:#fff}
+  .tab:hover:not(.active){color:var(--text)}
+  .vote-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;margin:6px 0}
+  .vote-bar-fill-for{background:var(--success);height:100%;border-radius:3px;transition:width .4s}
+  .vote-bar-fill-against{background:var(--danger);height:100%;border-radius:3px;transition:width .4s}
+  .arg-col{flex:1;min-width:0}
+  .arg-col-header{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding:6px 12px;border-radius:6px;text-align:center}
+  .arg-col-for .arg-col-header{background:rgba(34,197,94,.12);color:var(--success)}
+  .arg-col-against .arg-col-header{background:rgba(239,68,68,.12);color:var(--danger)}
+  .vote-btn{padding:4px 10px;border-radius:6px;font-size:13px;font-weight:700;transition:all .15s}
+  .vote-up{background:rgba(34,197,94,.12);color:var(--success)}.vote-up:hover,.vote-up.active{background:var(--success);color:#fff}
+  .vote-down{background:rgba(239,68,68,.12);color:var(--danger)}.vote-down:hover,.vote-down.active{background:var(--danger);color:#fff}
+  .comment-item{padding:12px 0;border-bottom:1px solid var(--border)}
+  .comment-item:last-child{border-bottom:none}
+  .search-bar{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:10px 16px;width:100%;font-size:14px;color:var(--text)}
+  .search-bar::placeholder{color:rgba(224,231,255,.35)}
+  .filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  select option{background:#0d1629}
+  .timer{font-size:12px;color:rgba(224,231,255,.5)}
+  .timer.urgent{color:#f97316}
+  .rules-panel{background:rgba(99,102,241,.06);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px}
+  .rules-panel h3{font-size:14px;font-weight:700;margin-bottom:10px;color:var(--accent);display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+  .rules-panel ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+  .rules-panel li{font-size:13px;color:rgba(224,231,255,.7);padding-left:16px;position:relative}
+  .rules-panel li::before{content:'•';position:absolute;left:0;color:var(--accent)}
+  .progress-overall{height:10px;border-radius:5px;background:rgba(239,68,68,.25);overflow:hidden;margin:8px 0}
+  .progress-overall-fill{height:100%;border-radius:5px;background:var(--success);transition:width .5s}
+  .header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:rgba(8,15,26,.9);backdrop-filter:blur(10px);position:sticky;top:0;z-index:50}
+  .container{max-width:1100px;margin:0 auto;padding:24px 20px}
+  .debates-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;margin-top:20px}
+  .leaderboard-row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px}
+  .rank-badge{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+  .rank-1{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
+  .rank-2{background:linear-gradient(135deg,#94a3b8,#64748b);color:#fff}
+  .rank-3{background:linear-gradient(135deg,#cd7c3c,#a35f2b);color:#fff}
+  .rank-other{background:rgba(99,102,241,.2);color:var(--accent)}
+  @media(max-width:700px){.args-cols{flex-direction:column!important}}
 </style>
 </head>
 <body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useMemo, useCallback } = React;
 
-<nav class="nav">
-  <a href="../../index.html" class="back-btn">← Back</a>
-  <div class="nav-title">⚔️ DebateHub</div>
-</nav>
+const ADJECTIVES = ['Bold','Clever','Fierce','Sharp','Brave','Swift','Keen','Wise','Calm','Iron','Dark','Bright','Quick','Loud','Quiet'];
+const NOUNS = ['Fox','Eagle','Wolf','Bear','Lion','Hawk','Tiger','Shark','Raven','Lynx','Drake','Crane','Cobra','Viper','Panda'];
+function genAlias() {
+  return ADJECTIVES[Math.floor(Math.random()*ADJECTIVES.length)] + NOUNS[Math.floor(Math.random()*NOUNS.length)];
+}
 
-<!-- Topic List View -->
-<div id="list-view" class="view active">
-  <div class="page-header">
-    <h1>⚔️ Pick Your Battle</h1>
-    <p>Choose a debate topic, pick your side, and make your argument. See what others think.</p>
-  </div>
-  <div class="topics-controls">
-    <button class="new-topic-btn" onclick="showNewTopicModal()">+ New Topic</button>
-    <div class="topics-count" id="topics-count"></div>
-  </div>
-  <div class="topics-grid" id="topics-grid"></div>
-</div>
+const CATEGORIES = ['Politics','Science','Society','Tech','Sport','Random'];
+const now = Date.now();
+const H = 3600000;
 
-<!-- Debate Detail View -->
-<div id="detail-view" class="view">
-  <div class="debate-header">
-    <button class="debate-back-btn" onclick="showListView()">← All Topics</button>
-    <div class="debate-topic-title" id="detail-title"></div>
-    <div class="debate-meta" id="detail-meta"></div>
-  </div>
-
-  <div class="vote-split-card">
-    <div class="split-inner">
-      <div class="split-title">Community Vote Split</div>
-      <div class="split-bar-wrap">
-        <div class="split-bar-bg"><div class="split-bar-for" id="split-bar" style="width:50%"></div></div>
-        <div class="split-labels">
-          <span class="split-label for" id="split-for-pct">50% For</span>
-          <span class="split-label against" id="split-against-pct">50% Against</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="argue-section">
-    <div class="side-picker">
-      <div class="side-btn for" id="side-for" onclick="selectSide('for')">✅ For</div>
-      <div class="side-btn against" id="side-against" onclick="selectSide('against')">❌ Against</div>
-    </div>
-    <textarea class="argue-textarea" id="argue-textarea" placeholder="Make your argument… be persuasive!" maxlength="400"></textarea>
-    <div class="argue-footer">
-      <input class="name-input-sm" id="argue-name" placeholder="Your name (optional)" maxlength="20">
-      <button class="argue-submit against" id="argue-submit" onclick="submitArgument()" disabled>Submit Argument</button>
-    </div>
-  </div>
-
-  <div class="args-section">
-    <div class="args-cols">
-      <div>
-        <div class="args-col-header for">✅ For <span id="for-count" style="font-size:13px;font-weight:500;color:var(--subtext)"></span></div>
-        <div id="for-args"></div>
-      </div>
-      <div>
-        <div class="args-col-header against">❌ Against <span id="against-count" style="font-size:13px;font-weight:500;color:var(--subtext)"></span></div>
-        <div id="against-args"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- New Topic Modal -->
-<div class="modal-overlay hidden" id="new-topic-modal">
-  <div class="modal-card">
-    <h2>💡 New Debate Topic</h2>
-    <div class="form-group">
-      <label>Topic Statement</label>
-      <input class="form-input" id="nt-title" type="text" placeholder="e.g. 'AI will replace most jobs by 2040'" maxlength="120">
-    </div>
-    <div class="form-group">
-      <label>Category</label>
-      <select class="form-select" id="nt-cat">
-        <option value="Technology">🤖 Technology</option>
-        <option value="Society">🌍 Society</option>
-        <option value="Education">📚 Education</option>
-        <option value="Politics">🏛️ Politics</option>
-        <option value="Environment">🌿 Environment</option>
-        <option value="Ethics">⚖️ Ethics</option>
-        <option value="Other">💬 Other</option>
-      </select>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-cancel" onclick="hideNewTopicModal()">Cancel</button>
-      <button class="btn-create" onclick="createTopic()">Create Topic</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<script>
-  const STORAGE_KEY = 'debatehub_v2';
-  let topics = [], currentTopicId = null, selectedSide = null, myUpvotes = {};
-
-  const SEED_TOPICS = [
-    { id:'s1', title:'Social media does more harm than good', category:'Society', createdAt: Date.now()-86400000*5 },
-    { id:'s2', title:'AI will replace most human jobs within 20 years', category:'Technology', createdAt: Date.now()-86400000*3 },
-    { id:'s3', title:'School uniforms should be abolished', category:'Education', createdAt: Date.now()-86400000*2 },
-    { id:'s4', title:'Homework should be banned for under-16s', category:'Education', createdAt: Date.now()-86400000*1 },
-    { id:'s5', title:'Celebrities have too much political influence', category:'Politics', createdAt: Date.now()-3600000*6 },
-    { id:'s6', title:'Zoos are unethical and should be closed', category:'Ethics', createdAt: Date.now()-3600000*2 },
-  ];
-
-  function load() {
-    try {
-      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      topics = d.topics || [];
-      myUpvotes = d.myUpvotes || {};
-      if (topics.length === 0) {
-        topics = SEED_TOPICS.map(t => ({ ...t, arguments: seedArgs(t.id) }));
-      }
-    } catch(e) { topics = SEED_TOPICS.map(t => ({...t, arguments:[]})); myUpvotes = {}; }
-  }
-
-  function seedArgs(id) {
-    const map = {
-      's1': [
-        { id:'sa1', side:'for', author:'Alex', text:'Constant comparison and cyberbullying have dramatically increased teen mental health issues. Studies show Instagram usage correlates strongly with depression rates.', upvotes:14, time: Date.now()-3600000 },
-        { id:'sa2', side:'against', author:'Jamie', text:'Social media connects isolated people, enables grassroots activism, and lets marginalised voices be heard globally. The benefits outweigh the negatives.', upvotes:11, time: Date.now()-3600000*2 },
-        { id:'sa3', side:'for', author:'Sam', text:'Misinformation spreads faster than facts on every social platform. It undermines democracy and public health — we saw this clearly during the pandemic.', upvotes:9, time: Date.now()-3600000*3 },
+const INITIAL_DEBATES = [
+  {
+    id:'d1',motion:'AI should be regulated by a global governing body',category:'Tech',
+    createdBy:'BoldEagle',createdAt:now-40*H,
+    args:{
+      for:[
+        {id:'a1',text:'Unregulated AI poses existential risks. A global body ensures safety standards across all nations, preventing a race to the bottom.',author:'CleverFox',votes:42,createdAt:now-39*H},
+        {id:'a2',text:'Cross-border AI systems need cross-border governance. No single country can regulate systems that operate globally.',author:'WiseHawk',votes:31,createdAt:now-38*H},
+        {id:'a3',text:'Algorithmic bias and surveillance tools harm millions. International oversight provides accountability.',author:'IronWolf',votes:27,createdAt:now-37*H},
       ],
-      's2': [
-        { id:'sb1', side:'for', author:'Morgan', text:'Automation is already replacing factory workers, drivers, and now even white-collar tasks like coding and writing. The pace is accelerating rapidly.', upvotes:18, time: Date.now()-3600000 },
-        { id:'sb2', side:'against', author:'Riley', text:'Every industrial revolution has created more jobs than it destroyed. AI will create new categories of work we can\'t yet imagine, just like the internet did.', upvotes:15, time: Date.now()-3600000*2 },
+      against:[
+        {id:'a4',text:'A global body would be slow, bureaucratic and stifle innovation. Countries should regulate at their own pace.',author:'SwiftBear',votes:35,createdAt:now-39*H},
+        {id:'a5',text:'Geopolitical differences make consensus impossible. China and the US have incompatible visions for AI.',author:'FierceLion',votes:29,createdAt:now-38*H},
+        {id:'a6',text:'Innovation thrives on competition. Global regulation creates a monopolistic governance structure.',author:'QuickShark',votes:18,createdAt:now-36*H},
+      ]
+    },
+    comments:[
+      {id:'c1',text:'This is the defining debate of our generation.',author:'CalmTiger',createdAt:now-38*H},
+      {id:'c2',text:'History shows international bodies are ineffective.',author:'DarkRaven',createdAt:now-37*H},
+    ]
+  },
+  {
+    id:'d2',motion:'Social media does more harm than good to society',category:'Society',
+    createdBy:'KeenRaven',createdAt:now-36*H,
+    args:{
+      for:[
+        {id:'b1',text:'Teen mental health has cratered since 2012, coinciding exactly with smartphone and social media adoption.',author:'BrightCrane',votes:55,createdAt:now-35*H},
+        {id:'b2',text:'Misinformation spreads six times faster than truth on social platforms, undermining democracy.',author:'LoudCobra',votes:48,createdAt:now-34*H},
+        {id:'b3',text:'Social media business models are built on outrage and addiction, not connection.',author:'BoldPanda',votes:39,createdAt:now-33*H},
+        {id:'b4',text:'Cyberbullying has become epidemic, with platforms doing little to protect vulnerable users.',author:'SharpLynx',votes:33,createdAt:now-32*H},
       ],
-      's3': [
-        { id:'sc1', side:'for', author:'Jordan', text:'Uniforms suppress individuality and self-expression during crucial developmental years. Students should be able to express themselves freely.', upvotes:7, time: Date.now()-3600000 },
-        { id:'sc2', side:'against', author:'Casey', text:'Uniforms reduce visible inequality and stop students being judged by their clothes. They create a level playing field and reduce peer pressure.', upvotes:12, time: Date.now()-3600000*2 },
+      against:[
+        {id:'b5',text:'Social media enabled the Arab Spring and countless social justice movements worldwide.',author:'FierceViper',votes:44,createdAt:now-35*H},
+        {id:'b6',text:'Billions use it to maintain family connections across borders. The benefits of connection are immense.',author:'CleverDrake',votes:37,createdAt:now-34*H},
+        {id:'b7',text:'It democratized information access. Marginalized voices finally have a platform.',author:'WiseFox',votes:28,createdAt:now-33*H},
+      ]
+    },
+    comments:[
+      {id:'c3',text:'Both can be true simultaneously.',author:'QuietEagle',createdAt:now-34*H},
+    ]
+  },
+  {
+    id:'d3',motion:'Universal Basic Income should be implemented globally',category:'Politics',
+    createdBy:'SwiftLion',createdAt:now-30*H,
+    args:{
+      for:[
+        {id:'e1',text:'Automation will eliminate 40% of jobs by 2035. UBI is the only policy that addresses this at scale.',author:'IronHawk',votes:61,createdAt:now-29*H},
+        {id:'e2',text:'Finland and Kenya pilots show UBI improves wellbeing, entrepreneurship and mental health.',author:'CalmShark',votes:45,createdAt:now-28*H},
+        {id:'e3',text:'UBI eliminates the poverty trap that punishes low-income workers for earning more.',author:'BoldTiger',createdAt:now-27*H,votes:38},
       ],
-    };
-    return (map[id] || []).map(a => ({ ...a, id: a.id + '_' + Math.random().toString(36).slice(2) }));
-  }
+      against:[
+        {id:'e4',text:'UBI is wildly expensive. The US alone would need $3.8 trillion annually — more than the entire federal budget.',author:'BrightWolf',votes:53,createdAt:now-29*H},
+        {id:'e5',text:'Giving unconditional cash reduces work incentives, potentially shrinking the tax base that funds it.',author:'KeenBear',votes:41,createdAt:now-28*H},
+        {id:'e6',text:'Targeted welfare is more efficient. UBI wastes resources on those who do not need it.',author:'SharpRaven',votes:29,createdAt:now-27*H},
+      ]
+    },
+    comments:[
+      {id:'c4',text:'The pilot programs are promising but too small scale.',author:'LoudLynx',createdAt:now-28*H},
+      {id:'c5',text:'We need to fund it somehow — wealth tax?',author:'QuietCobra',createdAt:now-27*H},
+    ]
+  },
+  {
+    id:'d4',motion:'Space exploration is worth its enormous cost',category:'Science',
+    createdBy:'FierceDrake',createdAt:now-24*H,
+    args:{
+      for:[
+        {id:'f1',text:'NASA\'s budget generates $7 in economic return for every $1 invested through spinoff technologies.',author:'CleverPanda',votes:49,createdAt:now-23*H},
+        {id:'f2',text:'A multi-planetary species is essential for long-term human survival — Earth\'s risks are existential.',author:'WiseViper',votes:44,createdAt:now-22*H},
+        {id:'f3',text:'Space inspires STEM education globally, creating the engineers and scientists we desperately need.',author:'BoldEagle',votes:36,createdAt:now-21*H},
+      ],
+      against:[
+        {id:'f4',text:'$500B+ spent on space while billions lack clean water, food or medicine. The priorities are obscene.',author:'SwiftCrane',votes:57,createdAt:now-23*H},
+        {id:'f5',text:'Private companies like SpaceX do it cheaper. Government space agencies are inefficient dinosaurs.',author:'IronFox',votes:33,createdAt:now-22*H},
+        {id:'f6',text:'The benefits are too speculative and long-term. We need to solve today\'s climate crisis first.',author:'CalmHawk',votes:26,createdAt:now-21*H},
+      ]
+    },
+    comments:[
+      {id:'c6',text:'False choice — we can do both.',author:'FierceShark',createdAt:now-22*H},
+    ]
+  },
+  {
+    id:'d5',motion:'Homework should be abolished in primary and secondary schools',category:'Society',
+    createdBy:'BrightLion',createdAt:now-20*H,
+    args:{
+      for:[
+        {id:'g1',text:'Research shows homework has zero measurable benefit for primary school children and minimal benefit for secondary students.',author:'SharpTiger',votes:52,createdAt:now-19*H},
+        {id:'g2',text:'Homework increases inequality — kids with educated parents and stable homes have a massive advantage.',author:'LoudBear',votes:43,createdAt:now-18*H},
+        {id:'g3',text:'Children need unstructured play time for healthy development. Homework colonizes this essential time.',author:'QuietWolf',votes:38,createdAt:now-17*H},
+      ],
+      against:[
+        {id:'g4',text:'Practice is essential for learning. Without homework, students forget content between lessons.',author:'BoldRaven',votes:45,createdAt:now-19*H},
+        {id:'g5',text:'Homework builds self-discipline, time management and independent learning — crucial life skills.',author:'CleverLynx',votes:34,createdAt:now-18*H},
+        {id:'g6',text:'University demands significant independent study. Schools must prepare students for this reality.',author:'WiseCobra',votes:25,createdAt:now-17*H},
+      ]
+    },
+    comments:[
+      {id:'c7',text:'Quality over quantity. Meaningful homework only.',author:'IronDrake',createdAt:now-18*H},
+    ]
+  },
+  {
+    id:'d6',motion:'Cryptocurrencies will replace traditional banking within 20 years',category:'Tech',
+    createdBy:'FiercePanda',createdAt:now-16*H,
+    args:{
+      for:[
+        {id:'h1',text:'DeFi already offers savings, loans and trading with no banks, no middlemen and far lower fees.',author:'SwiftViper',votes:38,createdAt:now-15*H},
+        {id:'h2',text:'2 billion people are unbanked but have smartphones. Crypto removes the gatekeepers entirely.',author:'CalmCrane',votes:44,createdAt:now-14*H},
+        {id:'h3',text:'Bitcoin has outperformed every traditional asset class over the last decade.',author:'BrightFox',votes:29,createdAt:now-13*H},
+      ],
+      against:[
+        {id:'h4',text:'Crypto is too volatile to function as a currency. You cannot price a sandwich in something that swings 30% weekly.',author:'KeenHawk',votes:62,createdAt:now-15*H},
+        {id:'h5',text:'Governments will never cede monetary control. CBDCs are a response, not a replacement.',author:'SharpShark',votes:47,createdAt:now-14*H},
+        {id:'h6',text:'Energy consumption is catastrophic. Bitcoin uses more electricity than Argentina.',author:'LoudTiger',votes:39,createdAt:now-13*H},
+      ]
+    },
+    comments:[
+      {id:'c8',text:'Blockchain tech yes, crypto currencies no.',author:'QuietBear',createdAt:now-14*H},
+    ]
+  },
+  {
+    id:'d7',motion:'Professional athletes are grossly overpaid relative to their social contribution',category:'Sport',
+    createdBy:'BoldWolf',createdAt:now-10*H,
+    args:{
+      for:[
+        {id:'i1',text:'Teachers shape every future generation yet earn a fraction of what a footballer earns in a week.',author:'CleverEagle',votes:67,createdAt:now-9*H},
+        {id:'i2',text:'Nurses and doctors save lives daily for $50-80k a year. LeBron makes $40M. The disparity is morally indefensible.',author:'WiseLion',votes:58,createdAt:now-8*H},
+        {id:'i3',text:'Sports salaries are funded by working-class fans through ticket prices and subscriptions they can barely afford.',author:'IronBear',votes:42,createdAt:now-7*H},
+      ],
+      against:[
+        {id:'i4',text:'Athletes generate billions in revenue. Their pay reflects their market value, not a moral judgment.',author:'FierceHawk',votes:55,createdAt:now-9*H},
+        {id:'i5',text:'Elite athletes dedicate their entire lives from age 5, endure injuries and retire at 35. The window is tiny.',author:'SwiftShark',votes:41,createdAt:now-8*H},
+        {id:'i6',text:'We freely pay for entertainment. Actors, musicians and athletes provide joy to billions.',author:'CalmRaven',votes:33,createdAt:now-7*H},
+      ]
+    },
+    comments:[
+      {id:'c9',text:'It\'s supply and demand, not ethics.',author:'BrightLynx',createdAt:now-8*H},
+      {id:'c10',text:'We need to value teachers and nurses more, not athletes less.',author:'SharpCobra',createdAt:now-7*H},
+    ]
+  },
+  {
+    id:'d8',motion:'Gene editing in humans should be fully permitted with appropriate consent',category:'Science',
+    createdBy:'LoudDrake',createdAt:now-6*H,
+    args:{
+      for:[
+        {id:'j1',text:'CRISPR can eliminate hereditary diseases like Huntington\'s and cystic fibrosis. Preventing suffering is a moral imperative.',author:'QuietPanda',votes:53,createdAt:now-5*H},
+        {id:'j2',text:'Adults have bodily autonomy. If someone consents to gene therapy, that is their fundamental right.',author:'BoldViper',votes:44,createdAt:now-4*H},
+        {id:'j3',text:'We already accept corrective surgery, IVF and organ transplants. Gene editing is the next step in medicine.',author:'CleverCrane',votes:37,createdAt:now-3*H},
+      ],
+      against:[
+        {id:'j4',text:'Designer babies will entrench inequality — only the wealthy can afford genetic advantages for their children.',author:'WiseFox',votes:61,createdAt:now-5*H},
+        {id:'j5',text:'Germline editing is irreversible and heritable. We have no right to permanently alter the human genome.',author:'IronEagle',votes:49,createdAt:now-4*H},
+        {id:'j6',text:'He Jiankui showed us the danger — rogue scientists will rush ahead without ethical oversight.',author:'FierceLion',votes:41,createdAt:now-3*H},
+      ]
+    },
+    comments:[
+      {id:'c11',text:'Somatic vs germline is the key distinction being ignored.',author:'SwiftBear',createdAt:now-4*H},
+    ]
+  },
+];
 
-  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ topics, myUpvotes })); }
+function getDebates() {
+  const stored = localStorage.getItem('debates_v3');
+  if (stored) return JSON.parse(stored);
+  localStorage.setItem('debates_v3', JSON.stringify(INITIAL_DEBATES));
+  return INITIAL_DEBATES;
+}
+function saveDebates(d) { localStorage.setItem('debates_v3', JSON.stringify(d)); }
+function getVotes() {
+  const s = localStorage.getItem('debate_votes_v3');
+  return s ? JSON.parse(s) : {};
+}
+function saveVotes(v) { localStorage.setItem('debate_votes_v3', JSON.stringify(v)); }
+function getAlias() {
+  let a = localStorage.getItem('debate_alias');
+  if (!a) { a = genAlias(); localStorage.setItem('debate_alias', a); }
+  return a;
+}
 
-  function getTopic(id) { return topics.find(t => t.id === id); }
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+  if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+  return Math.floor(diff/86400000) + 'd ago';
+}
+function timeLeft(createdAt) {
+  const expires = createdAt + 48*3600000;
+  const remaining = expires - Date.now();
+  if (remaining <= 0) return { text: 'Expired', urgent: true };
+  const h = Math.floor(remaining / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  if (h < 3) return { text: `${h}h ${m}m left`, urgent: true };
+  return { text: `${h}h ${m}m left`, urgent: false };
+}
 
-  function countSide(topic, side) { return (topic.arguments||[]).filter(a => a.side === side).length; }
+function RulesPanel() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rules-panel">
+      <h3 onClick={() => setOpen(o => !o)}>
+        📋 Debate Rules {open ? '▲' : '▼'}
+      </h3>
+      {open && (
+        <ul>
+          <li>Arguments must be relevant to the motion.</li>
+          <li>Maximum 400 characters per argument.</li>
+          <li>Be respectful — attack ideas, not people.</li>
+          <li>Vote based on argument quality, not personal opinion.</li>
+          <li>No spam or duplicate arguments.</li>
+          <li>Debates expire after 48 hours.</li>
+          <li>Your alias is randomly assigned and stored locally.</li>
+        </ul>
+      )}
+    </div>
+  );
+}
 
-  function getVotePct(topic) {
-    const forV = (topic.arguments||[]).filter(a=>a.side==='for').reduce((s,a)=>s+a.upvotes,0);
-    const agV = (topic.arguments||[]).filter(a=>a.side==='against').reduce((s,a)=>s+a.upvotes,0);
-    const total = forV + agV;
-    if (total === 0) return 50;
-    return Math.round(forV / total * 100);
-  }
-
-  function catColor(cat) {
-    const map = { Technology:'#3b82f6',Society:'#8b5cf6',Education:'#10b981',Politics:'#f59e0b',Environment:'#22c55e',Ethics:'#ec4899',Other:'#94a3b8' };
-    return map[cat] || '#94a3b8';
-  }
-
-  function timeAgo(ts) {
-    const s = Math.floor((Date.now()-ts)/1000);
-    if(s<60) return 'just now'; if(s<3600) return Math.floor(s/60)+'m ago';
-    if(s<86400) return Math.floor(s/3600)+'h ago';
-    return Math.floor(s/86400)+'d ago';
-  }
-
-  // ── LIST VIEW ──
-  function renderTopics() {
-    const grid = document.getElementById('topics-grid');
-    document.getElementById('topics-count').textContent = topics.length + ' topic' + (topics.length!==1?'s':'');
-    grid.innerHTML = topics.map(t => {
-      const pct = getVotePct(t);
-      const total = (t.arguments||[]).length;
-      const color = catColor(t.category);
-      return `
-        <div class="topic-card" onclick="openTopic('${t.id}')">
-          <div class="topic-category" style="color:${color}">${t.category}</div>
-          <div class="topic-title">${escHtml(t.title)}</div>
-          <div class="vote-bar-wrap">
-            <div class="vote-bar-labels">
-              <span class="for-label">✅ For ${pct}%</span>
-              <span class="against-label">${100-pct}% Against ❌</span>
-            </div>
-            <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:${pct}%"></div></div>
-          </div>
-          <div class="topic-stats">
-            <div class="topic-stat"><strong>${total}</strong> argument${total!==1?'s':''}</div>
-            <div class="topic-stat"><strong>${countSide(t,'for')}</strong> for</div>
-            <div class="topic-stat"><strong>${countSide(t,'against')}</strong> against</div>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  function showListView() {
-    document.getElementById('list-view').classList.add('active');
-    document.getElementById('detail-view').classList.remove('active');
-    currentTopicId = null; selectedSide = null;
-    renderTopics();
-  }
-
-  // ── DETAIL VIEW ──
-  function openTopic(id) {
-    currentTopicId = id;
-    selectedSide = null;
-    document.getElementById('list-view').classList.remove('active');
-    document.getElementById('detail-view').classList.add('active');
-    renderDetail();
-    window.scrollTo(0,0);
-  }
-
-  function renderDetail() {
-    const t = getTopic(currentTopicId);
-    if (!t) return;
-    document.getElementById('detail-title').textContent = t.title;
-    const pct = getVotePct(t);
-    document.getElementById('detail-meta').innerHTML = `
-      <div class="debate-meta-item" style="color:${catColor(t.category)}">${t.category}</div>
-      <div class="debate-meta-item">💬 <strong>${(t.arguments||[]).length}</strong> arguments</div>
-      <div class="debate-meta-item">🕐 Created ${timeAgo(t.createdAt)}</div>
-    `;
-    document.getElementById('split-bar').style.width = pct + '%';
-    document.getElementById('split-for-pct').textContent = pct + '% For';
-    document.getElementById('split-against-pct').textContent = (100-pct) + '% Against';
-
-    // Side buttons
-    document.getElementById('side-for').classList.toggle('selected', selectedSide === 'for');
-    document.getElementById('side-against').classList.toggle('selected', selectedSide === 'against');
-
-    // Update submit button class/state
-    const sub = document.getElementById('argue-submit');
-    sub.className = 'argue-submit ' + (selectedSide||'against');
-    sub.textContent = selectedSide === 'for' ? '✅ Argue For' : selectedSide === 'against' ? '❌ Argue Against' : 'Submit Argument';
-    sub.disabled = !selectedSide || !document.getElementById('argue-textarea').value.trim();
-
-    // Arguments
-    const args = [...(t.arguments||[])].sort((a,b) => b.upvotes - a.upvotes);
-    const forArgs = args.filter(a => a.side === 'for');
-    const againstArgs = args.filter(a => a.side === 'against');
-
-    document.getElementById('for-count').textContent = '(' + forArgs.length + ')';
-    document.getElementById('against-count').textContent = '(' + againstArgs.length + ')';
-
-    document.getElementById('for-args').innerHTML = forArgs.length ? forArgs.map(a => argHtml(a)).join('') : '<div class="no-args">No arguments yet — be the first!</div>';
-    document.getElementById('against-args').innerHTML = againstArgs.length ? againstArgs.map(a => argHtml(a)).join('') : '<div class="no-args">No arguments yet — be the first!</div>';
-  }
-
-  function argHtml(a) {
-    const voted = myUpvotes[a.id];
-    return `
-      <div class="arg-card ${a.side}">
-        <div class="arg-author">
-          <span>${escHtml(a.author || 'Anonymous')}</span>
-          <span>${timeAgo(a.time)}</span>
-        </div>
-        <div class="arg-text">${escHtml(a.text)}</div>
-        <div class="arg-footer">
-          <button class="upvote-btn ${voted?'voted':''}" onclick="upvoteArg('${a.id}')">
-            👍 ${a.upvotes}
-          </button>
-          <button class="arg-del" onclick="deleteArg('${a.id}')">✕</button>
+function ArgumentCard({ arg, side, onVote, voteState }) {
+  const net = arg.votes;
+  const userVote = voteState[arg.id];
+  return (
+    <div className="card" style={{ marginBottom: 10 }}>
+      <p style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 10 }}>{arg.text}</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <span style={{ fontSize: 12, color: 'rgba(224,231,255,.45)' }}>~{arg.author} · {timeAgo(arg.createdAt)}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button
+            className={`vote-btn vote-up${userVote === 1 ? ' active' : ''}`}
+            onClick={() => onVote(arg.id, 1, side)}
+          >▲</button>
+          <span style={{ fontSize: 13, fontWeight: 700, minWidth: 28, textAlign: 'center', color: net >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+            {net >= 0 ? '+' : ''}{net}
+          </span>
+          <button
+            className={`vote-btn vote-down${userVote === -1 ? ' active' : ''}`}
+            onClick={() => onVote(arg.id, -1, side)}
+          >▼</button>
         </div>
       </div>
-    `;
-  }
+    </div>
+  );
+}
 
-  function selectSide(side) {
-    selectedSide = side;
-    renderDetail();
-  }
+function DebateDetail({ debate, onBack, debates, setDebates }) {
+  const [newArgFor, setNewArgFor] = useState('');
+  const [newArgAgainst, setNewArgAgainst] = useState('');
+  const [newComment, setNewComment] = useState('');
+  const [votes, setVotes] = useState(getVotes());
+  const alias = getAlias();
+  const tl = timeLeft(debate.createdAt);
 
-  document.getElementById('argue-textarea').addEventListener('input', function() {
-    const sub = document.getElementById('argue-submit');
-    sub.disabled = !selectedSide || !this.value.trim();
-  });
+  const d = useMemo(() => debates.find(x => x.id === debate.id) || debate, [debates, debate.id]);
 
-  function submitArgument() {
-    const t = getTopic(currentTopicId);
-    if (!t || !selectedSide) return;
-    const text = document.getElementById('argue-textarea').value.trim();
-    if (!text) return;
-    const name = document.getElementById('argue-name').value.trim() || 'Anonymous';
+  const totalForVotes = useMemo(() => d.args.for.reduce((s, a) => s + Math.max(0, a.votes), 0), [d]);
+  const totalAgainstVotes = useMemo(() => d.args.against.reduce((s, a) => s + Math.max(0, a.votes), 0), [d]);
+  const total = totalForVotes + totalAgainstVotes || 1;
+  const forPct = Math.round((totalForVotes / total) * 100);
 
-    t.arguments = t.arguments || [];
-    t.arguments.push({
-      id: Date.now().toString() + Math.random().toString(36).slice(2),
-      side: selectedSide, author: name, text,
-      upvotes: 0, time: Date.now()
+  const handleVote = useCallback((argId, dir, side) => {
+    const key = argId;
+    const current = votes[key];
+    let delta = 0;
+    let newDir = null;
+    if (current === dir) { delta = -dir; newDir = null; }
+    else if (current) { delta = dir * 2; newDir = dir; }
+    else { delta = dir; newDir = dir; }
+
+    const newVotes = { ...votes, [key]: newDir };
+    if (newDir === null) delete newVotes[key];
+    setVotes(newVotes);
+    saveVotes(newVotes);
+
+    setDebates(prev => {
+      const updated = prev.map(deb => {
+        if (deb.id !== d.id) return deb;
+        return {
+          ...deb,
+          args: {
+            ...deb.args,
+            [side]: deb.args[side].map(a => a.id === argId ? { ...a, votes: a.votes + delta } : a)
+          }
+        };
+      });
+      saveDebates(updated);
+      return updated;
     });
-    save();
-    document.getElementById('argue-textarea').value = '';
-    document.getElementById('argue-submit').disabled = true;
-    renderDetail();
-    showToast(selectedSide === 'for' ? '✅ Argument submitted — For!' : '❌ Argument submitted — Against!');
-  }
+  }, [votes, d.id, setDebates]);
 
-  function upvoteArg(argId) {
-    const t = getTopic(currentTopicId);
-    if (!t) return;
-    const arg = t.arguments.find(a => a.id === argId);
-    if (!arg) return;
-    if (myUpvotes[argId]) { arg.upvotes = Math.max(0, arg.upvotes-1); delete myUpvotes[argId]; }
-    else { arg.upvotes++; myUpvotes[argId] = true; }
-    save(); renderDetail();
-  }
+  const addArgument = useCallback((side) => {
+    const text = side === 'for' ? newArgFor.trim() : newArgAgainst.trim();
+    if (!text || text.length > 400) return;
+    const newArg = { id: 'arg_' + Date.now(), text, author: alias, votes: 0, createdAt: Date.now() };
+    setDebates(prev => {
+      const updated = prev.map(deb => {
+        if (deb.id !== d.id) return deb;
+        return { ...deb, args: { ...deb.args, [side]: [...deb.args[side], newArg] } };
+      });
+      saveDebates(updated);
+      return updated;
+    });
+    if (side === 'for') setNewArgFor(''); else setNewArgAgainst('');
+  }, [newArgFor, newArgAgainst, alias, d.id, setDebates]);
 
-  function deleteArg(argId) {
-    const t = getTopic(currentTopicId);
-    if (!t) return;
-    t.arguments = t.arguments.filter(a => a.id !== argId);
-    save(); renderDetail();
-  }
+  const addComment = useCallback(() => {
+    const text = newComment.trim();
+    if (!text) return;
+    const c = { id: 'c_' + Date.now(), text, author: alias, createdAt: Date.now() };
+    setDebates(prev => {
+      const updated = prev.map(deb => {
+        if (deb.id !== d.id) return deb;
+        return { ...deb, comments: [...deb.comments, c] };
+      });
+      saveDebates(updated);
+      return updated;
+    });
+    setNewComment('');
+  }, [newComment, alias, d.id, setDebates]);
 
-  function showNewTopicModal() { document.getElementById('new-topic-modal').classList.remove('hidden'); }
-  function hideNewTopicModal() { document.getElementById('new-topic-modal').classList.add('hidden'); }
+  const sortedFor = useMemo(() => [...d.args.for].sort((a, b) => b.votes - a.votes), [d]);
+  const sortedAgainst = useMemo(() => [...d.args.against].sort((a, b) => b.votes - a.votes), [d]);
 
-  function createTopic() {
-    const title = document.getElementById('nt-title').value.trim();
-    if (!title) return;
-    const cat = document.getElementById('nt-cat').value;
-    topics.unshift({ id: Date.now().toString(), title, category: cat, createdAt: Date.now(), arguments: [] });
-    save(); hideNewTopicModal();
-    document.getElementById('nt-title').value = '';
-    renderTopics();
-    showToast('💡 New debate topic created!');
-  }
+  return (
+    <div className="container">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <button className="btn btn-ghost" onClick={onBack}>← Back</button>
+        <span className={`badge badge-${d.category}`}>{d.category}</span>
+        <span className={`timer${tl.urgent ? ' urgent' : ''}`}>{tl.text}</span>
+      </div>
 
-  document.getElementById('new-topic-modal').addEventListener('click', e => {
-    if (e.target === document.getElementById('new-topic-modal')) hideNewTopicModal();
-  });
+      <div className="card" style={{ marginBottom: 20 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, lineHeight: 1.4 }}>"{d.motion}"</h2>
+        <p style={{ fontSize: 12, color: 'rgba(224,231,255,.45)', marginBottom: 14 }}>
+          Started by ~{d.createdBy} · {timeAgo(d.createdAt)} · {d.args.for.length + d.args.against.length} arguments · {d.comments.length} comments
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, marginBottom: 4 }}>
+          <span style={{ color: 'var(--success)' }}>FOR {forPct}%</span>
+          <span style={{ color: 'var(--danger)' }}>AGAINST {100 - forPct}%</span>
+        </div>
+        <div className="progress-overall">
+          <div className="progress-overall-fill" style={{ width: forPct + '%' }} />
+        </div>
+        <p style={{ fontSize: 12, color: 'rgba(224,231,255,.4)' }}>Based on argument votes</p>
+      </div>
 
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2800);
-  }
+      <div className="args-cols" style={{ display: 'flex', gap: 18, marginBottom: 28 }}>
+        <div className="arg-col arg-col-for">
+          <div className="arg-col-header">✅ For</div>
+          {sortedFor.map(a => (
+            <ArgumentCard key={a.id} arg={a} side="for" onVote={handleVote} voteState={votes} />
+          ))}
+          <div style={{ marginTop: 10 }}>
+            <textarea
+              value={newArgFor}
+              onChange={e => setNewArgFor(e.target.value)}
+              placeholder="Add an argument FOR… (max 400 chars)"
+              rows={3}
+              style={{ width: '100%', resize: 'vertical', marginBottom: 6, fontSize: 13 }}
+              maxLength={400}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 11, color: 'rgba(224,231,255,.4)' }}>{newArgFor.length}/400</span>
+              <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: 13, background: 'var(--success)', color:'#fff' }} onClick={() => addArgument('for')}>Add</button>
+            </div>
+          </div>
+        </div>
+        <div className="arg-col arg-col-against">
+          <div className="arg-col-header">❌ Against</div>
+          {sortedAgainst.map(a => (
+            <ArgumentCard key={a.id} arg={a} side="against" onVote={handleVote} voteState={votes} />
+          ))}
+          <div style={{ marginTop: 10 }}>
+            <textarea
+              value={newArgAgainst}
+              onChange={e => setNewArgAgainst(e.target.value)}
+              placeholder="Add an argument AGAINST… (max 400 chars)"
+              rows={3}
+              style={{ width: '100%', resize: 'vertical', marginBottom: 6, fontSize: 13 }}
+              maxLength={400}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 11, color: 'rgba(224,231,255,.4)' }}>{newArgAgainst.length}/400</span>
+              <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: 13, background: 'var(--danger)', color:'#fff' }} onClick={() => addArgument('against')}>Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-  function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+      <div className="card" style={{ marginTop: 10 }}>
+        <h3 style={{ marginBottom: 14, fontSize: 16, fontWeight: 700 }}>💬 Comments ({d.comments.length})</h3>
+        {d.comments.length === 0 && <p style={{ color: 'rgba(224,231,255,.4)', fontSize: 14 }}>No comments yet. Be first!</p>}
+        {d.comments.map(c => (
+          <div key={c.id} className="comment-item">
+            <div style={{ display: 'flex', gap: 8, marginBottom: 4, alignItems: 'center' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)' }}>~{c.author}</span>
+              <span style={{ fontSize: 11, color: 'rgba(224,231,255,.4)' }}>{timeAgo(c.createdAt)}</span>
+            </div>
+            <p style={{ fontSize: 14, lineHeight: 1.5 }}>{c.text}</p>
+          </div>
+        ))}
+        <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
+          <input
+            value={newComment}
+            onChange={e => setNewComment(e.target.value)}
+            placeholder="Add a comment…"
+            style={{ flex: 1 }}
+            onKeyDown={e => e.key === 'Enter' && addComment()}
+          />
+          <button className="btn btn-primary" onClick={addComment}>Post</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  load(); renderTopics();
+function DebateCard({ debate, onClick }) {
+  const tl = timeLeft(debate.createdAt);
+  const totalFor = debate.args.for.reduce((s, a) => s + Math.max(0, a.votes), 0);
+  const totalAgainst = debate.args.against.reduce((s, a) => s + Math.max(0, a.votes), 0);
+  const total = totalFor + totalAgainst || 1;
+  const forPct = Math.round((totalFor / total) * 100);
+  return (
+    <div className="card" onClick={onClick} style={{ cursor: 'pointer' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+        <span className={`badge badge-${debate.category}`}>{debate.category}</span>
+        <span className={`timer${tl.urgent ? ' urgent' : ''}`}>{tl.text}</span>
+      </div>
+      <h3 style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.5, marginBottom: 10 }}>"{debate.motion}"</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4, color: 'rgba(224,231,255,.6)' }}>
+        <span style={{ color: 'var(--success)', fontWeight: 600 }}>FOR {forPct}%</span>
+        <span style={{ color: 'var(--danger)', fontWeight: 600 }}>AGN {100 - forPct}%</span>
+      </div>
+      <div className="vote-bar">
+        <div className="vote-bar-fill-for" style={{ width: forPct + '%' }} />
+      </div>
+      <div style={{ display: 'flex', gap: 14, fontSize: 12, color: 'rgba(224,231,255,.45)', marginTop: 8 }}>
+        <span>🗣 {debate.args.for.length + debate.args.against.length} args</span>
+        <span>💬 {debate.comments.length}</span>
+        <span>👤 ~{debate.createdBy}</span>
+      </div>
+    </div>
+  );
+}
+
+function CreateDebateModal({ onClose, onCreate, alias }) {
+  const [motion, setMotion] = useState('');
+  const [category, setCategory] = useState('Society');
+  const [openingArg, setOpeningArg] = useState('');
+  const [openingSide, setOpeningSide] = useState('for');
+
+  const handleSubmit = () => {
+    if (!motion.trim()) return;
+    const args = { for: [], against: [] };
+    if (openingArg.trim()) {
+      const a = { id: 'arg_' + Date.now(), text: openingArg.trim(), author: alias, votes: 0, createdAt: Date.now() };
+      args[openingSide].push(a);
+    }
+    onCreate({ motion: motion.trim(), category, args, comments: [], createdBy: alias, createdAt: Date.now(), id: 'd_' + Date.now() });
+  };
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <h2 style={{ marginBottom: 18, fontSize: 20, fontWeight: 700 }}>⚡ Start a Debate</h2>
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>Motion / Topic *</label>
+          <textarea
+            value={motion}
+            onChange={e => setMotion(e.target.value)}
+            placeholder="State the debate motion clearly, e.g. 'Nuclear power should be expanded globally'"
+            rows={3}
+            style={{ width: '100%', resize: 'vertical' }}
+            maxLength={200}
+          />
+          <span style={{ fontSize: 11, color: 'rgba(224,231,255,.4)' }}>{motion.length}/200</span>
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>Category</label>
+          <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: '100%' }}>
+            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>Opening Argument (optional, max 400 chars)</label>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <button className={`btn ${openingSide === 'for' ? 'btn-primary' : 'btn-ghost'}`} style={{ flex: 1, fontSize: 13 }} onClick={() => setOpeningSide('for')}>✅ For</button>
+            <button className={`btn ${openingSide === 'against' ? 'btn-danger' : 'btn-ghost'}`} style={{ flex: 1, fontSize: 13 }} onClick={() => setOpeningSide('against')}>❌ Against</button>
+          </div>
+          <textarea
+            value={openingArg}
+            onChange={e => setOpeningArg(e.target.value)}
+            placeholder={`Your opening argument ${openingSide === 'for' ? 'FOR' : 'AGAINST'} the motion…`}
+            rows={3}
+            style={{ width: '100%', resize: 'vertical' }}
+            maxLength={400}
+          />
+        </div>
+        <p style={{ fontSize: 12, color: 'rgba(224,231,255,.4)', marginBottom: 16 }}>Debating as: <strong style={{ color: 'var(--accent)' }}>~{alias}</strong></p>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-ghost" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleSubmit} disabled={!motion.trim()}>Launch Debate</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DebateFeed({ debates, onSelectDebate, onCreateDebate, alias }) {
+  const [search, setSearch] = useState('');
+  const [filterCat, setFilterCat] = useState('All');
+  const [sortBy, setSortBy] = useState('newest');
+  const [showCreate, setShowCreate] = useState(false);
+
+  const filtered = useMemo(() => {
+    let list = [...debates];
+    if (filterCat !== 'All') list = list.filter(d => d.category === filterCat);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(d => d.motion.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
+    }
+    if (sortBy === 'newest') list.sort((a, b) => b.createdAt - a.createdAt);
+    else if (sortBy === 'most_votes') {
+      list.sort((a, b) => {
+        const votesA = [...a.args.for, ...a.args.against].reduce((s, x) => s + x.votes, 0);
+        const votesB = [...b.args.for, ...b.args.against].reduce((s, x) => s + x.votes, 0);
+        return votesB - votesA;
+      });
+    } else if (sortBy === 'ending_soon') {
+      list.sort((a, b) => {
+        const remA = (a.createdAt + 48*3600000) - Date.now();
+        const remB = (b.createdAt + 48*3600000) - Date.now();
+        return remA - remB;
+      });
+    }
+    return list;
+  }, [debates, filterCat, search, sortBy]);
+
+  return (
+    <div>
+      <RulesPanel />
+      <div className="filter-row" style={{ marginBottom: 16 }}>
+        <input
+          className="search-bar"
+          style={{ flex: 1, minWidth: 180 }}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="🔍 Search debates…"
+        />
+        <select value={filterCat} onChange={e => setFilterCat(e.target.value)} style={{ minWidth: 120 }}>
+          <option value="All">All Categories</option>
+          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ minWidth: 140 }}>
+          <option value="newest">Newest</option>
+          <option value="most_votes">Most Votes</option>
+          <option value="ending_soon">Ending Soon</option>
+        </select>
+        <button className="btn btn-primary" onClick={() => setShowCreate(true)}>+ New Debate</button>
+      </div>
+      {filtered.length === 0 && (
+        <div style={{ textAlign: 'center', padding: 48, color: 'rgba(224,231,255,.4)' }}>
+          No debates found. Start one!
+        </div>
+      )}
+      <div className="debates-grid">
+        {filtered.map(d => (
+          <DebateCard key={d.id} debate={d} onClick={() => onSelectDebate(d)} />
+        ))}
+      </div>
+      {showCreate && (
+        <CreateDebateModal
+          alias={alias}
+          onClose={() => setShowCreate(false)}
+          onCreate={d => { onCreateDebate(d); setShowCreate(false); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function Leaderboard({ debates }) {
+  const leaders = useMemo(() => {
+    const scores = {};
+    debates.forEach(d => {
+      [...d.args.for, ...d.args.against].forEach(a => {
+        if (!scores[a.author]) scores[a.author] = { alias: a.author, totalVotes: 0, argCount: 0 };
+        scores[a.author].totalVotes += a.votes;
+        scores[a.author].argCount += 1;
+      });
+    });
+    return Object.values(scores).sort((a, b) => b.totalVotes - a.totalVotes).slice(0, 10);
+  }, [debates]);
+
+  return (
+    <div>
+      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>🏆 Leaderboard</h2>
+      <p style={{ color: 'rgba(224,231,255,.5)', fontSize: 14, marginBottom: 20 }}>Top debaters by total argument votes received</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {leaders.map((l, i) => (
+          <div key={l.alias} className="leaderboard-row">
+            <div className={`rank-badge rank-${i < 3 ? i + 1 : 'other'}`}>{i + 1}</div>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontWeight: 700, fontSize: 15 }}>~{l.alias}</span>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--accent)' }}>+{l.totalVotes}</div>
+              <div style={{ fontSize: 11, color: 'rgba(224,231,255,.4)' }}>{l.argCount} args</div>
+            </div>
+          </div>
+        ))}
+        {leaders.length === 0 && <p style={{ color: 'rgba(224,231,255,.4)' }}>No debaters yet.</p>}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [debates, setDebates] = useState(getDebates);
+  const [activeTab, setActiveTab] = useState('feed');
+  const [selectedDebate, setSelectedDebate] = useState(null);
+  const alias = useMemo(() => getAlias(), []);
+
+  const handleCreateDebate = useCallback((d) => {
+    setDebates(prev => {
+      const updated = [d, ...prev];
+      saveDebates(updated);
+      return updated;
+    });
+  }, []);
+
+  const handleSelectDebate = useCallback((d) => {
+    setSelectedDebate(d);
+  }, []);
+
+  return (
+    <div>
+      <div className="header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <a href="../../index.html" style={{ fontSize: 13, color: 'rgba(224,231,255,.5)' }}>← Home</a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 22 }}>⚔️</span>
+            <span style={{ fontWeight: 800, fontSize: 18, background: 'linear-gradient(135deg, var(--accent), #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              DebateArena
+            </span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {selectedDebate ? null : (
+            <div className="tab-bar">
+              <button className={`tab${activeTab === 'feed' ? ' active' : ''}`} onClick={() => setActiveTab('feed')}>🗣 Feed</button>
+              <button className={`tab${activeTab === 'leaderboard' ? ' active' : ''}`} onClick={() => setActiveTab('leaderboard')}>🏆 Leaderboard</button>
+            </div>
+          )}
+          <span style={{ fontSize: 12, color: 'rgba(224,231,255,.5)', borderLeft: '1px solid var(--border)', paddingLeft: 12 }}>
+            ~{alias}
+          </span>
+        </div>
+      </div>
+
+      <div className="container">
+        {selectedDebate ? (
+          <DebateDetail
+            debate={selectedDebate}
+            debates={debates}
+            setDebates={setDebates}
+            onBack={() => setSelectedDebate(null)}
+          />
+        ) : activeTab === 'feed' ? (
+          <DebateFeed
+            debates={debates}
+            onSelectDebate={handleSelectDebate}
+            onCreateDebate={handleCreateDebate}
+            alias={alias}
+          />
+        ) : (
+          <Leaderboard debates={debates} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
 </script>
 </body>
 </html>
